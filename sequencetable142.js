@@ -1694,40 +1694,50 @@ function restoreLayoutFromObject(layout) {
         }
 
         const card = createImageCard(src, item.photographer || "");
-const img = card.querySelector("img");
+        const img = card.querySelector("img");
 
-// IMPORTANT: Prevent auto-resizing BEFORE the image loads
-card.keepSize = true;
-card.resized  = true;
-card.aspectRatio = item.aspectRatio;
+        // IMPORTANT: Prevent auto-resizing BEFORE the image loads
+        card.keepSize = true;
+        card.resized  = true;
+        card.aspectRatio = item.aspectRatio;
 
-// Save original dimensions for global scaling
-card._origW = parseFloat(item.width);
-card._origH = parseFloat(item.height);
+        // Restore frame metadata so saved layouts keep their frames
+        card.isFramedUpload = !!item.isFramedUpload;
+        card.matteValue     = item.matteValue ?? null;
+        card.frameValue     = item.frameValue ?? null;
+        card.frameUnit      = item.frameUnit  ?? null;
+        card.frameColor     = item.frameColor ?? null;
+        if (card.isFramedUpload) {
+            card.needsFrameReapply = true;
+        }
 
-// KEEP THIS — do NOT delete
-if (item.src.startsWith("local:")) {
-    card.dataset.uploadId = item.src.replace("local:", "");
-}
+        // Save original dimensions for global scaling
+        card._origW = parseFloat(item.width);
+        card._origH = parseFloat(item.height);
 
-// What actually applies the saved properties
-function applyProps() {
-    // exact saved layout geometry
-    card.style.left   = item.left;
-    card.style.top    = item.top;
-    card.style.width  = item.width;
-    card.style.height = item.height;
-    card.style.zIndex = item.zIndex || 1;
-    updateDimensionsLabel(
-        card,
-        parseFloat(item.width),
-        parseFloat(item.height)
-    );
-}
+        // KEEP THIS — do NOT delete
+        if (item.src.startsWith("local:")) {
+            card.dataset.uploadId = item.src.replace("local:", "");
+        }
 
-// Wait for image load (or apply immediately)
-if (img.complete) applyProps();
-else img.addEventListener("load", applyProps);
+        // What actually applies the saved properties
+        function applyProps() {
+            // exact saved layout geometry
+            card.style.left   = item.left;
+            card.style.top    = item.top;
+            card.style.width  = item.width;
+            card.style.height = item.height;
+            card.style.zIndex = item.zIndex || 1;
+            updateDimensionsLabel(
+                card,
+                parseFloat(item.width),
+                parseFloat(item.height)
+            );
+        }
+
+        // Wait for image load (or apply immediately)
+        if (img.complete) applyProps();
+        else img.addEventListener("load", applyProps);
 
     });
 
