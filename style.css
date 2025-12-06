@@ -7,11 +7,17 @@
 body {
     font-family: 'Google Sans', 'Roboto', Arial, sans-serif;
     background-color: #f9f9f9;
+    overflow: hidden;
 }
 
 .header {
     background-color: #fff;
     border-bottom: 1px solid #dadce0;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 10000;
 }
 
 .menu-bar {
@@ -94,43 +100,45 @@ body {
 }
 
 .content-area {
-    padding: 20px;
-    min-height: calc(100vh - 120px);
+    position: fixed;
+    top: 120px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow: hidden;
 }
 
 #photo-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 20px;
-    padding: 20px;
-    max-width: 1400px;
-    margin: 0 auto;
+    position: relative;
+    width: 100%;
+    height: 100%;
 }
 
 .photo-card {
-    position: relative;
+    position: absolute;
     background: #fff;
     border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    overflow: hidden;
-    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    cursor: move;
+    user-select: none;
+    z-index: 1000;
+    transform-origin: center center;
 }
 
 .photo-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
 }
 
 .photo-card img {
-    width: 100%;
-    height: 300px;
-    object-fit: cover;
     display: block;
+    border-radius: 8px 8px 0 0;
+    pointer-events: none;
 }
 
 .photo-info {
     padding: 12px;
     background: #fff;
+    border-radius: 0 0 8px 8px;
 }
 
 .photographer {
@@ -156,7 +164,7 @@ body {
     right: 8px;
     width: 32px;
     height: 32px;
-    background: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.95);
     border: none;
     border-radius: 50%;
     font-size: 24px;
@@ -167,15 +175,63 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    opacity: 0;
-}
-
-.photo-card:hover .remove-btn {
-    opacity: 1;
+    z-index: 10;
 }
 
 .remove-btn:hover {
     background: #ea4335;
     color: white;
     transform: scale(1.1);
+}
+
+.resize-handle {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    width: 32px;
+    height: 32px;
+    background: rgba(255, 255, 255, 0.95);
+    border: none;
+    border-radius: 50%;
+    font-size: 20px;
+    cursor: nwse-resize;
+    color: #5f6368;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    user-select: none;
+}
+
+.resize-handle:hover {
+    background: #4285f4;
+    color: white;
+}
+
+.rotate-handle {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    width: 32px;
+    height: 32px;
+    background: rgba(255, 255, 255, 0.95);
+    border: none;
+    border-radius: 50%;
+    font-size: 20px;
+    cursor: grab;
+    color: #5f6368;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    user-select: none;
+}
+
+.rotate-handle:active {
+    cursor: grabbing;
+}
+
+.rotate-handle:hover {
+    background: #34a853;
+    color: white;
 }
