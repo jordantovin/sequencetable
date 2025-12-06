@@ -1,10 +1,10 @@
 // Grid snap functionality
 (function() {
     let isGridLocked = false;
+    let isInGridMode = false;
     let gridCards = [];
     let draggedCard = null;
     let draggedIndex = -1;
-    let dropIndicator = null;
 
     function updateCardTransform(card) {
         const x = parseFloat(card.dataset.x);
@@ -34,6 +34,12 @@
         });
         
         gridCards = cardArray;
+        isInGridMode = true;
+        
+        // Enable scrolling when in grid mode
+        const contentArea = document.querySelector('.content-area');
+        contentArea.style.overflow = 'auto';
+        
         arrangeCardsInGrid();
     }
 
@@ -68,36 +74,29 @@
     }
 
     function toggleGridLock() {
+        if (!isInGridMode) {
+            // If not in grid mode, snap to grid first
+            snapToGrid();
+        }
+        
         isGridLocked = !isGridLocked;
         const lockBtn = document.querySelector('[title="Lock grid"]');
-        const contentArea = document.querySelector('.content-area');
         
         if (isGridLocked) {
             // Change icon to locked
             lockBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>';
             
-            // Enable scrolling
-            contentArea.style.overflow = 'auto';
-            
-            // Disable free dragging on all cards
+            // Enable grid dragging on all cards
             const cards = document.querySelectorAll('.photo-card');
             cards.forEach(card => {
                 card.style.cursor = 'grab';
                 enableGridDrag(card);
             });
-            
-            // Make sure we're in a grid first
-            if (gridCards.length === 0) {
-                snapToGrid();
-            }
         } else {
             // Change icon to unlocked
             lockBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M12 17c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm6-9h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6h1.9c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm0 12H6V10h12v10z"/></svg>';
             
-            // Disable scrolling
-            contentArea.style.overflow = 'hidden';
-            
-            // Re-enable free dragging
+            // Disable grid dragging
             const cards = document.querySelectorAll('.photo-card');
             cards.forEach(card => {
                 card.style.cursor = 'move';
@@ -186,6 +185,9 @@
         
         const lockBtn = document.querySelector('[title="Lock grid"]');
         if (lockBtn) {
+            // Set initial icon to unlocked
+            lockBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M12 17c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm6-9h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6h1.9c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm0 12H6V10h12v10z"/></svg>';
+            
             lockBtn.onclick = function() {
                 toggleGridLock();
             };
