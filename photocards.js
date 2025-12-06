@@ -28,8 +28,6 @@
     function makeCardInteractive(card) {
         // Store transform state
         card.dataset.rotation = '0';
-        card.dataset.x = '100';
-        card.dataset.y = '100';
         
         // Random initial position
         const randomX = Math.random() * (window.innerWidth - 400) + 50;
@@ -41,8 +39,7 @@
 
         // Drag functionality
         card.addEventListener('mousedown', function(e) {
-            if (e.target.classList.contains('remove-btn') || 
-                e.target.classList.contains('resize-handle') ||
+            if (e.target.classList.contains('resize-handle') ||
                 e.target.classList.contains('rotate-handle')) {
                 return;
             }
@@ -50,9 +47,13 @@
             isDragging = true;
             activeCard = card;
             
-            const rect = card.getBoundingClientRect();
-            dragOffset.x = e.clientX - rect.left;
-            dragOffset.y = e.clientY - rect.top;
+            // Get current position from transform
+            const currentX = parseFloat(card.dataset.x) || 0;
+            const currentY = parseFloat(card.dataset.y) || 0;
+            
+            // Calculate offset from current position
+            dragOffset.x = e.clientX - currentX;
+            dragOffset.y = e.clientY - currentY;
             
             card.style.zIndex = getHighestZIndex() + 1;
             e.preventDefault();
@@ -177,30 +178,7 @@
             img.style.height = (width * aspectRatio) + 'px';
         };
         
-        const info = document.createElement('div');
-        info.className = 'photo-info';
-        const p = document.createElement('p');
-        p.className = 'photographer';
-        p.textContent = photographer;
-        info.appendChild(p);
-        
-        if (isUploaded) {
-            const badge = document.createElement('span');
-            badge.className = 'uploaded-badge';
-            badge.textContent = 'Uploaded';
-            info.appendChild(badge);
-        }
-        
-        const removeBtn = document.createElement('button');
-        removeBtn.className = 'remove-btn';
-        removeBtn.textContent = '×';
-        removeBtn.onclick = function() {
-            card.remove();
-        };
-        
         card.appendChild(img);
-        card.appendChild(info);
-        card.appendChild(removeBtn);
         
         makeCardInteractive(card);
         
