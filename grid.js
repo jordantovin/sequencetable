@@ -1,5 +1,11 @@
 // Grid snap functionality
 (function() {
+    let isGridLocked = false;
+    let gridCards = [];
+    let draggedCard = null;
+    let draggedIndex = -1;
+    let dropIndicator = null;
+
     function updateCardTransform(card) {
         const x = parseFloat(card.dataset.x);
         const y = parseFloat(card.dataset.y);
@@ -27,37 +33,146 @@
             return aY - bY;
         });
         
+        gridCards = cardArray;
+        arrangeCardsInGrid();
+    }
+
+    function arrangeCardsInGrid() {
         const containerWidth = window.innerWidth;
-        const spacing = 20; // Gap between cards
+        const spacing = 20;
         const startX = 50;
-        let currentY = 150; // Starting Y position
+        let currentY = 150;
         let currentX = startX;
-        let rowHeight = 0; // Track tallest card in current row
+        let rowHeight = 0;
         
-        cardArray.forEach((card) => {
+        gridCards.forEach((card) => {
             const img = card.querySelector('img');
             const cardWidth = img.offsetWidth || 300;
             const cardHeight = img.offsetHeight || 400;
             
-            // Check if card fits in current row
             if (currentX + cardWidth > containerWidth - 50 && currentX > startX) {
-                // Move to next row
                 currentY += rowHeight + spacing;
                 currentX = startX;
                 rowHeight = 0;
             }
             
-            // Position the card
             card.dataset.x = currentX;
             card.dataset.y = currentY;
-            card.dataset.rotation = 0; // Reset rotation when snapping to grid
+            card.dataset.rotation = 0;
             
             updateCardTransform(card);
             
-            // Update for next card
             currentX += cardWidth + spacing;
             rowHeight = Math.max(rowHeight, cardHeight);
         });
+    }
+
+    function toggleGridLock() {
+        isGridLocked = !isGridLocked;
+        const lockBtn = document.querySelector('[title="Lock grid"]');
+        const contentArea = document.querySelector('.content-area');
+        
+        if (isGridLocked) {
+            // Change icon to locked
+            lockBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>';
+            
+            // Enable scrolling
+            contentArea.style.overflow = 'auto';
+            
+            // Disable free dragging on all cards
+            const cards = document.querySelectorAll('.photo-card');
+            cards.forEach(card => {
+                card.style.cursor = 'grab';
+                enableGridDrag(card);
+            });
+            
+            // Make sure we're in a grid first
+            if (gridCards.length === 0) {
+                snapToGrid();
+            }
+        } else {
+            // Change icon to unlocked
+            lockBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M12 17c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm6-9h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6h1.9c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm0 12H6V10h12v10z"/></svg>';
+            
+            // Disable scrolling
+            contentArea.style.overflow = 'hidden';
+            
+            // Re-enable free dragging
+            const cards = document.querySelectorAll('.photo-card');
+            cards.forEach(card => {
+                card.style.cursor = 'move';
+                disableGridDrag(card);
+            });
+        }
+    }
+
+    function enableGridDrag(card) {
+        card.setAttribute('draggable', 'true');
+        
+        card.addEventListener('dragstart', handleDragStart);
+        card.addEventListener('dragend', handleDragEnd);
+        card.addEventListener('dragover', handleDragOver);
+        card.addEventListener('drop', handleDrop);
+    }
+
+    function disableGridDrag(card) {
+        card.setAttribute('draggable', 'false');
+        
+        card.removeEventListener('dragstart', handleDragStart);
+        card.removeEventListener('dragend', handleDragEnd);
+        card.removeEventListener('dragover', handleDragOver);
+        card.removeEventListener('drop', handleDrop);
+    }
+
+    function handleDragStart(e) {
+        draggedCard = this;
+        draggedIndex = gridCards.indexOf(this);
+        this.style.opacity = '0.5';
+        e.dataTransfer.effectAllowed = 'move';
+    }
+
+    function handleDragEnd(e) {
+        this.style.opacity = '1';
+        
+        // Remove any drop indicators
+        const cards = document.querySelectorAll('.photo-card');
+        cards.forEach(card => {
+            card.classList.remove('drag-over');
+        });
+    }
+
+    function handleDragOver(e) {
+        if (e.preventDefault) {
+            e.preventDefault();
+        }
+        e.dataTransfer.dropEffect = 'move';
+        
+        const cards = document.querySelectorAll('.photo-card');
+        cards.forEach(card => card.classList.remove('drag-over'));
+        this.classList.add('drag-over');
+        
+        return false;
+    }
+
+    function handleDrop(e) {
+        if (e.stopPropagation) {
+            e.stopPropagation();
+        }
+        
+        if (draggedCard !== this) {
+            const dropIndex = gridCards.indexOf(this);
+            
+            // Remove from old position
+            gridCards.splice(draggedIndex, 1);
+            
+            // Insert at new position
+            gridCards.splice(dropIndex, 0, draggedCard);
+            
+            // Rearrange grid
+            arrangeCardsInGrid();
+        }
+        
+        return false;
     }
 
     // Initialize grid button when page loads
@@ -66,6 +181,13 @@
         if (gridBtn) {
             gridBtn.onclick = function() {
                 snapToGrid();
+            };
+        }
+        
+        const lockBtn = document.querySelector('[title="Lock grid"]');
+        if (lockBtn) {
+            lockBtn.onclick = function() {
+                toggleGridLock();
             };
         }
     });
