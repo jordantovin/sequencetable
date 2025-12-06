@@ -14,8 +14,10 @@
 
 .icon-hover-wrap {
     position: relative;
-    display: inline-flex;
+    display: flex;
     align-items: center;
+    width: 40px;
+    flex-shrink: 0;
 }
 
 .icon-hover-label {
@@ -43,29 +45,39 @@
 
 .icon-btn {
     all: unset !important;
-    display: inline-flex !important;
+    display: flex !important;
     align-items: center !important;
     justify-content: center !important;
     width: 40px !important;
     height: 40px !important;
+    min-width: 40px !important;
+    min-height: 40px !important;
+    flex-shrink: 0 !important;
     cursor: pointer !important;
     border-radius: 50% !important;
     background: none !important;
     color: black !important;
+    padding: 0 !important;
+    margin: 0 !important;
     transition: background 0.2s ease, color 0.2s ease !important;
 }
 
-.icon-small, #dragFrameBtn, #snapGridBtn, #toggleLockBtn {
+.icon-small, #dragFrameBtn, #snapGridBtn, #toggleLockBtn, #resetWallBtn {
     all: unset !important;
-    display: inline-flex !important;
+    display: flex !important;
     align-items: center !important;
     justify-content: center !important;
     width: 40px !important;
     height: 40px !important;
+    min-width: 40px !important;
+    min-height: 40px !important;
+    flex-shrink: 0 !important;
     cursor: pointer !important;
     border-radius: 50% !important;
     background: none !important;
     color: black !important;
+    padding: 0 !important;
+    margin: 0 !important;
     transition: background 0.2s ease, color 0.2s ease !important;
 }
 
@@ -85,7 +97,7 @@
 
 #uploadBtn {
     all: unset !important;
-    display: inline-flex !important;
+    display: flex !important;
     align-items: center !important;
     justify-content: center !important;
     width: 40px !important;
@@ -94,10 +106,16 @@
     min-height: 40px !important;
     max-width: 40px !important;
     max-height: 40px !important;
+    flex-shrink: 0 !important;
     border-radius: 50% !important;
     line-height: 1 !important;
     cursor: pointer !important;
     background: none !important;
+    color: black !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    transition: background 0.2s, color 0.2s !important;
+}
     color: black !important;
     box-sizing: border-box !important;
 }
@@ -153,6 +171,7 @@ input[type="number"] {
     z-index: 10000;
     display: flex;
     flex-direction: column;
+    align-items: flex-start;
     gap: 4px;
     padding: 10px 0 0 0;
 }
@@ -168,6 +187,17 @@ input[type="number"] {
 #sidePanel h1 {
     margin: 0 0 20px 0 !important;
     top: 0px;
+}
+
+#sidePanel .icon-hover-wrap,
+#sidePanel #uploadGroup,
+#sidePanel #frameInputsRow,
+#sidePanel #snapGridGroup,
+#sidePanel #wallInputs,
+#sidePanel #hangHeightGroup,
+#sidePanel #layoutButtons {
+    width: 40px;
+    margin: 0 !important;
 }
 
 h1 {
@@ -257,6 +287,7 @@ h1 {
     gap: 2px;
     margin-bottom: 8px;
     position: relative;
+    width: 40px;
 }
 
 #dragFrameBtn {
