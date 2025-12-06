@@ -16,14 +16,15 @@ async function loadCSVData() {
             .map(row => {
                 const [link, photographer] = row.split(',');
                 return {
-                    link: link.trim(),
-                    photographer: photographer.trim()
+                    link: link ? link.trim() : '',
+                    photographer: photographer ? photographer.trim() : 'Unknown'
                 };
             });
         
         console.log(`Loaded ${csvData.length} photos from CSV`);
     } catch (error) {
         console.error('Error loading CSV:', error);
+        alert('Failed to load photo library. Please check your internet connection.');
     }
 }
 
@@ -47,6 +48,11 @@ function handleFileUpload(event) {
     const files = event.target.files;
     const container = document.getElementById('photo-container');
     
+    if (!container) {
+        console.error('Photo container not found');
+        return;
+    }
+    
     for (let file of files) {
         if (file.type.startsWith('image/')) {
             const reader = new FileReader();
@@ -66,12 +72,19 @@ function handleFileUpload(event) {
 
 // Add photos from CSV
 function addPhotosFromCSV(count) {
+    console.log('Adding photos, CSV length:', csvData.length);
+    
     if (csvData.length === 0) {
         alert('Loading photos... please try again in a moment.');
         return;
     }
     
     const container = document.getElementById('photo-container');
+    if (!container) {
+        console.error('Photo container not found');
+        return;
+    }
+    
     let added = 0;
     
     while (added < count && currentPhotoIndex < csvData.length) {
@@ -88,11 +101,12 @@ function addPhotosFromCSV(count) {
         added++;
     }
     
-    if (added < count) {
+    if (currentPhotoIndex >= csvData.length) {
         // If we've run out of photos, loop back to the beginning
         currentPhotoIndex = 0;
-        alert(`Added ${added} photos. Reached end of library.`);
     }
+    
+    console.log(`Added ${added} photos`);
 }
 
 // Remove photo card
@@ -106,32 +120,52 @@ function removePhotoCard(button) {
 
 // Event listeners
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM loaded, initializing photo cards...');
+    
     // Load CSV data
     loadCSVData();
     
     // Upload photo button
     const uploadBtn = document.querySelector('[title="Upload photo"]');
-    const fileInput = document.createElement('input');
-    fileInput.type = 'file';
-    fileInput.accept = 'image/*';
-    fileInput.multiple = true;
-    fileInput.style.display = 'none';
-    fileInput.addEventListener('change', handleFileUpload);
-    document.body.appendChild(fileInput);
-    
-    uploadBtn.addEventListener('click', () => {
-        fileInput.click();
-    });
+    if (uploadBtn) {
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.accept = 'image/*';
+        fileInput.multiple = true;
+        fileInput.style.display = 'none';
+        fileInput.addEventListener('change', handleFileUpload);
+        document.body.appendChild(fileInput);
+        
+        uploadBtn.addEventListener('click', () => {
+            console.log('Upload button clicked');
+            fileInput.click();
+        });
+        console.log('Upload button initialized');
+    } else {
+        console.error('Upload button not found');
+    }
     
     // +5 photos button
     const add5Btn = document.querySelector('[title="+5 photos"]');
-    add5Btn.addEventListener('click', () => {
-        addPhotosFromCSV(5);
-    });
+    if (add5Btn) {
+        add5Btn.addEventListener('click', () => {
+            console.log('+5 button clicked');
+            addPhotosFromCSV(5);
+        });
+        console.log('+5 button initialized');
+    } else {
+        console.error('+5 button not found');
+    }
     
     // +1 photo button
     const add1Btn = document.querySelector('[title="+1 photo"]');
-    add1Btn.addEventListener('click', () => {
-        addPhotosFromCSV(1);
-    });
+    if (add1Btn) {
+        add1Btn.addEventListener('click', () => {
+            console.log('+1 button clicked');
+            addPhotosFromCSV(1);
+        });
+        console.log('+1 button initialized');
+    } else {
+        console.error('+1 button not found');
+    }
 });
