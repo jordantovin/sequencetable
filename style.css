@@ -449,6 +449,16 @@ h1 {
   height: 1em;
 }
 
+#wallInputs {
+    width: 40px !important;
+    margin: 0 !important;
+}
+
+#wallBtnGroup {
+    width: 40px !important;
+    position: relative;
+}
+
 #wallInputs input, #wallInputs select {
     width: 40px;
     font-size: 14px;
@@ -534,15 +544,20 @@ h1 {
 
 #setWallBtn {
     all: unset !important;
-    display: inline-flex !important;
+    display: flex !important;
     align-items: center !important;
     justify-content: center !important;
     width: 40px !important;
     height: 40px !important;
+    min-width: 40px !important;
+    min-height: 40px !important;
+    flex-shrink: 0 !important;
     border-radius: 50% !important;
     cursor: pointer !important;
     color: black !important;
     background: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
 }
 
 #setWallBtn span, #resetWallBtn span {
