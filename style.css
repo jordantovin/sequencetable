@@ -1,908 +1,381 @@
-.material-symbols-outlined {
-  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+/* ============================================
+   GLOBAL STYLES
+   ============================================ */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
-.material-symbols-rounded {
-  font-family: 'Material Symbols Rounded' !important;
-  font-weight: normal;
-  font-style: normal;
-  font-size: 26px;
-  line-height: 1;
-  display: inline-block;
-  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24 !important;
+body {
+  font-family: Helvetica, Arial, sans-serif;
+  background: #f5f5f5;
+  overflow-x: hidden;
 }
 
-.icon-hover-wrap {
-    position: relative;
-    display: flex;
-    align-items: center;
-    width: 40px;
-    flex-shrink: 0;
-}
-
-.icon-hover-label {
-    opacity: 0;
-    transform: translateX(4px);
-    white-space: nowrap;
-    font-family: Helvetica, sans-serif;
-    font-size: 14px;
-    color: black;
-    margin-left: 10px;
-    pointer-events: none;
-    transition: opacity 0.18s ease, transform 0.18s ease;
-}
-
-.icon-hover-wrap:hover .icon-hover-label {
-    opacity: 1;
-    transform: translateX(0px);
-}
-
-.icon-hover-wrap .icon-btn:hover,
-.icon-hover-wrap .icon-small:hover {
-    background: black !important;
-    color: white !important;
-}
-
-.icon-btn {
-    all: unset !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    width: 40px !important;
-    height: 40px !important;
-    min-width: 40px !important;
-    min-height: 40px !important;
-    flex-shrink: 0 !important;
-    cursor: pointer !important;
-    border-radius: 50% !important;
-    background: none !important;
-    color: black !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    transition: background 0.2s ease, color 0.2s ease !important;
-}
-
-.icon-small, #dragFrameBtn, #snapGridBtn, #toggleLockBtn, #resetWallBtn {
-    all: unset !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    width: 40px !important;
-    height: 40px !important;
-    min-width: 40px !important;
-    min-height: 40px !important;
-    flex-shrink: 0 !important;
-    cursor: pointer !important;
-    border-radius: 50% !important;
-    background: none !important;
-    color: black !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    transition: background 0.2s ease, color 0.2s ease !important;
-}
-
-.icon-btn svg, .icon-small svg, .icon-btn span, .icon-small span,
-#uploadBtn svg, #dragFrameBtn svg, #snapGridBtn span, #toggleLockBtn svg {
-    width: 24px !important;
-    height: 24px !important;
-    stroke: currentColor !important;
-    color: currentColor !important;
-}
-
-.icon-btn:hover, .icon-small:hover, #uploadBtn:hover,
-#dragFrameBtn:hover, #snapGridBtn:hover, #toggleLockBtn:hover {
-    background: black !important;
-    color: white !important;
-}
-
-#uploadBtn {
-    all: unset !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    width: 40px !important;
-    height: 40px !important;
-    min-width: 40px !important;
-    min-height: 40px !important;
-    max-width: 40px !important;
-    max-height: 40px !important;
-    flex-shrink: 0 !important;
-    border-radius: 50% !important;
-    line-height: 1 !important;
-    cursor: pointer !important;
-    background: none !important;
-    color: black !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    transition: background 0.2s, color 0.2s !important;
-}
-    color: black !important;
-    box-sizing: border-box !important;
-}
-
-#uploadBtn .material-symbols-outlined, #uploadBtn span {
-    font-size: 26px !important;
-    line-height: 1 !important;
-    width: 24px !important;
-    height: 24px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-}
-
-#uploadBtn:hover {
-    background: black !important;
-    color: white !important;
-}
-
-#uploadBtn svg {
-    stroke: black !important;
-}
-
-#uploadBtn:hover svg {
-    stroke: white !important;
-}
-
-html, body {
-    margin: 0;
-    background: white;
-    overflow-x: hidden;
-    height: auto;
-}
-
-html {
-    overflow-y: scroll;
-}
-
+/* Hide number input spinners */
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
+  -webkit-appearance: none;
+  margin: 0;
 }
 
 input[type="number"] {
-    -moz-appearance: textfield;
+  -moz-appearance: textfield;
 }
 
+/* ============================================
+   MATERIAL ICONS
+   ============================================ */
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  font-size: 24px;
+  line-height: 1;
+  display: block;
+  user-select: none;
+}
+
+/* ============================================
+   SIDE PANEL - PERFECT ALIGNMENT
+   ============================================ */
 #sidePanel {
-    position: fixed;
-    top: 0px;
-    left: 30px;
-    z-index: 10000;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 4px;
-    padding: 10px 0 0 0;
-}
-
-#sidePanel > * {
-    margin: 0 !important;
-}
-
-#sidePanel button {
-    margin: 0;
+  position: fixed;
+  top: 20px;
+  left: 30px;
+  width: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 10000;
 }
 
 #sidePanel h1 {
-    margin: 0 0 20px 0 !important;
-    top: 0px;
+  font-size: 28px;
+  line-height: 1.2;
+  margin-bottom: 20px;
+  font-weight: normal;
+  width: 120px;
 }
 
-#sidePanel .icon-hover-wrap,
-#sidePanel #uploadGroup,
-#sidePanel #frameInputsRow,
-#sidePanel #snapGridGroup,
-#sidePanel #wallInputs,
-#sidePanel #hangHeightGroup,
-#sidePanel #layoutButtons {
-    width: 40px;
-    margin: 0 !important;
+/* Control Group - ensures 40px width */
+.control-group {
+  width: 40px;
+  height: 40px;
+  position: relative;
+  flex-shrink: 0;
 }
 
-h1 {
-    margin: 0 0 10px 0;
-    font-size: 30px;
-    background: transparent;
-    text-align: left;
-    font-family: Helvetica, sans-serif;
-}
-
-#uploadGroup {
-    width: 40px !important;
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-#uploadGroup button {
-    width: auto !important;
-}
-
-#uploadGroup #uploadBtn {
-    width: 40px !important;
-    height: 40px !important;
-    min-width: 40px !important;
-    min-height: 40px !important;
-    max-width: 40px !important;
-    max-height: 40px !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    border-radius: 50% !important;
-}
-
-#uploadExtras {
-    position: absolute;
-    left: 44px;
-    top: 6px;
-    display: flex;
-    gap: 4px;
-    opacity: 0;
-    pointer-events: none;
-    transform: translateX(-4px);
-    transition: opacity 0.2s ease, transform 0.2s ease;
-}
-
-#uploadGroup:hover #uploadExtras {
-    opacity: 1;
-    pointer-events: auto;
-    transform: translateX(0);
-}
-
-.upload-mini-btn {
-    width: 28px !important;
-    min-width: 28px !important;
-    max-width: 28px !important;
-    height: 28px !important;
-    min-height: 28px !important;
-    max-height: 28px !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    border: 1px solid black !important;
-    background: white !important;
-    color: black !important;
-    font-size: 13px !important;
-    line-height: 28px !important;
-    text-align: center !important;
-    border-radius: 0 !important;
-    cursor: pointer !important;
-    transition: all 0.2s ease !important;
-    box-sizing: border-box !important;
-    display: flex !important;
-    justify-content: center !important;
-    align-items: center !important;
-}
-
-#uploadExtras .upload-mini-btn:hover {
-    background: black !important;
-    color: white !important;
-}
-
-#frameInputsRow {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 2px;
-    margin-bottom: 8px;
-    position: relative;
-    width: 40px;
-}
-
-#dragFrameBtn {
-    all: unset !important;
-    border: none !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    width: 40px !important;
-    height: 40px !important;
-    min-width: 40px !important;
-    min-height: 40px !important;
-    flex-shrink: 0 !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    border-radius: 50% !important;
-    cursor: pointer !important;
-    background: none !important;
-    color: black !important;
-    line-height: 0 !important;
-    box-shadow: none !important;
-}
-
-#dragFrameBtn .material-symbols-outlined {
-    font-size: 24px !important;
-    line-height: 1 !important;
-    font-variation-settings: 'wght' 400, 'opsz' 24 !important;
-}
-
-#dragFrameBtn svg {
-    width: 24px !important;
-    height: 24px !important;
-    stroke: black !important;
-    display: block !important;
-}
-
-#framePopover {
-    position: absolute;
-    left: 46px;
-    top: -4px;
-    display: none;
-    padding: 6px 8px;
-    border-radius: 6px;
-    background: white;
-    border: 1px solid black;
-    flex-direction: row;
-    gap: 6px;
-    align-items: center;
-    z-index: 999999;
-    box-sizing: border-box;
-}
-
-#framePopover input[type="number"] {
-    width: 32px;
-    height: 32px;
-    padding: 2px 4px;
-    font-size: 14px;
-    border: 1px solid black;
-    box-sizing: border-box;
-    text-align: center;
-}
-
-#framePopover select {
-    width: 48px;
-    height: 32px;
-    padding: 2px 4px;
-    font-size: 14px;
-    border: 1px solid black;
-    box-sizing: border-box;
-}
-
-#frameColorBtn.frame-color-circle {
-    all: unset !important;
-    width: 30px !important;
-    height: 30px !important;
-    border-radius: 50% !important;
-    border: 2px solid black !important;
-    background-color: var(--frame-color, black) !important;
-    display: none;
-    cursor: pointer !important;
-    pointer-events: auto !important;
-}
-
-#frameColorBtn.frame-color-circle:hover {
-    filter: brightness(1.15) !important;
-}
-
-#frameUnitMaster {
-    margin-left: auto;
-    width: 45px;
-    font-size: 14px;
-    padding: 3px;
-    border: 1px solid black;
-    color: black;
-    box-sizing: border-box;
-}
-
-#snapGridGroup {
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: flex-start !important;
-    gap: 4px !important;
-    width: 40px !important;
-}
-
-#snapGridBtn {
-    all: unset !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    width: 40px !important;
-    height: 40px !important;
-    cursor: pointer;
-    border-radius: 50%;
-    background: none !important;
-    border: none !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    color: black !important;
-}
-
-#snapGridBtn svg {
-    stroke: black !important;
-}
-
-#toggleLockBtn {
-    all: unset !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    width: 40px !important;
-    height: 40px !important;
-    cursor: pointer;
-    border-radius: 50%;
-    color: black !important;
-    background: none !important;
-    border: none !important;
-    padding: 0 !important;
-}
-
-#toggleLockBtn:hover {
-    background: black !important;
-    color: white !important;
-}
-
-.lock-button {
-  color: #111;
-  font-size: 18px;
-  background: transparent;
+/* ============================================
+   ICON BUTTONS - STANDARDIZED
+   ============================================ */
+.icon-btn {
+  width: 40px;
+  height: 40px;
   border: none;
-  padding: 6px;
+  background: none;
+  color: black;
   cursor: pointer;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: all 0.2s ease;
+  position: relative;
 }
 
-.lock-button svg {
-  display: inline-block;
-  vertical-align: middle;
-  width: 1em;
-  height: 1em;
+.icon-btn:hover {
+  background: black;
+  color: white;
 }
 
-#wallInputs {
-    width: 40px !important;
-    margin: 0 !important;
+.icon-btn:active {
+  transform: scale(0.95);
 }
 
-#wallBtnGroup {
-    width: 40px !important;
-    position: relative;
+/* ============================================
+   POPOVERS
+   ============================================ */
+.popover {
+  position: absolute;
+  left: 50px;
+  top: 0;
+  background: white;
+  border: 1px solid black;
+  padding: 8px;
+  display: none;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 120px;
+  z-index: 10001;
 }
 
-#wallInputs input, #wallInputs select {
-    width: 40px;
-    font-size: 14px;
-    padding: 3px;
-    border: 1px solid black;
-    color: black;
-    box-sizing: border-box;
+.popover.active {
+  display: flex;
 }
 
-#wallInputs .wallRow {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 4px;
-    width: 100%;
+.popover input,
+.popover select {
+  width: 100%;
+  padding: 6px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+  font-family: Helvetica, Arial, sans-serif;
 }
 
-#wallInputs button {
-    width: 130px;
-    border: 1px solid black;
-    color: black;
-    font-size: 16px;
-    text-transform: lowercase;
-    cursor: pointer;
-    border-radius: 0;
-    padding: 6px 10px;
-    transition: all 0.3s ease;
-    text-align: left;
+.popover input:focus,
+.popover select:focus {
+  outline: none;
+  border-color: black;
 }
 
-#wallInputs button:hover {
-    background: black;
-    color: white;
+/* Color Buttons */
+.color-btn {
+  width: 100%;
+  height: 30px;
+  border: 1px solid black;
+  cursor: pointer;
+  border-radius: 3px;
 }
 
-#wallPopover {
-    position: absolute;
-    left: 46px;
-    top: -4px;
-    display: none;
-    padding: 6px 8px;
-    border-radius: 6px;
-    background: white;
-    border: 1px solid black;
-    flex-direction: row;
-    gap: 6px;
-    align-items: center;
-    z-index: 999999;
+.color-btn:hover {
+  opacity: 0.8;
 }
 
-#wallPopover input[type="number"] {
-    width: 32px;
-    height: 32px;
-    padding: 2px 4px;
-    font-size: 14px;
-    border: 1px solid black;
-    box-sizing: border-box;
-    text-align: center;
+/* ============================================
+   MAIN CANVAS
+   ============================================ */
+#canvas {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  padding: 100px 100px 100px 150px;
 }
 
-#wallPopover select {
-    width: 48px;
-    height: 32px;
-    padding: 2px 4px;
-    font-size: 14px;
-    border: 1px solid black;
-    box-sizing: border-box;
+#imageContainer {
+  position: relative;
+  width: 100%;
+  min-height: calc(100vh - 200px);
 }
 
-.wall-color-circle {
-    all: unset !important;
-    width: 30px !important;
-    height: 30px !important;
-    border-radius: 50% !important;
-    border: 2px solid black !important;
-    background-color: var(--wall-color, #f0f0f0) !important;
-    cursor: pointer !important;
+/* ============================================
+   WALL
+   ============================================ */
+#wall {
+  position: absolute;
+  top: 100px;
+  left: 150px;
+  background: #ffffff;
+  border: 2px solid #333;
+  display: none;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
 }
 
-.wall-color-circle:hover {
-    filter: brightness(1.15) !important;
+#wall.active {
+  display: block;
 }
 
-#setWallBtn {
-    all: unset !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    width: 40px !important;
-    height: 40px !important;
-    min-width: 40px !important;
-    min-height: 40px !important;
-    flex-shrink: 0 !important;
-    border-radius: 50% !important;
-    cursor: pointer !important;
-    color: black !important;
-    background: none !important;
-    padding: 0 !important;
-    margin: 0 !important;
+/* Wall dimension lines */
+.wall-dimension {
+  position: absolute;
+  background: blue;
+  color: blue;
+  font-size: 12px;
+  font-family: monospace;
 }
 
-#setWallBtn span, #resetWallBtn span {
-    color: currentColor !important;
-    font-size: 24px !important;
-    line-height: 1 !important;
+.wall-dimension.horizontal {
+  height: 2px;
+  bottom: -20px;
+  left: 0;
 }
 
-#setWallBtn:hover, #resetWallBtn:hover {
-    background: black !important;
-    color: white !important;
+.wall-dimension.vertical {
+  width: 2px;
+  right: -20px;
+  top: 0;
 }
 
-#resetWallBtn {
-    all: unset !important;
-    display: none !important;
-    align-items: center !important;
-    justify-content: center !important;
-    width: 40px !important;
-    height: 40px !important;
-    min-width: 40px !important;
-    min-height: 40px !important;
-    flex-shrink: 0 !important;
-    border-radius: 50% !important;
-    cursor: pointer !important;
-    color: black !important;
-    background: none !important;
-    padding: 0 !important;
-    margin: 0 !important;
+.wall-dimension-label {
+  position: absolute;
+  white-space: nowrap;
+  font-size: 11px;
+  color: blue;
 }
 
-#resetWallBtn.visible {
-    display: flex !important;
-}
-    margin-top: 6px !important;
-}
-
-#hangHeightPopover {
-    position: absolute;
-    left: 40px;
-    top: 0px;
-    display: none;
-    padding: 6px 8px;
-    border-radius: 6px;
-    background: white;
-    border: 1px solid black;
-    flex-direction: row;
-    gap: 6px;
-    align-items: center;
-    z-index: 999999;
+/* Hang height line */
+#hangLine {
+  position: absolute;
+  width: 100%;
+  height: 2px;
+  background: green;
+  display: none;
+  z-index: 1;
 }
 
-#hangHeightPopover input[type="number"] {
-    width: 32px;
-    height: 32px;
-    padding: 2px 4px;
-    font-size: 14px;
-    border: 1px solid black;
-    box-sizing: border-box;
-    text-align: center;
+#hangLine.active {
+  display: block;
 }
 
-#hangHeightPopover select {
-    width: 48px;
-    height: 32px;
-    padding: 2px 4px;
-    font-size: 14px;
-    border: 1px solid black;
-    box-sizing: border-box;
+#hangLine::after {
+  content: attr(data-label);
+  position: absolute;
+  right: -100px;
+  top: -8px;
+  font-size: 11px;
+  color: green;
+  white-space: nowrap;
 }
 
-#hangHeightBtn {
-    position: relative !important;
-}
-
-#hangHeightBtn span.material-symbols-outlined {
-    width: 24px !important;
-    height: 24px !important;
-    font-size: 26px !important;
-    line-height: 1;
-    color: currentColor !important;
-}
-
-#hangHeightContainer {
-    display: block !important;
-}
-
-#hangHeightToggle {
-    appearance: none !important;
-    -webkit-appearance: none !important;
-    -moz-appearance: none !important;
-    height: 30px;
-    width: 32px;
-    border: 1px solid black;
-    background: white;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    margin-top: 0 !important;
-    padding: 0;
-    position: relative;
-}
-
-#hangHeightToggle:checked::after {
-    content: "";
-    position: absolute;
-    width: 6px;
-    height: 12px;
-    border-right: 2px solid black;
-    border-bottom: 2px solid black;
-    transform: rotate(45deg);
-    top: 6px;
-}
-
-#mockWall {
-    position: absolute;
-    top: 10px;
-    left: 200px;
-    width: 1400px;
-    height: auto;
-    background: #f0f0f0;
-    border: 2px solid black;
-    z-index: 9986;
-    display: none;
-}
-
-#scrollArea {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    overflow-y: auto;
-    overflow-x: hidden;
-    z-index: 9994;
-    pointer-events: auto;
-}
-
-#gallery {
-    position: relative;
-    width: 100%;
-    min-height: 100%;
-}
-
-#galleryOverlay {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-}
-
-#galleryOverlay:not(.edit-mode) {
-    pointer-events: none;
-}
-
-#galleryOverlay.edit-mode {
-    pointer-events: all;
-}
-
-.rect {
-    fill: rgba(255,255,255,0.85);
-    stroke: rgba(0,0,0,0.6);
-    stroke-width: 2;
-    cursor: move;
-}
-
-.handle {
-    fill: rgba(0,0,0,0.6);
-    cursor: nwse-resize;
-}
-
+/* ============================================
+   IMAGE CARDS
+   ============================================ */
 .image-card {
-    position: absolute;
-    cursor: grab;
-    user-select: none;
-    box-sizing: border-box;
-    transition: left 1s ease-out, top 1s ease-out;
-    will-change: width, height, top, left;
-    z-index: 9998;
+  position: absolute;
+  cursor: move;
+  user-select: none;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  transition: box-shadow 0.2s ease;
 }
 
-.image-card.dragging-sort {
-    transition: none !important;
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+.image-card:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  z-index: 100;
 }
 
 .image-card.selected {
-    outline: 3px solid #0099ff;
+  outline: 2px solid #0099ff;
+  outline-offset: 2px;
 }
 
-.resize-handle {
-    position: absolute;
-    width: 12px;
-    height: 12px;
-    background: rgba(0, 0, 0, 0.8);
-    border: 2px solid white;
-    box-sizing: border-box;
-    z-index: 99999;
-    opacity: 0.9;
-    transition: opacity 0.2s ease;
-    pointer-events: all;
-}
-
-.image-card:not(:hover) .resize-handle {
-    opacity: 0;
-}
-
-.resize-handle.nw { top: -6px; left: -6px; cursor: nwse-resize; }
-.resize-handle.ne { top: -6px; right: -6px; cursor: nesw-resize; }
-.resize-handle.sw { bottom: -6px; left: -6px; cursor: nesw-resize; }
-.resize-handle.se { bottom: -6px; right: -6px; cursor: nwse-resize; }
-.resize-handle.n, .resize-handle.s, .resize-handle.w, .resize-handle.e {
-    display: none;
+.image-card.dragging {
+  opacity: 0.8;
+  cursor: grabbing;
 }
 
 .image-card img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-    pointer-events: none;
-    border: none;
-    z-index: 100001;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
 }
 
+/* Frame wrapper for mattes */
 .frame-wrapper {
-    position: relative;
-    display: inline-block;
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  height: 100%;
 }
 
-.metadata {
-    font-size: 12px;
-    margin-bottom: 4px;
-    text-align: center;
-    display: block;
-    font-family: Helvetica, sans-serif;
+/* Resize handles */
+.resize-handle {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: white;
+  border: 1px solid black;
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  z-index: 10;
 }
 
-.dim-label {
-    font-size: 11px;
-    color: gray;
-    line-height: 1.2;
-    white-space: pre-line;
-    text-align: center;
-    display: none;
-    font-family: Helvetica, sans-serif;
-    pointer-events: auto;
+.image-card:hover .resize-handle {
+  opacity: 1;
 }
 
-.info-wrapper {
-    position: relative;
+.resize-handle.nw { top: -6px; left: -6px; cursor: nw-resize; }
+.resize-handle.ne { top: -6px; right: -6px; cursor: ne-resize; }
+.resize-handle.sw { bottom: -6px; left: -6px; cursor: sw-resize; }
+.resize-handle.se { bottom: -6px; right: -6px; cursor: se-resize; }
+
+/* Metadata */
+.image-metadata {
+  position: absolute;
+  bottom: -25px;
+  left: 0;
+  font-size: 11px;
+  color: #666;
+  white-space: nowrap;
+  display: none;
 }
 
+.image-metadata.visible {
+  display: block;
+}
+
+/* Dimensions label */
+.image-dimensions {
+  position: absolute;
+  bottom: -45px;
+  left: 0;
+  font-size: 11px;
+  color: #333;
+  white-space: pre;
+  font-family: monospace;
+  display: none;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.image-dimensions.visible {
+  display: block;
+}
+
+.image-dimensions:hover {
+  color: blue;
+}
+
+/* ============================================
+   TRASH ZONE
+   ============================================ */
 #trashZone {
-    border: 1px solid red;
-    position: fixed;
-    bottom: 40px;
-    height: 30px;
-    left: 40px;
-    width: 130px;
-    z-index: 9999;
-    background: white;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 18px;
-    color: red;
-    pointer-events: none;
-    user-select: none;
-    font-family: Helvetica, sans-serif;
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 200px;
+  height: 60px;
+  border: 2px dashed #ccc;
+  background: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: #999;
+  font-size: 14px;
+  z-index: 9999;
+  transition: all 0.2s ease;
 }
 
-#hangLine {
-    position: absolute !important;
-    left: 0;
-    width: 100%;
-    height: 2px;
-    background: red;
-    pointer-events: none;
-    z-index: 999999;
+#trashZone.drag-over {
+  border-color: red;
+  background: #ffebee;
+  color: red;
 }
 
-#hangLineLabel {
-    position: absolute;
-    left: 8px;
-    top: -18px;
-    font-size: 12px;
-    font-family: Helvetica, sans-serif;
-    color: red;
-    background: none;
-    padding: 1px 4px;
-    border-radius: 3px;
-    z-index: 1000000;
-    pointer-events: none;
+#trashZone .material-symbols-outlined {
+  font-size: 28px;
 }
 
-#globalScaleBarH {
-    position: fixed;
-    left: 40px;
-    bottom: 90px;
-    width: 130px;
-    height: 6px;
-    background: #ddd;
-    border-radius: 3px;
-    cursor: pointer;
-    z-index: 100000 !important;
-}
-
-#globalScaleHandleH {
-    position: absolute;
-    top: -4px;
-    width: 10px;
-    height: 14px;
-    background: black;
-    border-radius: 2px;
-    cursor: ew-resize;
-    left: 80px;
-}
-
-#dragFrameGhost {
-    position: absolute;
-    pointer-events: none;
-    width: 120px;
-    height: 120px;
-    border: 6px solid black;
-    box-sizing: border-box;
-    opacity: 0.5;
-    z-index: 999999;
-    display: none;
-}
-
+/* ============================================
+   INFO POPUP
+   ============================================ */
 #infoLink {
   position: fixed;
-  right: 40px;
-  bottom: 57px;
-  font-family: Helvetica, sans-serif;
-  font-size: 12px;
+  bottom: 20px;
+  right: 20px;
   color: black;
   text-decoration: none;
-  background: rgba(255, 255, 255, 0.7);
-  padding: 3px 6px;
+  font-size: 14px;
+  z-index: 9999;
+  padding: 8px 12px;
   border: 1px solid black;
-  z-index: 99999;
-  transition: all 0.2s ease;
-  pointer-events: auto;
+  background: white;
 }
 
 #infoLink:hover {
@@ -911,158 +384,177 @@ h1 {
 }
 
 #infoPopup {
-  display: none;
-  font-family: Helvetica, sans-serif;
   position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.6);
-  z-index: 999999;
-  justify-content: center;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.7);
+  display: none;
   align-items: center;
-  pointer-events: auto;
+  justify-content: center;
+  z-index: 10002;
+}
+
+#infoPopup.active {
+  display: flex;
 }
 
 #infoContent {
   background: white;
-  color: black;
-  padding: 24px 32px;
-  border-radius: 6px;
-  max-width: 620px;
-  width: 85%;
-  font-family: Helvetica, sans-serif;
-  text-align: left;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  padding: 40px;
+  max-width: 600px;
+  max-height: 80vh;
+  overflow-y: auto;
+  position: relative;
 }
 
-#infoContent a {
-  color: black;
-  text-decoration: underline;
+#infoContent h1 {
+  font-size: 32px;
+  margin-bottom: 20px;
+  line-height: 1.2;
 }
 
-#closeInfoLink {
-  display: inline-block;
-  margin-top: 16px;
+#infoContent h2 {
+  font-size: 20px;
+  margin: 20px 0 10px;
+}
+
+#infoContent p {
+  line-height: 1.6;
+  margin-bottom: 15px;
+}
+
+#infoContent ul {
+  margin-left: 20px;
+  line-height: 1.8;
+}
+
+#infoContent table {
+  width: 100%;
+  margin: 15px 0;
   font-size: 14px;
-  text-decoration: none;
+  font-family: monospace;
+}
+
+#infoContent table td {
+  padding: 4px 0;
+}
+
+#infoContent table td:first-child {
+  font-weight: bold;
+  width: 150px;
+}
+
+.close-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  font-size: 32px;
+  cursor: pointer;
+  color: #999;
+  line-height: 1;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+}
+
+.close-btn:hover {
   color: black;
-  border: 1px solid black;
-  padding: 4px 8px;
-  transition: all 0.2s ease;
-  background: transparent;
 }
 
-#closeInfoLink:hover {
-  background: black;
-  color: white;
-  text-decoration: none;
+.version {
+  margin-top: 30px;
+  font-size: 12px;
+  color: #999;
 }
 
+/* ============================================
+   CREDIT LINK
+   ============================================ */
 #creditLink {
-    position: fixed;
-    right: 40px;
-    bottom: 30px;
-    font-family: Helvetica, sans-serif;
-    font-size: 12px;
-    color: black;
-    text-decoration: none;
-    z-index: 10001;
-    background: rgba(255, 255, 255, 0.7);
-    padding: 4px 6px;
-    pointer-events: auto;
-    transition: all 0.2s ease;
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  color: #999;
+  text-decoration: none;
+  font-size: 11px;
+  z-index: 9998;
 }
 
 #creditLink:hover {
-    color: white;
-    background: black;
+  color: black;
 }
 
-#redBox {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100vh;
-    background-color: white;
-    z-index: 9000;
-    pointer-events: none;
+/* ============================================
+   SELECTION MARQUEE
+   ============================================ */
+#selectionMarquee {
+  position: absolute;
+  border: 1px dashed #0099ff;
+  background: rgba(0,153,255,0.1);
+  pointer-events: none;
+  z-index: 10000;
+  display: none;
 }
 
-#scrollNote {
-    display: none;
-    text-align: center;
-    font-family: Helvetica, sans-serif;
-    font-size: 14px;
-    background: white;
-    color: black;
+#selectionMarquee.active {
+  display: block;
 }
 
-#saveLayoutBtn {
-    margin-top: 4px;
-}
-
-#sidePanel { pointer-events: auto; }
-#sidePanel * { pointer-events: auto; }
-
+/* ============================================
+   MOBILE RESPONSIVE
+   ============================================ */
 @media (max-width: 768px) {
-    #creditLink, #creditSelector, #infoLink, #infoPopup {
-        display: none !important;
-    }
+  #sidePanel {
+    left: 10px;
+    top: 10px;
+  }
+  
+  #canvas {
+    padding: 80px 20px 100px 70px;
+  }
+  
+  #wall {
+    left: 70px;
+    top: 80px;
+  }
+  
+  .popover {
+    left: auto;
+    right: 0;
+    top: 50px;
+  }
+  
+  #trashZone {
+    width: 150px;
+    height: 50px;
+  }
+  
+  #infoContent {
+    padding: 20px;
+    max-width: 90vw;
+  }
+}
 
-    #sidePanel {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        top: auto;
-        height: auto;
-        padding: 10px;
-        background: white;
-        border-top: 1px solid #ccc;
-        display: flex !important;
-        flex-direction: row !important;
-        justify-content: space-between;
-        align-items: center;
-        gap: 8px;
-        z-index: 10000;
-    }
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+.hidden {
+  display: none !important;
+}
 
-    #sidePanel > * {
-        margin: 0 !important;
-    }
+.no-pointer-events {
+  pointer-events: none;
+}
 
-    #sidePanel button {
-        flex: 1;
-        padding: 10px 8px;
-        font-size: 12px;
-        text-align: center !important;
-        width: auto !important;
-        margin: 0;
-    }
+.grabbing {
+  cursor: grabbing !important;
+}
 
-    #uploadBtn, #add1Btn, #add5Btn, #undoBtn, #eraseAllBtn {
-        display: block !important;
-    }
-
-    #frameInputs, #toggleDemensBtn, #snapGridBtn, #toggleLockBtn,
-    #wallInputs, #hangHeightContainer, #frameColorBtn,
-    #paintBucketBtn, #setWallBtn {
-        display: none !important;
-    }
-
-    #gallery {
-        left: 0 !important;
-        width: 100vw !important;
-        margin-bottom: 80px;
-        top: 0;
-    }
-
-    #trashZone {
-        display: flex !important;
-        top: 10px;
-        left: 10px;
-        bottom: auto;
-        width: 100px;
-        height: 30px;
-    }
+.grab {
+  cursor: grab;
 }
