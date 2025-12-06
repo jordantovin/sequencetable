@@ -1,11 +1,10 @@
-/* ============================================
-   GLOBAL STYLES
-   ============================================ */
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+/* ===================================
+   SEQUENCE TABLE - CLEAN CSS
+   Perfect Icon Alignment
+   =================================== */
+
+/* Reset */
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
   font-family: Helvetica, Arial, sans-serif;
@@ -13,20 +12,7 @@ body {
   overflow-x: hidden;
 }
 
-/* Hide number input spinners */
-input[type="number"]::-webkit-inner-spin-button,
-input[type="number"]::-webkit-outer-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-
-input[type="number"] {
-  -moz-appearance: textfield;
-}
-
-/* ============================================
-   MATERIAL ICONS
-   ============================================ */
+/* Material Icons */
 .material-symbols-outlined {
   font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
   font-size: 24px;
@@ -35,17 +21,29 @@ input[type="number"] {
   user-select: none;
 }
 
-/* ============================================
+/* Hide number spinners */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* ===================================
    SIDE PANEL - PERFECT ALIGNMENT
-   ============================================ */
+   =================================== */
 #sidePanel {
   position: fixed;
-  top: 20px;
+  top: 0;
   left: 30px;
   width: 40px;
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: 4px;
+  padding: 10px 0;
   z-index: 10000;
 }
 
@@ -54,34 +52,31 @@ input[type="number"] {
   line-height: 1.2;
   margin-bottom: 20px;
   font-weight: normal;
-  width: 120px;
+  width: 150px;
 }
 
-/* Control Group - ensures 40px width */
-.control-group {
-  width: 40px;
-  height: 40px;
-  position: relative;
-  flex-shrink: 0;
-}
-
-/* ============================================
-   ICON BUTTONS - STANDARDIZED
-   ============================================ */
+/* ===================================
+   ICON BUTTONS - ALL 40x40px
+   =================================== */
 .icon-btn {
-  width: 40px;
-  height: 40px;
+  width: 40px !important;
+  height: 40px !important;
+  min-width: 40px !important;
+  min-height: 40px !important;
+  max-width: 40px !important;
+  max-height: 40px !important;
   border: none;
   background: none;
   color: black;
   cursor: pointer;
   border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  flex-shrink: 0 !important;
   transition: all 0.2s ease;
-  position: relative;
 }
 
 .icon-btn:hover {
@@ -89,16 +84,76 @@ input[type="number"] {
   color: white;
 }
 
-.icon-btn:active {
-  transform: scale(0.95);
+.icon-btn .material-symbols-outlined {
+  font-size: 24px;
 }
 
-/* ============================================
-   POPOVERS
-   ============================================ */
-.popover {
+/* ===================================
+   UPLOAD GROUP
+   =================================== */
+#uploadGroup {
+  width: 40px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+#uploadExtras {
   position: absolute;
-  left: 50px;
+  left: 46px;
+  top: 6px;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-4px);
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+#uploadGroup:hover #uploadExtras {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(0);
+}
+
+.upload-mini-btn {
+  width: 28px;
+  height: 28px;
+  border: 1px solid black;
+  background: white;
+  color: black;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.upload-mini-btn:hover {
+  background: black;
+  color: white;
+}
+
+/* ===================================
+   FRAME
+   =================================== */
+#frameInputsRow {
+  width: 40px;
+  position: relative;
+  margin-bottom: 4px;
+}
+
+#dragFrameBtn {
+  width: 40px !important;
+  height: 40px !important;
+}
+
+#framePopover {
+  position: absolute;
+  left: 46px;
   top: 0;
   background: white;
   border: 1px solid black;
@@ -110,148 +165,165 @@ input[type="number"] {
   z-index: 10001;
 }
 
-.popover.active {
+#framePopover.active {
   display: flex;
 }
 
-.popover input,
-.popover select {
+#framePopover input,
+#framePopover select {
   width: 100%;
   padding: 6px;
   border: 1px solid #ccc;
   font-size: 14px;
-  font-family: Helvetica, Arial, sans-serif;
 }
 
-.popover input:focus,
-.popover select:focus {
-  outline: none;
-  border-color: black;
-}
-
-/* Color Buttons */
-.color-btn {
-  width: 100%;
+.frame-color-circle {
+  width: 30px;
   height: 30px;
   border: 1px solid black;
+  border-radius: 50%;
   cursor: pointer;
-  border-radius: 3px;
+  background: var(--frame-color, black);
 }
 
-.color-btn:hover {
-  opacity: 0.8;
+/* ===================================
+   GRID SNAP + LOCK
+   =================================== */
+#snapGridGroup {
+  width: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 4px;
 }
 
-/* ============================================
-   MAIN CANVAS
-   ============================================ */
-#canvas {
+#toggleLockBtn {
+  width: 40px !important;
+  height: 40px !important;
+}
+
+/* ===================================
+   WALL
+   =================================== */
+#wallInputs {
+  width: 40px;
+  position: relative;
+  margin-bottom: 4px;
+}
+
+#wallPopover {
+  position: absolute;
+  left: 46px;
+  top: 0;
+  background: white;
+  border: 1px solid black;
+  padding: 8px;
+  display: none;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 120px;
+  z-index: 10001;
+}
+
+#wallPopover.active {
+  display: flex;
+}
+
+#wallPopover input,
+#wallPopover select {
+  width: 100%;
+  padding: 6px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+}
+
+.wall-color-circle {
+  width: 30px;
+  height: 30px;
+  border: 1px solid black;
+  border-radius: 50%;
+  cursor: pointer;
+  background: var(--wall-color, #fff);
+}
+
+/* ===================================
+   HANG HEIGHT
+   =================================== */
+#hangHeightGroup {
+  width: 40px;
+  position: relative;
+  margin-bottom: 4px;
+}
+
+#hangHeightPopover {
+  position: absolute;
+  left: 46px;
+  top: 0;
+  background: white;
+  border: 1px solid black;
+  padding: 8px;
+  display: none;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 120px;
+  z-index: 10001;
+}
+
+#hangHeightPopover.active {
+  display: flex;
+}
+
+#hangHeightPopover input,
+#hangHeightPopover select {
+  width: 100%;
+  padding: 6px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+}
+
+/* ===================================
+   LAYOUT BUTTONS
+   =================================== */
+#layoutButtons {
+  width: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* ===================================
+   GALLERY
+   =================================== */
+#scrollArea {
   position: relative;
   width: 100%;
   min-height: 100vh;
-  padding: 100px 100px 100px 150px;
 }
 
-#imageContainer {
+#gallery {
   position: relative;
   width: 100%;
-  min-height: calc(100vh - 200px);
+  min-height: 100vh;
+  padding-left: 100px;
 }
 
-/* ============================================
-   WALL
-   ============================================ */
-#wall {
-  position: absolute;
-  top: 100px;
-  left: 150px;
-  background: #ffffff;
-  border: 2px solid #333;
-  display: none;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-}
-
-#wall.active {
-  display: block;
-}
-
-/* Wall dimension lines */
-.wall-dimension {
-  position: absolute;
-  background: blue;
-  color: blue;
-  font-size: 12px;
-  font-family: monospace;
-}
-
-.wall-dimension.horizontal {
-  height: 2px;
-  bottom: -20px;
-  left: 0;
-}
-
-.wall-dimension.vertical {
-  width: 2px;
-  right: -20px;
-  top: 0;
-}
-
-.wall-dimension-label {
-  position: absolute;
-  white-space: nowrap;
-  font-size: 11px;
-  color: blue;
-}
-
-/* Hang height line */
-#hangLine {
-  position: absolute;
-  width: 100%;
-  height: 2px;
-  background: green;
-  display: none;
-  z-index: 1;
-}
-
-#hangLine.active {
-  display: block;
-}
-
-#hangLine::after {
-  content: attr(data-label);
-  position: absolute;
-  right: -100px;
-  top: -8px;
-  font-size: 11px;
-  color: green;
-  white-space: nowrap;
-}
-
-/* ============================================
+/* ===================================
    IMAGE CARDS
-   ============================================ */
+   =================================== */
 .image-card {
   position: absolute;
   cursor: move;
   user-select: none;
   background: white;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  transition: box-shadow 0.2s ease;
 }
 
 .image-card:hover {
   box-shadow: 0 4px 16px rgba(0,0,0,0.2);
-  z-index: 100;
 }
 
 .image-card.selected {
   outline: 2px solid #0099ff;
-  outline-offset: 2px;
-}
-
-.image-card.dragging {
-  opacity: 0.8;
-  cursor: grabbing;
 }
 
 .image-card img {
@@ -262,7 +334,6 @@ input[type="number"] {
   pointer-events: none;
 }
 
-/* Frame wrapper for mattes */
 .frame-wrapper {
   position: relative;
   display: inline-block;
@@ -279,7 +350,6 @@ input[type="number"] {
   border: 1px solid black;
   border-radius: 50%;
   opacity: 0;
-  transition: opacity 0.2s ease;
   z-index: 10;
 }
 
@@ -292,46 +362,9 @@ input[type="number"] {
 .resize-handle.sw { bottom: -6px; left: -6px; cursor: sw-resize; }
 .resize-handle.se { bottom: -6px; right: -6px; cursor: se-resize; }
 
-/* Metadata */
-.image-metadata {
-  position: absolute;
-  bottom: -25px;
-  left: 0;
-  font-size: 11px;
-  color: #666;
-  white-space: nowrap;
-  display: none;
-}
-
-.image-metadata.visible {
-  display: block;
-}
-
-/* Dimensions label */
-.image-dimensions {
-  position: absolute;
-  bottom: -45px;
-  left: 0;
-  font-size: 11px;
-  color: #333;
-  white-space: pre;
-  font-family: monospace;
-  display: none;
-  cursor: pointer;
-  text-decoration: underline;
-}
-
-.image-dimensions.visible {
-  display: block;
-}
-
-.image-dimensions:hover {
-  color: blue;
-}
-
-/* ============================================
+/* ===================================
    TRASH ZONE
-   ============================================ */
+   =================================== */
 #trashZone {
   position: fixed;
   bottom: 20px;
@@ -342,29 +375,16 @@ input[type="number"] {
   border: 2px dashed #ccc;
   background: white;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
   color: #999;
   font-size: 14px;
   z-index: 9999;
-  transition: all 0.2s ease;
 }
 
-#trashZone.drag-over {
-  border-color: red;
-  background: #ffebee;
-  color: red;
-}
-
-#trashZone .material-symbols-outlined {
-  font-size: 28px;
-}
-
-/* ============================================
+/* ===================================
    INFO POPUP
-   ============================================ */
+   =================================== */
 #infoLink {
   position: fixed;
   bottom: 20px;
@@ -412,7 +432,6 @@ input[type="number"] {
 #infoContent h1 {
   font-size: 32px;
   margin-bottom: 20px;
-  line-height: 1.2;
 }
 
 #infoContent h2 {
@@ -425,55 +444,16 @@ input[type="number"] {
   margin-bottom: 15px;
 }
 
-#infoContent ul {
-  margin-left: 20px;
-  line-height: 1.8;
-}
-
-#infoContent table {
-  width: 100%;
-  margin: 15px 0;
-  font-size: 14px;
-  font-family: monospace;
-}
-
-#infoContent table td {
-  padding: 4px 0;
-}
-
-#infoContent table td:first-child {
-  font-weight: bold;
-  width: 150px;
-}
-
-.close-btn {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background: none;
-  border: none;
-  font-size: 32px;
-  cursor: pointer;
-  color: #999;
-  line-height: 1;
-  padding: 0;
-  width: 30px;
-  height: 30px;
-}
-
-.close-btn:hover {
+#closeInfoLink {
+  display: inline-block;
+  margin-top: 20px;
   color: black;
+  text-decoration: underline;
 }
 
-.version {
-  margin-top: 30px;
-  font-size: 12px;
-  color: #999;
-}
-
-/* ============================================
+/* ===================================
    CREDIT LINK
-   ============================================ */
+   =================================== */
 #creditLink {
   position: fixed;
   bottom: 20px;
@@ -489,72 +469,59 @@ input[type="number"] {
   color: black;
 }
 
-/* ============================================
-   SELECTION MARQUEE
-   ============================================ */
-#selectionMarquee {
+/* ===================================
+   GLOBAL SCALE
+   =================================== */
+#globalScaleBarH {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 200px;
+  height: 4px;
+  background: #ddd;
+  z-index: 9999;
+  cursor: pointer;
+}
+
+#globalScaleHandleH {
   position: absolute;
-  border: 1px dashed #0099ff;
-  background: rgba(0,153,255,0.1);
-  pointer-events: none;
-  z-index: 10000;
+  width: 12px;
+  height: 12px;
+  background: black;
+  border-radius: 50%;
+  top: -4px;
+  left: 50%;
+  cursor: grab;
+}
+
+/* ===================================
+   UTILITY
+   =================================== */
+.metadata {
+  position: absolute;
+  bottom: -25px;
+  left: 0;
+  font-size: 11px;
+  color: #666;
   display: none;
 }
 
-#selectionMarquee.active {
+.metadata.visible {
   display: block;
 }
 
-/* ============================================
-   MOBILE RESPONSIVE
-   ============================================ */
-@media (max-width: 768px) {
-  #sidePanel {
-    left: 10px;
-    top: 10px;
-  }
-  
-  #canvas {
-    padding: 80px 20px 100px 70px;
-  }
-  
-  #wall {
-    left: 70px;
-    top: 80px;
-  }
-  
-  .popover {
-    left: auto;
-    right: 0;
-    top: 50px;
-  }
-  
-  #trashZone {
-    width: 150px;
-    height: 50px;
-  }
-  
-  #infoContent {
-    padding: 20px;
-    max-width: 90vw;
-  }
+.dim-label {
+  position: absolute;
+  bottom: -45px;
+  left: 0;
+  font-size: 11px;
+  font-family: monospace;
+  color: #333;
+  display: none;
+  cursor: pointer;
+  white-space: pre;
 }
 
-/* ============================================
-   UTILITY CLASSES
-   ============================================ */
-.hidden {
-  display: none !important;
-}
-
-.no-pointer-events {
-  pointer-events: none;
-}
-
-.grabbing {
-  cursor: grabbing !important;
-}
-
-.grab {
-  cursor: grab;
+.dim-label.visible {
+  display: block;
 }
