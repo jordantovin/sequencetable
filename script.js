@@ -694,26 +694,6 @@ function undoLastAction() {
                 setHangHeight();
                 if (!ws.hang.enabled && hangLine) hangLine.style.display = "none";
             }
-const resetWallBtn = document.getElementById("resetWallBtn");
-
-document.getElementById('setWallBtn').addEventListener('click', () => {
-    // Check if the wall is already created
-    if (mockWall.style.display === 'none') {
-        // Show the wall and set its dimensions
-        mockWall.style.display = 'block';
-        resetWallBtn.style.display = 'inline-flex';
-
-        // Set the wall dimensions based on user input
-        updateWallScale();
-        createPaintBucketTool(); // Create the paint bucket tool (if applicable)
-    } else {
-        // Hide the wall (if it's already visible)
-        mockWall.style.display = 'none';
-resetWallBtn.style.display = 'inline-flex';
-console.log("Erase wall button now visible");
-    }
-});
-
 
             document.getElementById("hangHeightContainer").style.display = 'block';
             break;
