@@ -1,0 +1,1302 @@
+.material-symbols-outlined {
+  font-variation-settings:
+    'FILL' 0,
+    'WGHt' 400,
+    'GRAD' 0,
+    'opsz' 24;
+}
+
+/* ============================================
+   ICON BUTTON + HOVER LABEL (universal)
+   ============================================ */
+
+.icon-hover-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+/* hidden label */
+.icon-hover-label {
+    opacity: 0;
+    transform: translateX(4px);
+    white-space: nowrap;
+
+    font-family: Helvetica, sans-serif;
+    font-size: 14px;
+    color: black;
+
+    margin-left: 10px;
+
+    pointer-events: none;
+    transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+/* show label when hovering icon or wrapper */
+.icon-hover-wrap:hover .icon-hover-label {
+    opacity: 1;
+    transform: translateX(0px);
+}
+
+/* keep circle hover behavior */
+.icon-hover-wrap .icon-btn:hover,
+.icon-hover-wrap .icon-small:hover {
+    background: black !important;
+    color: white !important;
+}
+
+/* ===== HANG HEIGHT POPOVER ===== */
+#hangHeightPopover {
+    position: absolute;
+    left: 40px;   /* distance to the right of icon */
+    top: 0px;  
+    display: none;
+    padding: 6px 8px;
+    border-radius: 6px;
+    background: white;
+    border: 1px solid black;
+    flex-direction: row;
+    gap: 6px;
+    align-items: center;
+    z-index: 999999;
+}
+
+#hangHeightPopover input[type="number"] {
+    width: 32px;
+    height: 32px;
+    padding: 2px 4px;
+    font-size: 14px;
+    border: 1px solid black;
+    box-sizing: border-box;
+    text-align: center;
+}
+
+#hangHeightPopover select {
+    width: 48px;
+    height: 32px;
+    padding: 2px 4px;
+    font-size: 14px;
+    border: 1px solid black;
+    box-sizing: border-box;
+}
+
+/* Anchor popover relative to button */
+#hangHeightBtn {
+    position: relative !important;
+}
+/* === FIX UPLOAD BUTTON TRUE CIRCLE === */
+#uploadBtn {
+    all: unset !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 50% !important;
+
+    line-height: 1 !important;
+    cursor: pointer !important;
+    background: none !important;
+    color: black !important;
+}
+
+#uploadBtn .material-symbols-outlined {
+    font-size: 26px !important;
+    line-height: 1 !important;
+    width: 24px !important;
+    height: 24px !important;
+}
+
+#uploadBtn span {
+    width: 24px !important;
+    height: 24px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    line-height: 1 !important;
+}
+
+#uploadBtn:hover {
+    background: black !important;
+    color: white !important;
+}
+#uploadBtn {
+    box-sizing: border-box !important;
+    line-height: 0 !important;
+}
+/* FINAL OVERRIDE: force uploadBtn to be a true circle */
+#uploadGroup #uploadBtn {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    min-height: 40px !important;
+    max-width: 40px !important;
+    max-height: 40px !important;
+
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    border-radius: 50% !important;
+}
+#uploadBtn span.material-symbols-outlined {
+    width: 24px !important;
+    height: 24px !important;
+    line-height: 1 !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+}
+
+
+</style>
+
+<!-- Material Icons -->
+<link rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100;200;300;400;500;600;700" />
+
+
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Draggable Photo Gallery Snap Grid</title>
+<style>
+#saveLayoutBtn {
+    margin-top: 4px;
+}
+
+/* --- BASE --- */
+html, body {
+    margin: 0;
+    background: white;
+    overflow-x: hidden;
+    height: auto;
+}
+
+/* REMOVE ARROWS ON NUMBER INPUTS — Chrome, Edge, Safari */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* REMOVE ARROWS — Firefox */
+input[type="number"] {
+    -moz-appearance: textfield;
+}
+
+html {
+    overflow-y: scroll;
+}
+
+#sidePanel h1 {
+    margin: 0 0 20px 0 !important;
+    top: 0px;
+}
+
+
+/* the shared unit selector */
+#frameUnitMaster {
+    margin-left: auto;
+    width: 45px;
+    font-size: 14px;
+    padding: 3px;
+    border: 1px solid black;
+    color: black;
+    box-sizing: border-box;
+}
+
+#mockWall {
+    position: absolute;
+    top: 10px;
+    left: 200px;
+
+    /* FIXED WALL SIZE */
+    width: 1400px;      /* ← choose your fixed design width */
+    height: auto;       /* ← JS will compute the height */
+
+    background: #f0f0f0;
+    border: 2px solid black;
+    z-index: 9986;
+    display: none;
+}
+
+/* DRAG-SORT VISUAL CUE */
+.image-card.dragging-sort {
+    transition: none !important;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+.image-card {
+    transition: left 1s ease-out, top 1s ease-out;
+}
+
+/* Lock button (SVG) */
+.lock-button {
+  color: #111;
+  font-size: 18px;
+  background: transparent;
+  border: none;
+  padding: 6px;
+  cursor: pointer;
+}
+.lock-button svg {
+  display: inline-block;
+  vertical-align: middle;
+  width: 1em;
+  height: 1em;
+}
+
+/* #toggleLockBtn styling to match other buttons */
+#toggleLockBtn {
+    font-family: Arial, sans-serif;
+    line-height: 1;
+    outline: none;
+    border: 1px solid black;
+    color: black;
+    font-size: 16px;
+    text-transform: lowercase;
+    cursor: pointer;
+    border-radius: 0;
+    padding: 6px 10px;
+    transition: all 0.3s ease;
+    width: 130px;
+    text-align: left;
+}
+
+#toggleLockBtn:hover {
+    background: black;
+    color: white;
+}
+
+/* Hide Jordan credit on mobile */
+@media (max-width: 768px) {
+    #creditSelector { display: none !important; }
+}
+
+#wallInputs input,
+#wallInputs select {
+    width: 40px;
+    font-size: 14px;
+    padding: 3px;
+    border: 1px solid black;
+    color: black;
+    box-sizing: border-box;
+}
+
+#wallInputs .wallRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px;
+    width: 100%;
+}
+
+#wallInputs button {
+    width: 130px;
+    border: 1px solid black;
+    color: black;
+    font-size: 16px;
+    text-transform: lowercase;
+    cursor: pointer;
+    border-radius: 0;
+    padding: 6px 10px;
+    transition: all 0.3s ease;
+    text-align: left;
+}
+
+#wallInputs button:hover {
+    background: black;
+    color: white;
+}
+
+
+
+#galleryOverlay {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+}
+
+#galleryOverlay:not(.edit-mode) {
+    pointer-events: none;
+}
+#galleryOverlay.edit-mode {
+    pointer-events: all;
+}
+
+.rect {
+    fill: rgba(255,255,255,0.85);
+    stroke: rgba(0,0,0,0.6);
+    stroke-width: 2;
+    cursor: move;
+}
+.handle {
+    fill: rgba(0,0,0,0.6);
+    cursor: nwse-resize;
+}
+
+#redBox {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    background-color: white;
+    z-index: 9000;
+    pointer-events: none;
+}
+
+#scrollNote {
+    display: none;
+    text-align: center;
+    font-family: Helvetica, sans-serif;
+    font-size: 14px;
+    background: white;
+    color: black;
+}
+
+#sidePanel {
+    position: fixed;
+    top: 0px;
+    left: 30px;
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 10px 0 0 0;
+}
+
+#sidePanel > * {
+    margin: 0 !important;
+}
+
+/* All buttons inside sidePanel have no extra vertical margin */
+#sidePanel button {
+    margin: 0;
+}
+
+h1 {
+    margin: 0 0 10px 0;
+    font-size: 30px;
+    background: transparent;
+    text-align: left;
+    font-family: Helvetica, sans-serif;
+}
+
+#creditLink {
+    position: fixed;
+    right: 40px;
+    bottom: 30px;
+    font-family: Helvetica, sans-serif;
+    font-size: 12px;
+    color: black;
+    text-decoration: none;
+    z-index: 10001;
+    background: rgba(255, 255, 255, 0.7);
+    padding: 4px 6px;
+    pointer-events: auto;
+    transition: all 0.2s ease;
+}
+
+#creditLink:hover {
+    color: white;
+    background: black;
+}
+
+#scrollArea {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    z-index: 9994;
+    pointer-events: auto;
+}
+
+#gallery {
+    position: relative;
+    width: 100%;
+    min-height: 100%;
+}
+
+.image-card {
+    position: absolute;
+    cursor: grab;
+    user-select: none;
+    box-sizing: border-box;
+    transition: none;
+    will-change: width, height, top, left;
+    z-index: 9998;
+}
+
+/* --- RESIZE HANDLES CSS --- */
+.resize-handle {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background: rgba(0, 0, 0, 0.8);
+    border: 2px solid white;
+    box-sizing: border-box;
+    z-index: 99999;
+    opacity: 0.9;
+    transition: opacity 0.2s ease;
+    pointer-events: all;
+}
+
+/* Hide handles unless a card is hovered */
+.image-card:not(:hover) .resize-handle {
+    opacity: 0;
+}
+
+/* Corner Handles */
+.resize-handle.nw { top: -6px; left: -6px; cursor: nwse-resize; }
+.resize-handle.ne { top: -6px; right: -6px; cursor: nesw-resize; }
+.resize-handle.sw { bottom: -6px; left: -6px; cursor: nesw-resize; }
+.resize-handle.se { bottom: -6px; right: -6px; cursor: nwse-resize; }
+
+/* Hide side handles */
+.resize-handle.n, .resize-handle.s, .resize-handle.w, .resize-handle.e {
+    display: none;
+}
+
+/* Image */
+.image-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    pointer-events: none;
+    border: none;
+    z-index: 100001;
+}
+
+.metadata {
+    font-size: 12px;
+    margin-bottom: 4px;
+    text-align: center;
+    display: block;
+    font-family: Helvetica, sans-serif;
+}
+
+.dim-label {
+    font-size: 11px;
+    color: gray;
+    line-height: 1.2;
+    white-space: pre-line;
+    text-align: center;
+    display: none;
+    font-family: Helvetica, sans-serif;
+    pointer-events: auto;
+}
+
+/* Trash zone */
+#trashZone {
+    border: 1px solid red;
+    position: fixed;
+    bottom: 40px;
+    height: 30px;
+    left: 40px;
+    width: 130px;
+    z-index: 9999;
+    background: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 18px;
+    color: red;
+    pointer-events: none;
+    user-select: none;
+    font-family: Helvetica, sans-serif;
+}
+
+/* Hang height line + label */
+#hangLine {
+    position: absolute !important;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: red;
+    pointer-events: none;
+    z-index: 999999;
+}
+
+#hangLineLabel {
+    position: absolute;
+    left: 8px;
+    top: -18px;
+    font-size: 12px;
+    font-family: Helvetica, sans-serif;
+    color: red;
+    background: none;
+    padding: 1px 4px;
+    border-radius: 3px;
+    z-index: 1000000;
+    pointer-events: none;
+}
+
+/* Ensure hang-height stays visible (global) */
+#hangHeightContainer {
+    display: block !important;
+}
+
+/* Hang height checkbox style */
+#hangHeightToggle {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    height: 30px;
+    width: 32px;
+    border: 1px solid black;
+    background: white;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 0 !important;
+    padding: 0;
+    position: relative;
+}
+
+/* Thin checkmark */
+#hangHeightToggle:checked::after {
+    content: "";
+    position: absolute;
+    width: 6px;
+    height: 12px;
+    border-right: 2px solid black;
+    border-bottom: 2px solid black;
+    transform: rotate(45deg);
+    top: 6px;
+}
+
+.info-wrapper {
+    position: relative;
+}
+
+/* Global scale bar */
+#globalScaleBarH {
+    position: fixed;
+    left: 40px;
+    bottom: 90px;
+    width: 130px;
+    height: 6px;
+    background: #ddd;
+    border-radius: 3px;
+    cursor: pointer;
+    z-index: 100000 !important;
+}
+
+/* Handle */
+#globalScaleHandleH {
+    position: absolute;
+    top: -4px;
+    width: 10px;
+    height: 14px;
+    background: black;
+    border-radius: 2px;
+    cursor: ew-resize;
+    left: 80px;
+}
+
+/* ===== SIMPLE MOBILE TOOLBAR ===== */
+@media (max-width: 768px) {
+
+    #sidePanel > * {
+        margin: 0 !important;
+    }
+
+    #uploadBtn,
+    #add1Btn,
+    #add5Btn,
+    #undoBtn,
+    #eraseAllBtn {
+        display: block !important;
+    }
+
+    #sidePanel {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        top: auto;
+        height: auto;
+        padding: 10px;
+        background: white;
+        border-top: 1px solid #ccc;
+        display: flex !important;
+        flex-direction: row !important;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        z-index: 10000;
+    }
+
+    #sidePanel button {
+        flex: 1;
+        padding: 10px 8px;
+        font-size: 12px;
+        text-align: center !important;
+        width: auto !important;
+        margin: 0;
+    }
+
+    #frameInputs,
+    #toggleDemensBtn,
+    #snapGridBtn,
+    #toggleLockBtn,
+    #wallInputs,
+    #hangHeightContainer,
+    #frameColorBtn,
+    #paintBucketBtn,
+    #setWallBtn {
+        display: none !important;
+    }
+
+    #gallery {
+        left: 0 !important;
+        width: 100vw !important;
+        margin-bottom: 80px;
+        top: 0;
+    }
+
+    #trashZone {
+        display: flex !important;
+        top: 10px;
+        left: 10px;
+        bottom: auto;
+        width: 100px;
+        height: 30px;
+    }
+}
+
+/* pointer-events fix */
+#scrollArea { pointer-events: auto; }
+#sidePanel  { pointer-events: auto; }
+#sidePanel *{ pointer-events: auto; }
+
+/* Frame wrapper for box shadow frame */
+.frame-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+/* Drag frame ghost preview */
+#dragFrameGhost {
+    position: absolute;
+    pointer-events: none;
+    width: 120px;
+    height: 120px;
+    border: 6px solid black;
+    box-sizing: border-box;
+    opacity: 0.5;
+    z-index: 999999;
+    display: none;
+}
+
+/* Multi-select highlight */
+.image-card.selected {
+    outline: 3px solid #0099ff;
+}
+
+/* Info popup + link + credit styling */
+#infoLink {
+  position: fixed;
+  right: 40px;
+  bottom: 57px;
+  font-family: Helvetica, sans-serif;
+  font-size: 12px;
+  color: black;
+  text-decoration: none;
+  background: rgba(255, 255, 255, 0.7);
+  padding: 3px 6px;
+  border: 1px solid black;
+  z-index: 99999;
+  transition: all 0.2s ease;
+  pointer-events: auto;
+}
+
+#infoLink:hover {
+  background: black;
+  color: white;
+}
+
+#infoPopup {
+  display: none;
+  font-family: Helvetica, sans-serif;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 999999;
+  justify-content: center;
+  align-items: center;
+  pointer-events: auto;
+}
+
+#infoContent {
+  background: white;
+  color: black;
+  padding: 24px 32px;
+  border-radius: 6px;
+  max-width: 620px;
+  width: 85%;
+  font-family: Helvetica, sans-serif;
+  text-align: left;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+
+#infoContent a {
+  color: black;
+  text-decoration: underline;
+}
+
+#closeInfoLink {
+  display: inline-block;
+  margin-top: 16px;
+  font-size: 14px;
+  text-decoration: none;
+  color: black;
+  border: 1px solid black;
+  padding: 4px 8px;
+  transition: all 0.2s ease;
+  background: transparent;
+}
+
+#closeInfoLink:hover {
+  background: black;
+  color: white;
+  text-decoration: none;
+}
+
+/* Hide info + credit on mobile */
+@media (max-width: 768px) {
+  #infoLink,
+  #infoPopup,
+  #creditLink {
+    display: none !important;
+  }
+}
+
+
+/* Keep SVG same color on hover */
+#uploadBtn svg {
+    stroke: black !important;
+}
+
+#uploadBtn:hover svg {
+    stroke: black !important;
+}
+
+#dragFrameBtn {
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: auto !important;
+    height: auto !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 0;
+    box-shadow: none !important;
+}
+
+#dragFrameBtn .material-symbols-outlined {
+    font-size: 26px;
+    line-height: 1;
+    font-variation-settings:
+        'wght' 300,
+        'opsz' 24;
+}
+
+
+#dragFrameBtn svg {
+    width: 32px; /* same size as uploadBtn */
+    height: 34px;
+    stroke: black !important;
+    display: block;
+}
+
+
+
+
+/* FRAME INPUTS ROW — clean, aligned, boxed */
+#frameInputsRow {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 2px;
+    margin-bottom: 8px;
+}
+
+/* Inputs (m) and (f) */
+#frameInputsRow input[type="number"] {
+    width: 32px;
+    height: 28px;
+    padding: 2px 4px;
+    font-size: 14px;
+    border: 1px solid black;
+    box-sizing: border-box;
+    text-align: center;
+}
+
+/* Unit dropdown */
+#frameInputsRow select {
+    width: 48px;
+    height: 28px;
+    padding: 2px 4px;
+    font-size: 14px;
+    border: 1px solid black;
+    box-sizing: border-box;
+}
+
+/* === FINAL FIX: REAL COLOR CIRCLE BUTTON === */
+#frameColorBtn.frame-color-circle {
+    all: unset !important;   /* ← resets EVERYTHING inherited from button:not(...) */
+    width: 30px !important;
+    height: 30px !important;
+    border-radius: 50% !important;
+    border: 2px solid black !important;
+background-color: var(--frame-color, black) !important;
+    display: none;
+    cursor: pointer !important;
+
+    /* RE-ENABLE pointer events */
+    pointer-events: auto !important;
+}
+#frameColorBtn.frame-color-circle:hover {
+    filter: brightness(1.15) !important;
+}
+/* ===== FRAME POPOVER — MATCH CREATE WALL POPOVER ===== */
+#framePopover {
+    position: absolute;
+    left: 46px;              /* same as wall popover */
+    top: -4px;               /* same vertical alignment */
+    display: none;
+
+    padding: 6px 8px;        /* identical box padding */
+    border-radius: 6px;
+    background: white;
+    border: 1px solid black;
+
+    flex-direction: row;
+    gap: 6px;                /* identical spacing */
+    align-items: center;
+
+    z-index: 999999;
+    box-sizing: border-box;
+}
+
+/* Inputs identical to wall popover */
+#framePopover input[type="number"] {
+    width: 32px;
+    height: 32px;
+    padding: 2px 4px;
+    font-size: 14px;
+    border: 1px solid black;
+    box-sizing: border-box;
+    text-align: center;
+}
+
+/* Unit selector same dimensions */
+#framePopover select {
+    width: 48px;
+    height: 32px;
+    padding: 2px 4px;
+    font-size: 14px;
+    border: 1px solid black;
+    box-sizing: border-box;
+}
+
+/* Frame color circle matches wall color circle */
+#frameColorBtn.frame-color-circle {
+    all: unset !important;
+    width: 30px !important;
+    height: 30px !important;
+    border-radius: 50% !important;
+    border: 2px solid black !important;
+    background-color: var(--frame-color, black) !important;
+    cursor: pointer !important;
+}
+
+
+#frameInputsRow {
+    position: relative;      /* needed so popover positions relative to icon */
+}
+
+#framePopover input[type="number"] {
+    width: 32px;
+    height: 32px;
+    padding: 2px 4px;
+    font-size: 14px;
+    border: 1px solid black;
+    box-sizing: border-box;
+    text-align: center;
+}
+
+#framePopover select {
+    width: 48px;
+    height: 28px;
+    padding: 2px 4px;
+    font-size: 14px;
+    border: 1px solid black;
+    box-sizing: border-box;
+}
+
+/* Hide add buttons by default */
+#uploadExtras {
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(-4px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+/* Show when hovering upload area */
+#uploadGroup:hover #uploadExtras {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(0);
+}
+
+/* Small square +1/+5 buttons — fully override global button width */
+.upload-mini-btn {
+    width: 28px !important;
+    min-width: 28px !important;
+    max-width: 28px !important;
+
+    height: 28px !important;
+    min-height: 28px !important;
+    max-height: 28px !important;
+
+    padding: 0 !important;
+    margin: 0 !important;
+
+    border: 1px solid black !important;
+    background: white !important;
+    color: black !important;
+
+    font-size: 13px !important;
+    line-height: 28px !important;
+    text-align: center !important;
+
+    border-radius: 0 !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+
+    box-sizing: border-box !important;
+}
+
+#uploadExtras .upload-mini-btn:hover {
+    background: black !important;
+    color: white !important;
+}
+
+/* === FIX BUTTON SPACING AROUND UPLOAD SVG === */
+
+/* 1) The global button width rule forces unwanted 130px spacing.
+      Remove it ONLY for the upload row. */
+#uploadGroup button {
+    width: auto !important;
+}
+
+/* 2) Make the +1 and +5 buttons true 28×28 squares,
+      completely immune to global button CSS */
+#uploadExtras .upload-mini-btn {
+    width: 28px !important;
+    min-width: 28px !important;
+    max-width: 28px !important;
+
+    height: 28px !important;
+    min-height: 28px !important;
+    max-height: 28px !important;
+
+    padding: 0 !important;
+    margin: 0 !important;
+    background: white !important;
+    border: 1px solid black !important;
+
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+
+    text-align: center !important;
+    line-height: 28px !important;
+    font-size: 13px !important;
+
+    border-radius: 0 !important;
+    cursor: pointer !important;
+}
+
+/* Align upload button with the column */
+#uploadGroup {
+    width: 40px !important;           /* same width as circular buttons */
+    position: relative;
+    display: flex;
+    align-items: center;              /* centers the icon vertically */
+    justify-content: center;          /* centers horizontally */
+}
+
+/* Keep +1/+5 flowing to the right */
+#uploadExtras {
+    position: absolute;
+    left: 44px;                       /* 40px + a tiny gap */
+    top: 6px;                         /* adjust vertically if needed */
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+/* Show when hovering */
+#uploadGroup:hover #uploadExtras {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* === FIX: KEEP LOCK INSIDE SNAPGRID CIRCLE === */
+
+#snapGridBtn {
+    all: unset !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    width: 40px !important;
+    height: 40px !important;
+
+    cursor: pointer;
+    border-radius: 50%;
+    background: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+
+    color: black !important;
+}
+#snapGridGroup {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important; /* ← left align */
+    gap: 4px !important;
+}
+
+#toggleLockBtn {
+    all: unset !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    width: 32px !important;
+    height: 32px !important;
+
+    cursor: pointer;
+    border-radius: 50%;
+    color: black !important;
+    background: none !important;
+    border: none !important;
+    padding: 0 !important;
+}
+
+#toggleLockBtn:hover {
+    background: black !important;
+    color: white !important;
+}
+
+
+
+#snapGridBtn svg {
+    stroke: black !important;
+}
+
+.material-symbols-rounded {
+  font-family: 'Material Symbols Rounded' !important;
+  font-weight: normal;
+  font-style: normal;
+  font-size: 26px;
+  line-height: 1;
+  display: inline-block;
+  font-variation-settings:
+    'FILL' 0,
+    'wght' 400,
+    'GRAD' 0,
+    'opsz' 24 !important;
+}
+/* =====================================================
+   UNIVERSAL ICON BUTTON — final authoritative rules
+   ===================================================== */
+
+.icon-small,
+#dragFrameBtn,
+#snapGridBtn,
+#toggleLockBtn {
+    all: unset !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    width: 40px !important;
+    height: 40px !important;
+
+    cursor: pointer !important;
+    border-radius: 50% !important;
+    background: none !important;
+    color: black !important;
+
+    transition: background 0.2s ease, color 0.2s ease !important;
+}
+
+/* Icons follow parent color automatically */
+.icon-btn svg,
+.icon-small svg,
+.icon-btn span,
+.icon-small span,
+#uploadBtn svg,
+#dragFrameBtn svg,
+#snapGridBtn span,
+#toggleLockBtn svg {
+    width: 24px !important;
+    height: 24px !important;
+    stroke: currentColor !important;
+    color: currentColor !important;
+}
+
+/* UNIVERSAL hover behavior */
+.icon-btn:hover,
+.icon-small:hover,
+#uploadBtn:hover,
+#dragFrameBtn:hover,
+#snapGridBtn:hover,
+#toggleLockBtn:hover {
+    background: black !important;
+    color: white !important;
+}
+/* ===== WALL POPOVER ===== */
+#wallPopover {
+    position: absolute;
+    left: 46px;
+    top: -4px;
+    display: none;
+    padding: 6px 8px;
+    border-radius: 6px;
+    background: white;
+    border: 1px solid black;
+    flex-direction: row;
+    gap: 6px;
+    align-items: center;
+    z-index: 999999;
+}
+
+#wallPopover input[type="number"] {
+    width: 32px;
+    height: 32px;
+    padding: 2px 4px;
+    font-size: 14px;
+    border: 1px solid black;
+    box-sizing: border-box;
+    text-align: center;
+}
+
+#wallPopover select {
+    width: 48px;
+    height: 32px;
+    padding: 2px 4px;
+    font-size: 14px;
+    border: 1px solid black;
+    box-sizing: border-box;
+}
+
+/* Wall color circle */
+.wall-color-circle {
+    all: unset !important;
+    width: 30px !important;
+    height: 30px !important;
+    border-radius: 50% !important;
+    border: 2px solid black !important;
+    background-color: var(--wall-color, #f0f0f0) !important;
+    cursor: pointer !important;
+}
+.wall-color-circle:hover {
+    filter: brightness(1.15) !important;
+}
+
+/* Base icon styling */
+.icon-btn {
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    color: black;
+    background: none;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.icon-btn:hover {
+    background: black !important;
+    color: white !important;
+}
+
+/* === CREATE WALL BUTTON === */
+#setWallBtn {
+    all: unset !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 50% !important;
+
+    cursor: pointer !important;
+    color: black !important;
+    background: none !important;
+}
+
+/* === ERASE WALL BUTTON (hidden until JS shows it) === */
+#resetWallBtn {
+    all: unset !important;
+    display: none;                   /* <-- ONLY this line, no !important */
+    align-items: center !important;
+    justify-content: center !important;
+
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 50% !important;
+
+    cursor: pointer !important;
+    color: black !important;
+    background: none !important;
+
+    margin-top: 6px !important;      /* sits under Create Wall */
+}
+
+/* Force icons inside them to inherit color */
+#setWallBtn span,
+#resetWallBtn span {
+    color: currentColor !important;
+    font-size: 26px !important;
+}
+
+/* Hover behavior */
+#setWallBtn:hover,
+#resetWallBtn:hover {
+    background: black !important;
+    color: white !important;
+}
+#resetWallBtn {
+    display: none !important;
+}
+
+#hangHeightBtn span.material-symbols-outlined {
+    width: 24px !important;
+    height: 24px !important;
+    font-size: 26px !important;
+    line-height: 1;
+    color: currentColor !important;
+}
