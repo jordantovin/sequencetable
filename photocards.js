@@ -133,6 +133,11 @@
 
     // Global mouse move handler
     document.addEventListener('mousemove', function(e) {
+        // Don't allow free dragging if grid is locked
+        if (window.isGridLocked && window.isGridLocked()) {
+            return;
+        }
+        
         if (isDragging && activeCard) {
             const x = e.clientX - dragOffset.x;
             const y = e.clientY - dragOffset.y;
@@ -157,6 +162,11 @@
 
     // Global mouse up handler
     document.addEventListener('mouseup', function() {
+        // Don't handle mouseup if grid is locked
+        if (window.isGridLocked && window.isGridLocked()) {
+            return;
+        }
+        
         isDragging = false;
         isResizing = false;
         activeCard = null;
