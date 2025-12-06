@@ -31,7 +31,6 @@ body {
     font-size: 18px;
     color: #202124;
     padding: 8px 12px;
-    border-radius: 4px;
     cursor: pointer;
     transition: background-color 0.2s;
 }
@@ -51,7 +50,6 @@ body {
     color: #444746;
     font-size: 14px;
     cursor: pointer;
-    border-radius: 4px;
     transition: background-color 0.2s;
 }
 
@@ -75,7 +73,6 @@ body {
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    border-radius: 4px;
     transition: background-color 0.2s;
     color: #444746;
     font-size: 20px;
@@ -116,72 +113,15 @@ body {
 
 .photo-card {
     position: absolute;
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     cursor: move;
     user-select: none;
     z-index: 1000;
     transform-origin: center center;
 }
 
-.photo-card:hover {
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
-}
-
 .photo-card img {
     display: block;
-    border-radius: 8px 8px 0 0;
     pointer-events: none;
-}
-
-.photo-info {
-    padding: 12px;
-    background: #fff;
-    border-radius: 0 0 8px 8px;
-}
-
-.photographer {
-    margin: 0;
-    font-size: 14px;
-    color: #202124;
-    font-weight: 500;
-}
-
-.uploaded-badge {
-    display: inline-block;
-    background: #1a73e8;
-    color: white;
-    font-size: 11px;
-    padding: 2px 8px;
-    border-radius: 12px;
-    margin-top: 6px;
-}
-
-.remove-btn {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    width: 32px;
-    height: 32px;
-    background: rgba(255, 255, 255, 0.95);
-    border: none;
-    border-radius: 50%;
-    font-size: 24px;
-    line-height: 1;
-    cursor: pointer;
-    color: #5f6368;
-    transition: all 0.2s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 10;
-}
-
-.remove-btn:hover {
-    background: #ea4335;
-    color: white;
-    transform: scale(1.1);
 }
 
 .resize-handle {
@@ -190,9 +130,8 @@ body {
     right: 8px;
     width: 32px;
     height: 32px;
-    background: rgba(255, 255, 255, 0.95);
-    border: none;
-    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid #ccc;
     font-size: 20px;
     cursor: nwse-resize;
     color: #5f6368;
@@ -201,6 +140,12 @@ body {
     justify-content: center;
     z-index: 10;
     user-select: none;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.photo-card:hover .resize-handle {
+    opacity: 1;
 }
 
 .resize-handle:hover {
@@ -214,9 +159,8 @@ body {
     left: 8px;
     width: 32px;
     height: 32px;
-    background: rgba(255, 255, 255, 0.95);
-    border: none;
-    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid #ccc;
     font-size: 20px;
     cursor: grab;
     color: #5f6368;
@@ -225,6 +169,12 @@ body {
     justify-content: center;
     z-index: 10;
     user-select: none;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.photo-card:hover .rotate-handle {
+    opacity: 1;
 }
 
 .rotate-handle:active {
