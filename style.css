@@ -291,29 +291,37 @@ h1 {
 }
 
 #dragFrameBtn {
+    all: unset !important;
     border: none !important;
     padding: 0 !important;
     margin: 0 !important;
-    width: auto !important;
-    height: auto !important;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    line-height: 0;
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    min-height: 40px !important;
+    flex-shrink: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 50% !important;
+    cursor: pointer !important;
+    background: none !important;
+    color: black !important;
+    line-height: 0 !important;
     box-shadow: none !important;
 }
 
 #dragFrameBtn .material-symbols-outlined {
-    font-size: 26px;
-    line-height: 1;
-    font-variation-settings: 'wght' 300, 'opsz' 24;
+    font-size: 24px !important;
+    line-height: 1 !important;
+    font-variation-settings: 'wght' 400, 'opsz' 24 !important;
 }
 
 #dragFrameBtn svg {
-    width: 32px;
-    height: 34px;
+    width: 24px !important;
+    height: 24px !important;
     stroke: black !important;
-    display: block;
+    display: block !important;
 }
 
 #framePopover {
@@ -539,7 +547,8 @@ h1 {
 
 #setWallBtn span, #resetWallBtn span {
     color: currentColor !important;
-    font-size: 26px !important;
+    font-size: 24px !important;
+    line-height: 1 !important;
 }
 
 #setWallBtn:hover, #resetWallBtn:hover {
@@ -549,15 +558,25 @@ h1 {
 
 #resetWallBtn {
     all: unset !important;
-    display: none;
+    display: none !important;
     align-items: center !important;
     justify-content: center !important;
     width: 40px !important;
     height: 40px !important;
+    min-width: 40px !important;
+    min-height: 40px !important;
+    flex-shrink: 0 !important;
     border-radius: 50% !important;
     cursor: pointer !important;
     color: black !important;
     background: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+#resetWallBtn.visible {
+    display: flex !important;
+}
     margin-top: 6px !important;
 }
 
