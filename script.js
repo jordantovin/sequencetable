@@ -27,9 +27,10 @@ let frameSettings = { matte: 0, width: 0, unit: 'in', color: '#000000' };
 document.addEventListener('DOMContentLoaded', init);
 
 async function init() {
+  console.log('Initializing Sequence Table...');
   await loadCSV();
   setupEventListeners();
-  console.log('Sequence Table ready');
+  console.log('Sequence Table ready - buttons should work now');
 }
 
 // Load CSV data
@@ -48,39 +49,63 @@ async function loadCSV() {
 // Event listeners
 function setupEventListeners() {
   // Upload
-  document.getElementById('uploadBtn').onclick = () => document.getElementById('uploadInput').click();
-  document.getElementById('uploadInput').onchange = handleUpload;
+  const uploadBtn = document.getElementById('uploadBtn');
+  const uploadInput = document.getElementById('uploadInput');
+  if (uploadBtn && uploadInput) {
+    uploadBtn.onclick = () => uploadInput.click();
+    uploadInput.onchange = handleUpload;
+  }
   
   // Add random
-  document.getElementById('add1Btn').onclick = () => addRandomImages(1);
-  document.getElementById('add5Btn').onclick = () => addRandomImages(5);
+  const add1Btn = document.getElementById('add1Btn');
+  const add5Btn = document.getElementById('add5Btn');
+  if (add1Btn) add1Btn.onclick = () => addRandomImages(1);
+  if (add5Btn) add5Btn.onclick = () => addRandomImages(5);
   
   // Grid
-  document.getElementById('snapGridBtn').onclick = snapToGrid;
-  document.getElementById('lockBtn').onclick = toggleLock;
+  const snapGridBtn = document.getElementById('snapGridBtn');
+  const lockBtn = document.getElementById('lockBtn');
+  if (snapGridBtn) snapGridBtn.onclick = snapToGrid;
+  if (lockBtn) lockBtn.onclick = toggleLock;
   
   // Display
-  document.getElementById('dimensionsBtn').onclick = toggleDimensions;
-  document.getElementById('namesBtn').onclick = toggleNames;
+  const dimensionsBtn = document.getElementById('dimensionsBtn');
+  const namesBtn = document.getElementById('namesBtn');
+  if (dimensionsBtn) dimensionsBtn.onclick = toggleDimensions;
+  if (namesBtn) namesBtn.onclick = toggleNames;
   
   // Wall
-  document.getElementById('wallBtn').onclick = buildWall;
-  document.getElementById('resetWallBtn').onclick = resetWall;
+  const wallBtn = document.getElementById('wallBtn');
+  const resetWallBtn = document.getElementById('resetWallBtn');
+  if (wallBtn) wallBtn.onclick = buildWall;
+  if (resetWallBtn) resetWallBtn.onclick = resetWall;
   
   // Delete
-  document.getElementById('deleteAllBtn').onclick = deleteAll;
+  const deleteAllBtn = document.getElementById('deleteAllBtn');
+  if (deleteAllBtn) deleteAllBtn.onclick = deleteAll;
   
   // Info
-  document.getElementById('infoLink').onclick = (e) => {
-    e.preventDefault();
-    document.getElementById('infoPopup').classList.add('active');
-  };
-  document.getElementById('closeInfo').onclick = () => {
-    document.getElementById('infoPopup').classList.remove('active');
-  };
+  const infoLink = document.getElementById('infoLink');
+  const closeInfo = document.getElementById('closeInfo');
+  const infoPopup = document.getElementById('infoPopup');
+  
+  if (infoLink && infoPopup) {
+    infoLink.onclick = (e) => {
+      e.preventDefault();
+      infoPopup.classList.add('active');
+    };
+  }
+  
+  if (closeInfo && infoPopup) {
+    closeInfo.onclick = () => {
+      infoPopup.classList.remove('active');
+    };
+  }
   
   // Keyboard shortcuts
   document.addEventListener('keydown', handleKeyboard);
+  
+  console.log('Event listeners attached');
 }
 
 // Add random images
