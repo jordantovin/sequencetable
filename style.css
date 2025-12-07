@@ -5,28 +5,10 @@
 }
 
 /* ======================================================= */
-/* 💡 PATCH: Selection Indicator Fix (Using Outline) */
-/* This preserves the custom frame (box-shadow) and adds the blue selection line outside it. */
+/* FRAME & SELECTION STYLING */
 /* ======================================================= */
 
-/* Remove border from the main card container */
-.photo-card.selected {
-    border: none; 
-}
-
-.photo-card.selected .photo-frame {
-    /* 1. Ensure the frame shadow is NOT wiped out. */
-    box-shadow: var(--custom-frame-shadow);
-    
-    /* 2. Use 'outline' which draws OUTSIDE the box-shadow boundary. */
-    outline: 3px solid #4285F4;
-    outline-offset: 2px; /* Add a small gap between the frame and the outline */
-    
-    /* Clear redundant properties */
-    border: none; 
-}
-
-/* Apply the custom frame shadow set by JavaScript by default, without selection */
+/* Default style: Use the custom frame shadow set by JavaScript */
 .photo-frame {
     box-shadow: var(--custom-frame-shadow);
     /* Ensure the existing frame styles are respected */
@@ -37,6 +19,22 @@
     outline: none; 
 }
 
+/* Selection style: STACK the custom frame shadow AND the blue selection outline */
+.photo-card.selected {
+    border: none; 
+}
+
+.photo-card.selected .photo-frame {
+    /* * FIX: Stack the original custom shadow first, then the blue outline. 
+     * This preserves the gray frame and adds blue around it.
+     */
+    box-shadow: var(--custom-frame-shadow), /* The decorative gray frame/matte shadow */
+                0 0 0 3px #4285F4,        /* The 3px blue outline */
+                0 0 10px rgba(66, 133, 244, 0.8) !important; /* The blue glow */
+    
+    border: none;
+    outline: none; /* Ensure no outline is interfering */
+}
 
 body {
     font-family: 'Google Sans', 'Roboto', Arial, sans-serif;
