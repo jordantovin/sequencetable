@@ -31,6 +31,7 @@
     function makeCardInteractive(card) {
         card.dataset.rotation = '0';
 
+        // random starting position
         const randomX = Math.random() * (window.innerWidth - 400) + 50;
         const randomY = Math.random() * (window.innerHeight - 400) + 150;
         card.dataset.x = randomX;
@@ -136,10 +137,8 @@
         if (window.isGridLocked && window.isGridLocked()) return;
 
         if (isDragging && activeCard) {
-            const x = e.clientX - dragOffset.x;
-            const y = e.clientY - dragOffset.y;
-            activeCard.dataset.x = x;
-            activeCard.dataset.y = y;
+            activeCard.dataset.x = e.clientX - dragOffset.x;
+            activeCard.dataset.y = e.clientY - dragOffset.y;
             updateCardTransform(activeCard);
         }
 
@@ -148,32 +147,29 @@
             const deltaX = e.clientX - resizeStartX;
             const newWidth = Math.max(150, resizeStartWidth + deltaX);
             const aspectRatio = resizeStartHeight / resizeStartWidth;
-            const newHeight = newWidth * aspectRatio;
-
             img.style.width = newWidth + 'px';
-            img.style.height = newHeight + 'px';
+            img.style.height = (newWidth * aspectRatio) + 'px';
         }
     });
 
     document.addEventListener('mouseup', function() {
         if (window.isGridLocked && window.isGridLocked()) return;
-
         isDragging = false;
         isResizing = false;
         activeCard = null;
     });
 
-    // NEW FEATURE — toggle captions
+    // Caption visibility toggle
     function setNamesVisibility(visible) {
         areNamesVisible = visible;
-        document.querySelectorAll('.photo-card .photo-caption').forEach(caption => {
+        document.querySelectorAll('.photo-caption').forEach(caption => {
             caption.style.display = visible ? '' : 'none';
         });
 
         const namesBtn = document.querySelector('[title="Names"]');
         if (namesBtn) {
-            namesBtn.setAttribute('aria-pressed', visible ? 'true' : 'false');
             namesBtn.classList.toggle('active', visible);
+            namesBtn.setAttribute('aria-pressed', visible);
         }
     }
 
@@ -198,13 +194,12 @@
 
         card.appendChild(img);
 
-        // NEW caption element
         const caption = document.createElement('div');
         caption.className = 'photo-caption';
         caption.textContent = photographer || 'Unknown';
         caption.style.display = areNamesVisible ? '' : 'none';
-        card.appendChild(caption);
 
+        card.appendChild(caption);
         makeCardInteractive(card);
 
         return card;
@@ -214,8 +209,7 @@
         const files = event.target.files;
         const container = document.getElementById('photo-container');
 
-        for (let i = 0; i < files.length; i++) {
-            const file = files[i];
+        for (let file of files) {
             if (file.type.startsWith('image/')) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
@@ -229,7 +223,7 @@
 
     function addPhotosFromCSV(count) {
         if (csvData.length === 0) {
-            alert('Loading photos... please try again in a moment.');
+            alert("Loading… try again shortly.");
             return;
         }
 
@@ -261,25 +255,13 @@
         fileInput.onchange = handleFileUpload;
         document.body.appendChild(fileInput);
 
-        uploadBtn.onclick = function() {
-            fileInput.click();
-        };
+        uploadBtn.onclick = () => fileInput.click();
+        document.getElementById('add5PhotosBtn').onclick = () => addPhotosFromCSV(5);
+        document.getElementById('add1PhotoBtn').onclick = () => addPhotosFromCSV(1);
 
-        document.getElementById('add5PhotosBtn').onclick = function() {
-            addPhotosFromCSV(5);
-        };
-
-        document.getElementById('add1PhotoBtn').onclick = function() {
-            addPhotosFromCSV(1);
-        };
-
-        // initialize Names toggle button
         const namesBtn = document.querySelector('[title="Names"]');
         if (namesBtn) {
-            namesBtn.onclick = function() {
-                toggleNamesVisibility();
-            };
-
+            namesBtn.onclick = toggleNamesVisibility;
             setNamesVisibility(areNamesVisible);
         }
     };
