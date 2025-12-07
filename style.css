@@ -189,8 +189,10 @@ body {
 }
 
 .photo-card.selected .photo-frame {
+    /* Add blue selection ring outside the frame border */
+    filter: drop-shadow(0 0 0 #4285f4) drop-shadow(0 0 0 #4285f4) drop-shadow(0 0 0 #4285f4);
     outline: 3px solid #4285f4;
-    outline-offset: 3px;
+    outline-offset: calc(var(--frame-thickness, 0px) + 2px);
 }
 
 .photo-caption {
