@@ -1,38 +1,32 @@
 // ==========================================================
-// DIMENSIONS + FRAME SYSTEM + WALL SIZE SCALING
-// With Real-Time Dimension Updates & Toggle Visibility
+// FRAME SYSTEM + WALL SCALING + REAL-TIME DIMENSIONS
 // ==========================================================
 
 (function() {
 
-    // ------------------------------------------------------
-    // ELEMENT HOOKS
-    // ------------------------------------------------------
-    const applyFrameBtn = document.getElementById("applyFrameBtn");
-
-    // Wall UI
+    // --------------------------
+    // UI ELEMENTS
+    // --------------------------
+    const applyFrameBtn   = document.getElementById("applyFrameBtn");
     const wallWidthInput  = document.getElementById("wallWidth");
     const wallHeightInput = document.getElementById("wallHeight");
     const wallUnitInput   = document.getElementById("wallUnit");
+    const dimToggleBtn    = document.querySelector(".toolbar-icon[title='Dimensions']");
+    const contentArea     = document.querySelector(".content-area");
+    const wall            = document.getElementById("wall");
 
-    const contentArea = document.querySelector(".content-area");
-
-    // Dimensions toggle button (from toolbar)
-    const dimToggleBtn = document.querySelector(".toolbar-icon[title='Dimensions']");
-
-    // Conversion dictionary to inches
     const UNIT_TO_IN = {
-        "in": 1,
-        "ft": 12,
-        "cm": 0.393701,
-        "m": 39.3701
+        in: 1,
+        ft: 12,
+        cm: 0.393701,
+        m: 39.3701
     };
 
     const CAPTION_GAP_PX = 10;
 
-    // ------------------------------------------------------
+    // --------------------------
     // FRAME SETTINGS
-    // ------------------------------------------------------
+    // --------------------------
     function getFrameSettings() {
         return {
             frameColor: document.getElementById("frameColor")?.value || "#424242",
@@ -42,65 +36,47 @@
         };
     }
 
-    // ------------------------------------------------------
-    // APPLY FRAME TO PHOTO CARD
-    // ------------------------------------------------------
-    function applyFrameToCard(card, settings) {
-        const photoFrame = card.querySelector(".photo-frame");
-        if (!photoFrame) return;
+    // --------------------------
+    // APPLY FRAME
+    // --------------------------
+    function applyFrame(card, settings) {
+        const frame = card.querySelector(".photo-frame");
+        if (!frame) return;
 
-        const frameUnit = settings.unit;
+        const u = settings.unit;
 
-        // Matte
-        photoFrame.style.padding = `${settings.matteThickness}${frameUnit}`;
-        photoFrame.style.backgroundColor = "#FFFFFF";
+        frame.style.padding     = `${settings.matteThickness}${u}`;
+        frame.style.background  = "#fff";
+        frame.style.boxShadow   = `0 0 0 ${settings.frameThickness}${u} ${settings.frameColor}`;
+        frame.style.setProperty("--frame-thickness", `${settings.frameThickness}${u}`);
 
-        // Outer frame (box-shadow used as frame thickness)
-        const frameShadow = `0 0 0 ${settings.frameThickness}${frameUnit} ${settings.frameColor}`;
-        photoFrame.style.boxShadow = frameShadow;
-
-        // Pass frame thickness to CSS so outlines offset correctly
-        photoFrame.style.setProperty("--frame-thickness", `${settings.frameThickness}${frameUnit}`);
-
-        // Caption spacing
         const caption = card.querySelector(".photo-caption");
+
         if (caption) {
-            if (frameUnit === "px") {
-                photoFrame.style.marginBottom = `${settings.frameThickness + CAPTION_GAP_PX}px`;
+            if (u === "px") {
+                frame.style.marginBottom = `${settings.frameThickness + CAPTION_GAP_PX}px`;
                 caption.style.marginTop = "0";
             } else {
-                photoFrame.style.marginBottom = `${settings.frameThickness}${frameUnit}`;
+                frame.style.marginBottom = `${settings.frameThickness}${u}`;
                 caption.style.marginTop = `${CAPTION_GAP_PX}px`;
             }
         }
 
-        card.dataset.frameSettings = JSON.stringify(settings);
-        photoFrame.classList.add("has-frame");
-
-        updateCardDimensionsText(card);
+        updateDimensions(card);
     }
 
-    // ------------------------------------------------------
-    // FRAME APPLY BUTTON
-    // ------------------------------------------------------
-    function handleApplyFrameClick() {
+    function handleApplyFrame() {
         const cards = window.getSelectedCards ? window.getSelectedCards() : [];
-
-        if (cards.length === 0) {
-            console.warn("No cards selected.");
-            return;
-        }
-
         const settings = getFrameSettings();
 
-        cards.forEach(card => applyFrameToCard(card, settings));
+        cards.forEach(c => applyFrame(c, settings));
     }
 
-    // ------------------------------------------------------
-    // WALL SCALING SYSTEM
-    // ------------------------------------------------------
-    function updateWallDimensions() {
-        if (!contentArea) return;
+    // --------------------------
+    // UPDATE WALL SIZE
+    // --------------------------
+    function updateWall() {
+        if (!wall) return;
 
         let W = parseFloat(wallWidthInput.value);
         let H = parseFloat(wallHeightInput.value);
@@ -112,11 +88,12 @@
         let W_in = W * UNIT_TO_IN[U];
         let H_in = H * UNIT_TO_IN[U];
 
+        window.currentWallInches = { width: W_in, height: H_in };
+
         const wallRatio = W_in / H_in;
 
-        // Available browser area
-        const screenW = window.innerWidth - 80;  
-        const screenH = window.innerHeight - 160; 
+        const screenW = window.innerWidth - 80;
+        const screenH = window.innerHeight - 160;
 
         const screenRatio = screenW / screenH;
 
@@ -124,80 +101,64 @@
 
         if (wallRatio > screenRatio) {
             renderW = screenW;
-            renderH = screenW / wallRatio;
+            renderH = renderW / wallRatio;
         } else {
             renderH = screenH;
-            renderW = screenH * wallRatio;
+            renderW = renderH * wallRatio;
         }
 
-        // Apply
-        contentArea.style.width = `${renderW}px`;
-        contentArea.style.height = `${renderH}px`;
-        contentArea.style.margin = "auto";
+        wall.style.width  = `${renderW}px`;
+        wall.style.height = `${renderH}px`;
 
-        // Update dimensions for all cards when the wall changes
-        document.querySelectorAll(".photo-card").forEach(updateCardDimensionsText);
-
-        window.currentWallInches = { width: W_in, height: H_in };
+        document.querySelectorAll(".photo-card").forEach(updateDimensions);
     }
 
-    // ------------------------------------------------------
-    // DIMENSION DISPLAY UNDER EACH PHOTO
-    // ------------------------------------------------------
-    function updateCardDimensionsText(card) {
+    // --------------------------
+    // DIMENSIONS TEXT FOR EACH CARD
+    // --------------------------
+    function updateDimensions(card) {
         if (!window.currentWallInches) return;
 
-        const frameContainer = card.querySelector(".photo-frame");
-        if (!frameContainer) return;
+        const frame = card.querySelector(".photo-frame");
+        const dim   = card.querySelector(".photo-dimensions");
 
-        const rect = frameContainer.getBoundingClientRect();
+        if (!frame || !dim) return;
 
-        let pxW = rect.width;
-        let pxH = rect.height;
+        const rect = frame.getBoundingClientRect();
 
-        const scaleX = window.currentWallInches.width  / contentArea.clientWidth;
-        const scaleY = window.currentWallInches.height / contentArea.clientHeight;
+        const pxW = rect.width;
+        const pxH = rect.height;
 
-        const inW = pxW * scaleX;
-        const inH = pxH * scaleY;
+        const scaleX = window.currentWallInches.width  / wall.offsetWidth;
+        const scaleY = window.currentWallInches.height / wall.offsetHeight;
 
-        const dimText = card.querySelector(".photo-dimensions");
-        if (dimText) {
-            dimText.textContent = `${inW.toFixed(2)} in × ${inH.toFixed(2)} in`;
-        }
+        const wIn = pxW * scaleX;
+        const hIn = pxH * scaleY;
+
+        dim.textContent = `${wIn.toFixed(2)} in × ${hIn.toFixed(2)} in`;
     }
 
-    // Expose globally for resize.js/grid.js
-    window.updateCardDimensionsText = updateCardDimensionsText;
+    window.updateCardDimensionsText = updateDimensions;
 
-    // ------------------------------------------------------
-    // DIMENSIONS VISIBILITY TOGGLE
-    // ------------------------------------------------------
+    // Toggle visibility
     function toggleDimensions() {
-        const allDims = document.querySelectorAll(".photo-dimensions");
-        allDims.forEach(dim => {
-            dim.style.display = dim.style.display === "none" ? "block" : "none";
+        document.querySelectorAll(".photo-dimensions").forEach(el => {
+            el.style.display = (el.style.display === "none" ? "block" : "none");
         });
     }
 
-    if (dimToggleBtn) {
-        dimToggleBtn.addEventListener("click", toggleDimensions);
-    }
+    // --------------------------
+    // EVENT BINDINGS
+    // --------------------------
+    if (applyFrameBtn) applyFrameBtn.addEventListener("click", handleApplyFrame);
+    if (dimToggleBtn)  dimToggleBtn.addEventListener("click", toggleDimensions);
 
-    // ------------------------------------------------------
-    // EVENT LISTENERS
-    // ------------------------------------------------------
-    if (applyFrameBtn) {
-        applyFrameBtn.addEventListener("click", handleApplyFrameClick);
-    }
+    [wallWidthInput, wallHeightInput].forEach(el => {
+        if (el) el.addEventListener("input", updateWall);
+    });
+    if (wallUnitInput) wallUnitInput.addEventListener("change", updateWall);
 
-    if (wallWidthInput && wallHeightInput && wallUnitInput) {
-        wallWidthInput.addEventListener("input", updateWallDimensions);
-        wallHeightInput.addEventListener("input", updateWallDimensions);
-        wallUnitInput.addEventListener("change", updateWallDimensions);
-    }
-
-    window.addEventListener("load", updateWallDimensions);
-    window.addEventListener("resize", updateWallDimensions);
+    window.addEventListener("load", updateWall);
+    window.addEventListener("resize", updateWall);
 
 })();
