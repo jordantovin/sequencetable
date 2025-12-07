@@ -13,14 +13,14 @@
 
     let areNamesVisible = true;
     
-    // 💡 NEW: Selection Tracking
+    // 💡 NEW: Selection Tracking Set
     const selectedCards = new Set();
 
     /* ============ SELECTION FUNCTIONS ============ */
     
     // Function to handle adding/removing the 'selected' class
     function handleCardSelection(card, event) {
-        // Prevent selection when dragging/resizing
+        // Prevent selection when interacting with drag/resize handles
         if (event.target.closest('.resize-handle') || event.target.closest('.rotate-handle')) {
             return;
         }
