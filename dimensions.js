@@ -1,5 +1,5 @@
 // ==========================================================
-// FRAME SYSTEM + WALL SCALING + REAL-TIME DIMENSIONS
+// FRAME SYSTEM + WALL SCALING + REAL-TIME DIMENSIONS + WALL COLOR
 // ==========================================================
 
 (function() {
@@ -11,8 +11,8 @@
     const wallWidthInput  = document.getElementById("wallWidth");
     const wallHeightInput = document.getElementById("wallHeight");
     const wallUnitInput   = document.getElementById("wallUnit");
-    const dimToggleBtn    = document.querySelector(".toolbar-icon[title='Dimensions']");
-    const contentArea     = document.querySelector(".content-area");
+    const wallColorInput  = document.getElementById("wallColor");   // NEW
+    const dimToggleBtn    = document.getElementById("dimensionsToggleBtn");
     const wall            = document.getElementById("wall");
 
     const UNIT_TO_IN = {
@@ -73,7 +73,7 @@
     }
 
     // --------------------------
-    // UPDATE WALL SIZE
+    // UPDATE WALL SIZE + COLOR
     // --------------------------
     function updateWall() {
         if (!wall) return;
@@ -83,6 +83,9 @@
         let U = wallUnitInput.value;
 
         if (!W || !H) return;
+
+        // Apply wall background color (NEW)
+        wall.style.backgroundColor = wallColorInput.value;
 
         // Convert to inches
         let W_in = W * UNIT_TO_IN[U];
@@ -110,6 +113,7 @@
         wall.style.width  = `${renderW}px`;
         wall.style.height = `${renderH}px`;
 
+        // Update dimensions for all cards
         document.querySelectorAll(".photo-card").forEach(updateDimensions);
     }
 
@@ -140,7 +144,9 @@
 
     window.updateCardDimensionsText = updateDimensions;
 
-    // Toggle visibility
+    // --------------------------
+    // TOGGLE DIMENSIONS PANEL
+    // --------------------------
     function toggleDimensions() {
         document.querySelectorAll(".photo-dimensions").forEach(el => {
             el.style.display = (el.style.display === "none" ? "block" : "none");
@@ -156,7 +162,11 @@
     [wallWidthInput, wallHeightInput].forEach(el => {
         if (el) el.addEventListener("input", updateWall);
     });
+
     if (wallUnitInput) wallUnitInput.addEventListener("change", updateWall);
+
+    // NEW: live-update wall color
+    if (wallColorInput) wallColorInput.addEventListener("input", updateWall);
 
     window.addEventListener("load", updateWall);
     window.addEventListener("resize", updateWall);
