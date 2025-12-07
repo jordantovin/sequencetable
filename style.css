@@ -117,10 +117,19 @@ body {
 
 .photo-card {
     position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
     cursor: move;
     user-select: none;
     z-index: 1000;
     transform-origin: center center;
+}
+
+.photo-frame {
+    position: relative;
+    display: inline-block;
 }
 
 .photo-card.drag-over {
@@ -130,6 +139,14 @@ body {
 .photo-card img {
     display: block;
     pointer-events: none;
+}
+
+.photo-caption {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 14px;
+    color: #202124;
+    text-align: center;
+    width: 100%;
 }
 
 .resize-handle {
