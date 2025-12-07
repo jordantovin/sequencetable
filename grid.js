@@ -1,5 +1,9 @@
-// Grid snap functionality
+// ==========================
+// GRID SNAP / GRID LOCK SYSTEM
+// ==========================
+
 (function() {
+
     let isGridLocked = false;
     let gridCards = [];
     let slideCard = null;
@@ -9,11 +13,12 @@
     let slideOffsetY = 0;
     let isSliding = false;
 
-    // Expose this globally so app.js can check it
-    window.isGridLocked = function() {
-        return isGridLocked;
-    };
+    // Make lock-state readable from app.js
+    window.isGridLocked = () => isGridLocked;
 
+    // ------------------------------
+    // Utility
+    // ------------------------------
     function updateCardTransform(card) {
         const x = parseFloat(card.dataset.x);
         const y = parseFloat(card.dataset.y);
@@ -21,154 +26,186 @@
         card.style.transform = `translate(${x}px, ${y}px) rotate(${rotation}deg)`;
     }
 
+    // ------------------------------
+    // Snap-to-grid ordering
+    // ------------------------------
     function snapToGrid() {
-        const cards = document.querySelectorAll('.photo-card');
-        const cardCount = cards.length;
-        if (cardCount === 0) return;
-        
-        // Get ALL cards currently on screen
-        const cardArray = Array.from(cards);
-        
-        // Sort by current position (top to bottom, left to right)
-        cardArray.sort((a, b) => {
+        const cards = [...document.querySelectorAll('.photo-card')];
+        if (!cards.length) return;
+
+        // Sort by layout position
+        cards.sort((a, b) => {
             const aY = parseFloat(a.dataset.y) || 0;
             const bY = parseFloat(b.dataset.y) || 0;
             const aX = parseFloat(a.dataset.x) || 0;
             const bX = parseFloat(b.dataset.x) || 0;
-            
-            if (Math.abs(aY - bY) < 100) {
-                return aX - bX;
-            }
+
+            if (Math.abs(aY - bY) < 100) return aX - bX;
             return aY - bY;
         });
-        
-        gridCards = cardArray;
-        
-        // Enable scrolling
-        const contentArea = document.querySelector('.content-area');
-        contentArea.style.overflow = 'auto';
-        
+
+        gridCards = cards;
+
+        document.querySelector('.content-area').style.overflow = 'auto';
+
         arrangeCardsInGrid();
     }
 
+    // ------------------------------
+    // Actual grid placement
+    // ------------------------------
     function arrangeCardsInGrid() {
         const containerWidth = window.innerWidth;
         const spacing = 20;
         const startX = 50;
-        let currentY = 150;
-        let currentX = startX;
+
+        let x = startX;
+        let y = 150;
         let rowHeight = 0;
-        
-        gridCards.forEach((card) => {
+
+        gridCards.forEach(card => {
             const img = card.querySelector('img');
-            const cardWidth = img.offsetWidth || 300;
-            const cardHeight = img.offsetHeight || 400;
-            
-            // Check if card fits in current row
-            if (currentX + cardWidth > containerWidth - 50 && currentX > startX) {
-                // Move to next row
-                currentY += rowHeight + spacing;
-                currentX = startX;
+
+            const w = img.offsetWidth || 300;
+            const h = img.offsetHeight || 400;
+
+            // Wrap to next row
+            if (x + w > containerWidth - 50 && x > startX) {
+                y += rowHeight + spacing;
+                x = startX;
                 rowHeight = 0;
             }
-            
-            card.dataset.x = currentX;
-            card.dataset.y = currentY;
+
+            card.dataset.x = x;
+            card.dataset.y = y;
             card.dataset.rotation = 0;
-            
+
             updateCardTransform(card);
-            
-            currentX += cardWidth + spacing;
-            rowHeight = Math.max(rowHeight, cardHeight);
+
+            x += w + spacing;
+            rowHeight = Math.max(rowHeight, h);
         });
     }
 
+    // ------------------------------
+    // Toggle Grid Lock
+    // ------------------------------
     function toggleGridLock() {
         isGridLocked = !isGridLocked;
+
         const lockBtn = document.querySelector('[title="Lock grid"]');
         const contentArea = document.querySelector('.content-area');
-        
+        contentArea.style.overflow = 'auto';
+
         if (isGridLocked) {
-            // SNAP TO GRID when locking
+            // SNAP INTO PLACE
             snapToGrid();
-            
-            // Change icon to locked
-            lockBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>';
-            
-            contentArea.style.overflow = 'auto';
-            
-            // Hide handles and enable sliding
+
+            lockBtn.innerHTML = `
+                <svg viewBox="0 0 24 24">
+                    <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1
+                    0-2 .9-2 2v10c0 1.1.9 2 2
+                    2h12c1.1 0 2-.9
+                    2-2V10c0-1.1-.9-2-2-2zm-6
+                    9c-1.1 0-2-.9-2-2s.9-2
+                    2-2 2 .9 2 2-.9 2-2
+                    2zm3.1-9H8.9V6c0-1.71 1.39-3.1
+                    3.1-3.1 1.71 0 3.1 1.39
+                    3.1 3.1v2z"/>
+                </svg>
+            `;
+
+            // Lock all cards
             gridCards.forEach(card => {
-                const resizeHandle = card.querySelector('.resize-handle');
-                const rotateHandle = card.querySelector('.rotate-handle');
-                if (resizeHandle) resizeHandle.style.display = 'none';
-                if (rotateHandle) rotateHandle.style.display = 'none';
-                
-                card.style.cursor = 'grab';
                 card.dataset.gridLocked = 'true';
+
+                const rh = card.querySelector('.resize-handle');
+                const oh = card.querySelector('.rotate-handle');
+                if (rh) rh.style.display = 'none';
+                if (oh) oh.style.display = 'none';
+
+                card.style.cursor = 'grab';
             });
-            
+
         } else {
-            // Change icon to unlocked
-            lockBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M12 17c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm6-9h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6h1.9c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm0 12H6V10h12v10z"/></svg>';
-            
-            contentArea.style.overflow = 'auto';
-            
-            // Show handles and disable sliding
+            // UNLOCK
+            lockBtn.innerHTML = `
+                <svg viewBox="0 0 24 24">
+                    <path d="M12 17c1.1 0 2-.9
+                    2-2s-.9-2-2-2-2 .9-2
+                    2 .9 2 2 2zm6-9h-1V6c0-2.76-2.24-5-5-5S7
+                    3.24 7 6h1.9c0-1.71 1.39-3.1
+                    3.1-3.1 1.71 0 3.1 1.39
+                    3.1 3.1v2H6c-1.1 0-2 .9-2
+                    2v10c0 1.1.9 2 2
+                    2h12c1.1 0 2-.9
+                    2-2V10c0-1.1-.9-2-2-2zm0
+                    12H6V10h12v10z"/>
+                </svg>
+            `;
+
             gridCards.forEach(card => {
-                const resizeHandle = card.querySelector('.resize-handle');
-                const rotateHandle = card.querySelector('.rotate-handle');
-                if (resizeHandle) resizeHandle.style.display = '';
-                if (rotateHandle) rotateHandle.style.display = '';
-                
-                card.style.cursor = 'move';
                 delete card.dataset.gridLocked;
+
+                const rh = card.querySelector('.resize-handle');
+                const oh = card.querySelector('.rotate-handle');
+                if (rh) rh.style.display = '';
+                if (oh) oh.style.display = '';
+
+                card.style.cursor = 'move';
             });
         }
     }
 
-    // Mouse handlers for sliding
-    document.addEventListener('mousedown', function(e) {
+    // ------------------------------
+    // Sliding behavior
+    // ------------------------------
+    document.addEventListener('mousedown', e => {
         if (!isGridLocked) return;
-        
+
         const card = e.target.closest('.photo-card');
         if (!card || !card.dataset.gridLocked) return;
-        
+
         isSliding = true;
         slideCard = card;
         slideIndex = gridCards.indexOf(card);
-        
-        const currentX = parseFloat(card.dataset.x) || 0;
-        const currentY = parseFloat(card.dataset.y) || 0;
-        
-        slideOffsetX = e.clientX - currentX;
-        slideOffsetY = e.clientY - currentY;
-        
+
+        const x = parseFloat(card.dataset.x);
+        const y = parseFloat(card.dataset.y);
+
+        slideOffsetX = e.clientX - x;
+        slideOffsetY = e.clientY - y;
+
         card.style.cursor = 'grabbing';
         card.style.zIndex = 10000;
         card.style.opacity = '0.7';
-        
+
         e.preventDefault();
     });
 
-    document.addEventListener('mousemove', function(e) {
+    document.addEventListener('mousemove', e => {
         if (!isSliding || !slideCard) return;
-        
+
         const x = e.clientX - slideOffsetX;
         const y = e.clientY - slideOffsetY;
-        
+
         slideCard.dataset.x = x;
         slideCard.dataset.y = y;
+
         updateCardTransform(slideCard);
-        
-        // Find which card we're hovering over
+
         swapTargetIndex = -1;
+
         gridCards.forEach((card, index) => {
             if (card === slideCard) return;
-            
+
             const rect = card.getBoundingClientRect();
-            if (e.clientX >= rect.left && e.clientX <= rect.right &&
-                e.clientY >= rect.top && e.clientY <= rect.bottom) {
+            if (
+                e.clientX >= rect.left &&
+                e.clientX <= rect.right &&
+                e.clientY >= rect.top &&
+                e.clientY <= rect.bottom
+            ) {
                 swapTargetIndex = index;
                 card.style.opacity = '0.5';
             } else {
@@ -177,50 +214,61 @@
         });
     });
 
-    document.addEventListener('mouseup', function(e) {
+    document.addEventListener('mouseup', () => {
         if (!isSliding || !slideCard) return;
-        
+
         isSliding = false;
+
         slideCard.style.cursor = 'grab';
         slideCard.style.zIndex = '';
         slideCard.style.opacity = '1';
-        
-        // Reset all opacities
-        gridCards.forEach(card => {
-            card.style.opacity = '1';
-        });
-        
-        // Swap if we found a target
+
+        gridCards.forEach(card => (card.style.opacity = '1'));
+
         if (swapTargetIndex !== -1 && swapTargetIndex !== slideIndex) {
             const temp = gridCards[slideIndex];
             gridCards[slideIndex] = gridCards[swapTargetIndex];
             gridCards[swapTargetIndex] = temp;
         }
-        
-        // Rearrange grid
+
         arrangeCardsInGrid();
-        
+
         slideCard = null;
         slideIndex = -1;
         swapTargetIndex = -1;
     });
 
+    // ------------------------------
     // Initialize buttons
-    window.addEventListener('load', function() {
+    // ------------------------------
+    window.addEventListener('load', () => {
         const gridBtn = document.querySelector('[title="Grid"]');
-        if (gridBtn) {
-            gridBtn.onclick = function() {
-                snapToGrid();
-            };
-        }
-        
+        if (gridBtn) gridBtn.onclick = snapToGrid;
+
         const lockBtn = document.querySelector('[title="Lock grid"]');
         if (lockBtn) {
-            lockBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M12 17c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm6-9h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6h1.9c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm0 12H6V10h12v10z"/></svg>';
-            
-            lockBtn.onclick = function() {
-                toggleGridLock();
-            };
+            lockBtn.onclick = toggleGridLock;
         }
     });
+
+    // ------------------------------
+    // Expose functions for app.js
+    // ------------------------------
+
+    window.gridAPI = {
+        addCardToGrid(card) {
+            if (!isGridLocked) return;
+
+            card.dataset.gridLocked = 'true';
+
+            const rh = card.querySelector('.resize-handle');
+            const oh = card.querySelector('.rotate-handle');
+            if (rh) rh.style.display = 'none';
+            if (oh) oh.style.display = 'none';
+
+            gridCards.push(card);
+            arrangeCardsInGrid();
+        }
+    };
+
 })();
