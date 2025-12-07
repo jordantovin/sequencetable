@@ -14,6 +14,7 @@
 
     const dimToggleBtn    = document.getElementById("dimensionsToggleBtn");
     const buildWallBtn    = document.getElementById("buildWallBtn");
+    const eraseWallBtn    = document.getElementById("eraseWallBtn");
 
     const wall            = document.getElementById("wall");
 
@@ -202,14 +203,22 @@
     wallUnitInput.addEventListener("change", updateWall);
 
     buildWallBtn.addEventListener("click", () => {
-        if (wall.style.display === "block") {
-            // Hide the wall
-            wall.style.display = "none";
-        } else {
-            // Show and build the wall
-            wall.style.display = "block";
-            updateWall();
-        }
+        // Show the wall
+        wall.style.display = "block";
+        updateWall();
+        
+        // Show the erase button, hide the build button
+        buildWallBtn.style.display = "none";
+        eraseWallBtn.style.display = "flex";
+    });
+
+    eraseWallBtn.addEventListener("click", () => {
+        // Hide the wall
+        wall.style.display = "none";
+        
+        // Show the build button, hide the erase button
+        buildWallBtn.style.display = "flex";
+        eraseWallBtn.style.display = "none";
     });
 
     window.addEventListener("resize", updateWall);
