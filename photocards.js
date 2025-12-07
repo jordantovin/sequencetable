@@ -11,7 +11,7 @@
     let resizeStartWidth = 0;
     let resizeStartHeight = 0;
 
-    let areNamesVisible = true;
+    let areNamesVisible = false;
     
     // 💡 NEW: Selection Tracking Set
     const selectedCards = new Set();
