@@ -1,10 +1,9 @@
 // ==========================
-// FRAME APPLICATION LOGIC (Final Version with Fixed Gap + Outline Fix)
-// + WALL SIZE & RATIO SYSTEM (grid.js–safe)
+// FRAME LOGIC + WALL SYSTEM
 // ==========================
 
 (function() {
-    
+
     const applyFrameBtn = document.getElementById('applyFrameBtn');
 
     // WALL INPUTS
@@ -12,7 +11,22 @@
     const wallHeightInput = document.getElementById("wallHeight");
     const wallUnitInput  = document.getElementById("wallUnit");
 
+    const buildWallBtn = document.getElementById("buildWallBtn");
+
     const contentArea = document.querySelector(".content-area");
+
+    // Create wall canvas (starts hidden)
+    const wallCanvas = document.createElement("div");
+    wallCanvas.id = "wallCanvas";
+    wallCanvas.style.position = "absolute";
+    wallCanvas.style.left = "50%";
+    wallCanvas.style.top = "50%";
+    wallCanvas.style.transform = "translate(-50%, -50%)";
+    wallCanvas.style.background = "#f1f1f1";
+    wallCanvas.style.border = "2px solid #000";
+    wallCanvas.style.display = "none";
+    wallCanvas.style.zIndex = "0";
+    contentArea.appendChild(wallCanvas);
 
     // Conversion factors to inches
     const UNIT_TO_IN = {
@@ -21,8 +35,6 @@
         "cm": 0.393701,
         "m": 39.3701
     };
-
-    if (!applyFrameBtn) return;
 
     const CAPTION_GAP_PX = 10;
 
@@ -93,11 +105,9 @@
 
     // ======================================================
     //                WALL SIZE + RATIO SYSTEM
-    //     (Maintains perfect aspect ratio, no transforms)
     // ======================================================
 
-    function updateWallDimensions() {
-        if (!contentArea) return;
+    function buildWallBox() {
 
         let W = parseFloat(wallWidthInput.value);
         let H = parseFloat(wallHeightInput.value);
@@ -111,44 +121,45 @@
 
         let wallRatio = W_in / H_in;
 
-        // Available browser space
-        const screenW = window.innerWidth - 80;  // 40px margin on each side
-        const screenH = window.innerHeight - 160; // subtract header area
+        // Available browser space (biggest possible wall)
+        const screenW = window.innerWidth - 80;
+        const screenH = window.innerHeight - 160;
 
         const screenRatio = screenW / screenH;
 
-        // Decide which dimension limits the layout
+        // Decide rendering scale
         let renderW, renderH;
 
         if (wallRatio > screenRatio) {
-            // wall is wider than browser
             renderW = screenW;
             renderH = screenW / wallRatio;
         } else {
-            // wall is taller than browser
             renderH = screenH;
             renderW = screenH * wallRatio;
         }
 
-        // Apply new aspect ratio safely
-        contentArea.style.width = `${renderW}px`;
-        contentArea.style.height = `${renderH}px`;
-        contentArea.style.margin = "auto";
-        contentArea.style.left = "0";
-        contentArea.style.right = "0";
+        // APPLY wall box dimensions
+        wallCanvas.style.width = `${renderW}px`;
+        wallCanvas.style.height = `${renderH}px`;
+        wallCanvas.style.display = "block";
+
+        console.log("Wall built:", renderW, renderH);
     }
 
-    // Live updates
-    if (wallWidthInput && wallHeightInput && wallUnitInput) {
-        wallWidthInput.addEventListener("input", updateWallDimensions);
-        wallHeightInput.addEventListener("input", updateWallDimensions);
-        wallUnitInput.addEventListener("change", updateWallDimensions);
+    // ------------------------------
+    // BUILD WALL BUTTON (HAMMER)
+    // ------------------------------
+    if (buildWallBtn) {
+        buildWallBtn.addEventListener("click", buildWallBox);
     }
 
-    // Run once on load
+    // ------------------------------
+    // INIT
+    // ------------------------------
     window.addEventListener("load", () => {
-        applyFrameBtn.addEventListener('click', handleApplyFrameClick);
-        updateWallDimensions();
+        if (applyFrameBtn) {
+            applyFrameBtn.addEventListener('click', handleApplyFrameClick);
+        }
     });
 
 })();
