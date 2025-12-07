@@ -146,8 +146,33 @@
         const picHIn = img.offsetHeight * scaleY;
 
         // Frame dimensions (image + matte + frame border)
-        const frameWIn = frame.offsetWidth * scaleX;
-        const frameHIn = frame.offsetHeight * scaleY;
+        // Note: box-shadow doesn't affect offsetWidth, so we need to add frame thickness manually
+        let frameBorderPx = 0;
+        const frameThicknessVar = frame.style.getPropertyValue('--frame-thickness');
+        if (frameThicknessVar) {
+            // Parse the frame thickness (could be "20px" or "20in", etc.)
+            const match = frameThicknessVar.match(/^(\d+(?:\.\d+)?)(px|in|mm)$/);
+            if (match) {
+                const value = parseFloat(match[1]);
+                const unit = match[2];
+                
+                // Convert to pixels if needed
+                if (unit === 'px') {
+                    frameBorderPx = value;
+                } else if (unit === 'in') {
+                    frameBorderPx = value * 96; // 96 pixels per inch
+                } else if (unit === 'mm') {
+                    frameBorderPx = value * 96 / 25.4; // mm to inches to pixels
+                }
+            }
+        }
+        
+        // Total frame size includes the border on both sides (2x)
+        const totalFrameWidth = frame.offsetWidth + (frameBorderPx * 2);
+        const totalFrameHeight = frame.offsetHeight + (frameBorderPx * 2);
+        
+        const frameWIn = totalFrameWidth * scaleX;
+        const frameHIn = totalFrameHeight * scaleY;
 
         // Display as two lines
         label.innerHTML = `${picWIn.toFixed(2)} in × ${picHIn.toFixed(2)} in<br>${frameWIn.toFixed(2)} in × ${frameHIn.toFixed(2)} in`;
