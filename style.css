@@ -8,7 +8,10 @@
 
 }
 
-
+.photo-card.selected {
+    /* Example 1: A bright, distinct border */
+    border: 3px solid #4285F4; /* Google Blue */
+}
 
 body {
 
