@@ -117,7 +117,9 @@
         caption.style.display = areNamesVisible ? "" : "none";
         card.appendChild(caption);
 
-        /* DIMENSIONS LABEL */
+        /* DIMENSIONS LABEL - Shows TWO lines:
+           Line 1: Picture dimensions (actual image)
+           Line 2: Frame dimensions (picture + matte + frame border) */
         const dim = document.createElement("div");
         dim.className = "photo-dimensions";
         dim.style.display = "none"; // hidden until toggled
@@ -250,6 +252,29 @@
     /* ==========================================================
        HELPERS
        ========================================================== */
+    
+    // Helper function to get picture and frame dimensions
+    // This can be called by window.updateCardDimensionsText
+    window.getCardDimensions = function(card) {
+        const img = card.querySelector("img");
+        const frame = card.querySelector(".photo-frame");
+        
+        if (!img || !frame) return null;
+        
+        // Picture dimensions (actual image only)
+        const pictureWidth = img.offsetWidth;
+        const pictureHeight = img.offsetHeight;
+        
+        // Frame dimensions (includes matte and frame border)
+        const frameWidth = frame.offsetWidth;
+        const frameHeight = frame.offsetHeight;
+        
+        return {
+            picture: { width: pictureWidth, height: pictureHeight },
+            frame: { width: frameWidth, height: frameHeight }
+        };
+    };
+    
     function updateCardTransform(card) {
         const x = parseFloat(card.dataset.x);
         const y = parseFloat(card.dataset.y);
