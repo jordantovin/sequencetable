@@ -99,19 +99,15 @@
     }
 
     // ------------------------------
-    // Toggle Grid Lock 
+    // Logic to apply the lock state (REPLACED toggleGridLock)
     // ------------------------------
-    function toggleGridLock(initialLoad = false) {
-        if (!initialLoad) {
-            isGridLocked = !isGridLocked;
-        }
-
+    function updateLockState(locked) {
         const lockBtn = document.querySelector('[title="Lock grid"]');
         const contentArea = document.querySelector('.content-area');
         contentArea.style.overflow = 'auto';
 
-        if (isGridLocked) {
-            // LOCKED state
+        if (locked) {
+            // LOCKED state: Apply grid and locked visuals
             snapToGrid();
 
             lockBtn.innerHTML = `
@@ -141,7 +137,7 @@
             });
 
         } else {
-            // UNLOCKED state (Default initial state)
+            // UNLOCKED state: Remove grid and restore move visuals
             lockBtn.innerHTML = `
                 <svg viewBox="0 0 24 24">
                     <path d="M12 17c1.1 0 2-.9
@@ -259,20 +255,25 @@
     });
 
     // ------------------------------
-    // Initialize buttons & state
+    // Initialize buttons & state (FIXED click handler)
     // ------------------------------
     window.addEventListener('load', () => {
+        
         const gridBtn = document.querySelector('[title="Grid"]');
         if (gridBtn) gridBtn.onclick = snapToGrid;
 
         const lockBtn = document.querySelector('[title="Lock grid"]');
         if (lockBtn) {
-            lockBtn.onclick = toggleGridLock;
-            
-            // Set initial state to unlocked and run setup
-            isGridLocked = false;
-            toggleGridLock(true); 
+            // FIX: Use an anonymous function to explicitly toggle state and update visuals/grid
+            lockBtn.onclick = () => {
+                isGridLocked = !isGridLocked; // Manually toggle state
+                updateLockState(isGridLocked); // Run the logic based on the new state
+            };
         }
+        
+        // Set initial state to UNLOCKED and update visuals
+        isGridLocked = false;
+        updateLockState(isGridLocked);
         
         // Initial grid arrangement for cards loaded on startup
         snapToGrid();
