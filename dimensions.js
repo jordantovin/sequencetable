@@ -12,10 +12,11 @@
     const wallWidthInput  = document.getElementById("wallWidth");
     const wallHeightInput = document.getElementById("wallHeight");
     const wallUnitInput   = document.getElementById("wallUnit");
-    const wallColorInput  = document.getElementById("wallColor"); // NEW
+    const wallColorInput  = document.getElementById("wallColor");
 
     const dimToggleBtn    = document.getElementById("dimensionsToggleBtn");
 
+    const buildWallBtn    = document.getElementById("buildWallBtn"); // <-- NEW
     const contentArea     = document.querySelector(".content-area");
     const wall            = document.getElementById("wall");
 
@@ -41,7 +42,7 @@
     }
 
     // --------------------------
-    // APPLY FRAME TO CARD
+    // APPLY FRAME
     // --------------------------
     function applyFrame(card, settings) {
         const frame = card.querySelector(".photo-frame");
@@ -77,10 +78,10 @@
     }
 
     // --------------------------
-    // UPDATE WALL SIZE (BUILDS/RESIZES WALL)
+    // UPDATE WALL SIZE
     // --------------------------
     function updateWall() {
-        if (!wall) return;
+        if (!wall || wall.style.display === "none") return;
 
         let W = parseFloat(wallWidthInput.value);
         let H = parseFloat(wallHeightInput.value);
@@ -88,7 +89,6 @@
 
         if (!W || !H) return;
 
-        // Convert dimension → inches
         let W_in = W * UNIT_TO_IN[U];
         let H_in = H * UNIT_TO_IN[U];
 
@@ -96,7 +96,6 @@
 
         const wallRatio = W_in / H_in;
 
-        // Available viewport area
         const screenW = window.innerWidth - 80;
         const screenH = window.innerHeight - 160;
 
@@ -114,16 +113,13 @@
 
         wall.style.width = `${renderW}px`;
         wall.style.height = `${renderH}px`;
-
-        // Ensure wall color stays consistent
         wall.style.backgroundColor = wallColorInput.value;
 
-        // update dimensions for all cards
         document.querySelectorAll(".photo-card").forEach(updateDimensions);
     }
 
     // --------------------------
-    // WALL COLOR FUNCTION
+    // WALL COLOR UPDATE
     // --------------------------
     function updateWallColor() {
         if (!wall) return;
@@ -131,7 +127,7 @@
     }
 
     // --------------------------
-    // DIMENSIONS TEXT UNDER CARDS
+    // UPDATE PHOTO DIMENSIONS
     // --------------------------
     function updateDimensions(card) {
         if (!window.currentWallInches) return;
@@ -143,27 +139,23 @@
 
         const rect = frame.getBoundingClientRect();
 
-        const pxW = rect.width;
-        const pxH = rect.height;
-
         const scaleX = window.currentWallInches.width / wall.offsetWidth;
         const scaleY = window.currentWallInches.height / wall.offsetHeight;
 
-        const wIn = pxW * scaleX;
-        const hIn = pxH * scaleY;
+        const wIn = rect.width * scaleX;
+        const hIn = rect.height * scaleY;
 
         dim.textContent = `${wIn.toFixed(2)} in × ${hIn.toFixed(2)} in`;
     }
 
-    // Make global for resize logic
     window.updateCardDimensionsText = updateDimensions;
 
     // --------------------------
-    // DIMENSIONS VISIBILITY TOGGLE
+    // TOGGLE DIMENSION LABELS
     // --------------------------
     function toggleDimensions() {
         document.querySelectorAll(".photo-dimensions").forEach(el => {
-            el.style.display = (el.style.display === "none" ? "block" : "none");
+            el.style.display = el.style.display === "none" ? "block" : "none";
         });
     }
 
@@ -171,7 +163,6 @@
     // EVENT LISTENERS
     // --------------------------
     if (applyFrameBtn) applyFrameBtn.addEventListener("click", handleApplyFrame);
-
     if (dimToggleBtn) dimToggleBtn.addEventListener("click", toggleDimensions);
 
     if (wallColorInput) wallColorInput.addEventListener("input", updateWallColor);
@@ -182,7 +173,16 @@
 
     if (wallUnitInput) wallUnitInput.addEventListener("change", updateWall);
 
-    window.addEventListener("load", updateWall);
+    // --------------------------
+    // HAMMER BUTTON ACTIVATES THE WALL
+    // --------------------------
+    if (buildWallBtn) {
+        buildWallBtn.addEventListener("click", () => {
+            wall.style.display = "block";  // <-- makes wall appear
+            updateWall();                  // <-- size immediately
+        });
+    }
+
     window.addEventListener("resize", updateWall);
 
 })();
