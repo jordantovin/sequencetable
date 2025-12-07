@@ -70,13 +70,13 @@ window.addEventListener("load", function() {
                 break;
 
             // --------------------------------------------------
-            // DUPLICATE CARD (ALL PROPERTIES, FRAME INCLUDED)
+            // DUPLICATE CARD — FULL FUNCTIONALITY CLONE
             // --------------------------------------------------
             case "duplicate":
 
                 const clone = targetCard.cloneNode(true);
 
-                // Offset slightly so clone is visible
+                // Position offset so the duplicate is visible
                 const x = parseFloat(targetCard.dataset.x) || 0;
                 const y = parseFloat(targetCard.dataset.y) || 0;
 
@@ -86,8 +86,15 @@ window.addEventListener("load", function() {
                 const rotation = clone.dataset.rotation || "0";
                 clone.style.transform = `translate(${x + 30}px, ${y + 30}px) rotate(${rotation}deg)`;
 
-                // Add clone to container
-                document.getElementById("photo-container").appendChild(clone);
+                const container = document.getElementById("photo-container");
+                container.appendChild(clone);
+
+                // ⭐ Reinitialize full card functionality if available
+                if (window.initializePhotoCard) {
+                    window.initializePhotoCard(clone);
+                } else {
+                    console.warn("⚠️ No initializePhotoCard() found. Duplicate will not have full functionality.");
+                }
 
                 break;
         }
