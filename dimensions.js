@@ -1,18 +1,33 @@
 // ==========================
 // FRAME APPLICATION LOGIC (Final Version with Fixed Gap + Outline Fix)
+// + WALL SIZE & RATIO SYSTEM (grid.js–safe)
 // ==========================
 
 (function() {
     
     const applyFrameBtn = document.getElementById('applyFrameBtn');
-    
+
+    // WALL INPUTS
+    const wallWidthInput = document.getElementById("wallWidth");
+    const wallHeightInput = document.getElementById("wallHeight");
+    const wallUnitInput  = document.getElementById("wallUnit");
+
+    const contentArea = document.querySelector(".content-area");
+
+    // Conversion factors to inches
+    const UNIT_TO_IN = {
+        "in": 1,
+        "ft": 12,
+        "cm": 0.393701,
+        "m": 39.3701
+    };
+
     if (!applyFrameBtn) return;
 
-    // 💡 PATCH: Fixed desired gap between the outer edge of the frame and the caption text
-    const CAPTION_GAP_PX = 10; 
+    const CAPTION_GAP_PX = 10;
 
     // ------------------------------
-    // Utility: Read Input Values
+    // FRAME SETTINGS
     // ------------------------------
     function getFrameSettings() {
         return {
@@ -22,30 +37,29 @@
             unit: document.getElementById('measurementUnit')?.value || 'px',
         };
     }
-    
+
     // ------------------------------
-    // Utility: Apply Frame CSS
+    // APPLY FRAME TO CARD
     // ------------------------------
     function applyFrameToCard(card, settings) {
         const photoFrame = card.querySelector('.photo-frame');
-        
         if (!photoFrame) return;
 
         const frameUnit = settings.unit;
-        
-        // --- 1. Matte (Inner border next to image): Use PADDING ---
+
+        // Matte
         photoFrame.style.padding = `${settings.matteThickness}${frameUnit}`;
-        photoFrame.style.backgroundColor = '#FFFFFF'; // matte color
-        
-        // --- 2. Frame (Outer border): Use BOX-SHADOW ---
+        photoFrame.style.backgroundColor = '#FFFFFF';
+
+        // Frame border
         const frameSpread = `${settings.frameThickness}${frameUnit}`;
         const frameShadowFinal = `0 0 0 ${frameSpread} ${settings.frameColor}`;
         photoFrame.style.boxShadow = frameShadowFinal;
 
-        // 💡 NEW: expose frame thickness so CSS outline can sit OUTSIDE the grey frame
+        // Make outline offset work
         photoFrame.style.setProperty('--frame-thickness', `${settings.frameThickness}${frameUnit}`);
-        
-        // --- 3. Caption Spacing Fix ---
+
+        // Caption spacing
         if (frameUnit === 'px') {
             photoFrame.style.marginBottom = `${settings.frameThickness + CAPTION_GAP_PX}px`;
             const caption = card.querySelector('.photo-caption');
@@ -56,15 +70,12 @@
             if (caption) caption.style.marginTop = `${CAPTION_GAP_PX}px`;
         }
 
-        // Store settings for persistence
         card.dataset.frameSettings = JSON.stringify(settings);
-        
-        // Optional: class marker
         photoFrame.classList.add('has-frame');
     }
 
     // ------------------------------
-    // Main Button Click Handler
+    // APPLY FRAME BUTTON
     // ------------------------------
     function handleApplyFrameClick() {
         const cardsToFrame = window.getSelectedCards ? window.getSelectedCards() : [];
@@ -75,19 +86,69 @@
         }
         
         const settings = getFrameSettings();
-        
-        cardsToFrame.forEach(card => {
-            applyFrameToCard(card, settings);
-        });
+        cardsToFrame.forEach(card => applyFrameToCard(card, settings));
 
         console.log(`Applied frame to ${cardsToFrame.length} selected card(s).`);
     }
 
-    // ------------------------------
-    // Initialization
-    // ------------------------------
-    window.addEventListener('load', () => {
+    // ======================================================
+    //                WALL SIZE + RATIO SYSTEM
+    //     (Maintains perfect aspect ratio, no transforms)
+    // ======================================================
+
+    function updateWallDimensions() {
+        if (!contentArea) return;
+
+        let W = parseFloat(wallWidthInput.value);
+        let H = parseFloat(wallHeightInput.value);
+        let U = wallUnitInput.value;
+
+        if (!W || !H) return;
+
+        // Convert to inches
+        let W_in = W * UNIT_TO_IN[U];
+        let H_in = H * UNIT_TO_IN[U];
+
+        let wallRatio = W_in / H_in;
+
+        // Available browser space
+        const screenW = window.innerWidth - 80;  // 40px margin on each side
+        const screenH = window.innerHeight - 160; // subtract header area
+
+        const screenRatio = screenW / screenH;
+
+        // Decide which dimension limits the layout
+        let renderW, renderH;
+
+        if (wallRatio > screenRatio) {
+            // wall is wider than browser
+            renderW = screenW;
+            renderH = screenW / wallRatio;
+        } else {
+            // wall is taller than browser
+            renderH = screenH;
+            renderW = screenH * wallRatio;
+        }
+
+        // Apply new aspect ratio safely
+        contentArea.style.width = `${renderW}px`;
+        contentArea.style.height = `${renderH}px`;
+        contentArea.style.margin = "auto";
+        contentArea.style.left = "0";
+        contentArea.style.right = "0";
+    }
+
+    // Live updates
+    if (wallWidthInput && wallHeightInput && wallUnitInput) {
+        wallWidthInput.addEventListener("input", updateWallDimensions);
+        wallHeightInput.addEventListener("input", updateWallDimensions);
+        wallUnitInput.addEventListener("change", updateWallDimensions);
+    }
+
+    // Run once on load
+    window.addEventListener("load", () => {
         applyFrameBtn.addEventListener('click', handleApplyFrameClick);
+        updateWallDimensions();
     });
 
 })();
