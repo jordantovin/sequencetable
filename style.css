@@ -111,6 +111,7 @@ body {
     color: #444746;
     font-size: 20px;
     position: relative;
+    border-radius: 6px;
 }
 
 .toolbar-icon:hover {
@@ -128,6 +129,59 @@ body {
     height: 24px;
     background-color: #dadce0;
     margin: 0 4px;
+}
+
+/* ======================================================= */
+/* SLEEK FRAME CONTROLS */
+/* ======================================================= */
+
+.frame-controls {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding-left: 6px;
+}
+
+.control-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #f1f3f4;
+    padding: 4px 10px;
+    border-radius: 6px;
+}
+
+.control-group label {
+    font-size: 13px;
+    color: #555;
+}
+
+/* Color input */
+.color-input {
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: none;
+    cursor: pointer;
+    border-radius: 4px;
+    background: none;
+}
+
+/* Number input */
+.number-input {
+    width: 48px;
+    padding: 4px 2px;
+    font-size: 13px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+}
+
+/* Unit dropdown */
+.unit-select {
+    padding: 4px 6px;
+    font-size: 13px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
 }
 
 .content-area {
