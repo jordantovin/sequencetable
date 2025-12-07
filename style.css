@@ -149,17 +149,11 @@ body {
     position: static !important;
     margin-top: 4px;
     padding: 8px 12px;
-
-    background: #e0e0e0;     /* solid grey block */
     color: #202124;
-
     font-family: 'Courier New', Courier, monospace;
     font-size: 14px;
-
     text-align: center;
     width: fit-content;       /* shrink wrap */
-    border-radius: 4px;
-
     pointer-events: none;
     box-shadow: none;         /* removed overlay look */
 }
