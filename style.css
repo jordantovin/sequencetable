@@ -151,24 +151,41 @@ body {
     color: #555;
 }
 
-/* COLOR PICKER — circular */
+/* ======================================================= */
+/* COLOR PICKER — fully circular & cross-browser */
+/* ======================================================= */
+
 .color-input {
     width: 26px;
     height: 26px;
     padding: 0;
-    border: none;
     cursor: pointer;
-    border-radius: 50%;         /* 🔥 circle */
-    background: none;
-    overflow: hidden;           /* ensures circle crop on native UI */
+    border-radius: 50%;       /* circle */
+    border: none;
+    overflow: hidden;         /* ensures circular cropping */
+    -webkit-appearance: none;
+    appearance: none;
 }
 
-/* NUMBER INPUT — square w/ 2px radius */
+.color-input::-webkit-color-swatch-wrapper {
+    padding: 0;
+    border-radius: 50%;
+}
+
+.color-input::-webkit-color-swatch {
+    border: none;
+    border-radius: 50%;
+}
+
+/* ======================================================= */
+/* NUMBER INPUTS — square with 2px radius */
+/* ======================================================= */
+
 .number-input {
     width: 48px;
     padding: 4px 2px;
     font-size: 13px;
-    border-radius: 2px;         /* 🔥 subtle rounded edges */
+    border-radius: 2px;
     border: 1px solid #ccc;
     text-align: center;
 }
@@ -176,9 +193,13 @@ body {
 .unit-select {
     padding: 4px 6px;
     font-size: 13px;
-    border-radius: 2px;         /* match the number-input */
+    border-radius: 2px;
     border: 1px solid #ccc;
 }
+
+/* ======================================================= */
+/* MAIN CANVAS LAYOUT */
+/* ======================================================= */
 
 .content-area {
     position: fixed;
