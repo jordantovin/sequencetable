@@ -52,12 +52,15 @@
     }
 
     // ------------------------------
-    // Actual grid placement
+    // Actual grid placement (UPDATED)
     // ------------------------------
     function arrangeCardsInGrid() {
         const containerWidth = window.innerWidth;
         const spacing = 20;
         const startX = 50;
+        
+        // ⬇️ UPDATE: Extra space reserved for the name tag below the image
+        const nameSpace = 40; 
 
         let x = startX;
         let y = 150;
@@ -68,6 +71,9 @@
 
             const w = img.offsetWidth || 300;
             const h = img.offsetHeight || 400;
+
+            // Calculate total height including the name space
+            const totalCardHeight = h + nameSpace;
 
             // Wrap to next row
             if (x + w > containerWidth - 50 && x > startX) {
@@ -83,7 +89,9 @@
             updateCardTransform(card);
 
             x += w + spacing;
-            rowHeight = Math.max(rowHeight, h);
+            
+            // ⬇️ UPDATE: Determine row height based on image + name space
+            rowHeight = Math.max(rowHeight, totalCardHeight);
         });
     }
 
