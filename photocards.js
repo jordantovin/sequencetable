@@ -11,6 +11,9 @@
     let resizeStartWidth = 0;
     let resizeStartHeight = 0;
 
+    // NEW FEATURE: caption visibility toggle
+    let areNamesVisible = true;
+
     async function loadCSVData() {
         try {
             const response = await fetch('https://docs.google.com/spreadsheets/d/e/2PACX-1vQ5j1OVFnwB19xVA3ZVM46C8tNKvGHimyElwIAgMFDzurSEFA0m_8iHBIvD1_TKbtlfWw2MaDAirm47/pub?output=csv');
@@ -26,10 +29,8 @@
     }
 
     function makeCardInteractive(card) {
-        // Store transform state
         card.dataset.rotation = '0';
 
-        // Random initial position
         const randomX = Math.random() * (window.innerWidth - 400) + 50;
         const randomY = Math.random() * (window.innerHeight - 400) + 150;
         card.dataset.x = randomX;
@@ -37,25 +38,17 @@
 
         updateCardTransform(card);
 
-        // Drag functionality
         card.addEventListener('mousedown', function(e) {
-            if (window.isGridLocked && window.isGridLocked()) {
-                return;
-            }
-
+            if (window.isGridLocked && window.isGridLocked()) return;
             if (e.target.classList.contains('resize-handle') ||
-                e.target.classList.contains('rotate-handle')) {
-                return;
-            }
+                e.target.classList.contains('rotate-handle')) return;
 
             isDragging = true;
             activeCard = card;
 
-            // Get current position from transform
             const currentX = parseFloat(card.dataset.x) || 0;
             const currentY = parseFloat(card.dataset.y) || 0;
 
-            // Calculate offset from current position
             dragOffset.x = e.clientX - currentX;
             dragOffset.y = e.clientY - currentY;
 
@@ -63,16 +56,14 @@
             e.preventDefault();
         });
 
-        // Add resize handle
+        // Resize handle
         const resizeHandle = document.createElement('div');
         resizeHandle.className = 'resize-handle';
         resizeHandle.innerHTML = '⇲';
         card.appendChild(resizeHandle);
 
         resizeHandle.addEventListener('mousedown', function(e) {
-            if (window.isGridLocked && window.isGridLocked()) {
-                return;
-            }
+            if (window.isGridLocked && window.isGridLocked()) return;
 
             isResizing = true;
             activeCard = card;
@@ -87,7 +78,7 @@
             e.preventDefault();
         });
 
-        // Add rotate handle
+        // Rotate handle
         const rotateHandle = document.createElement('div');
         rotateHandle.className = 'rotate-handle';
         rotateHandle.innerHTML = '↻';
@@ -95,9 +86,7 @@
 
         let rotateStartAngle = 0;
         rotateHandle.addEventListener('mousedown', function(e) {
-            if (window.isGridLocked && window.isGridLocked()) {
-                return;
-            }
+            if (window.isGridLocked && window.isGridLocked()) return;
 
             activeCard = card;
             const rect = card.getBoundingClientRect();
@@ -143,12 +132,8 @@
         return highest;
     }
 
-    // Global mouse move handler
     document.addEventListener('mousemove', function(e) {
-        // Don't allow free dragging if grid is locked
-        if (window.isGridLocked && window.isGridLocked()) {
-            return;
-        }
+        if (window.isGridLocked && window.isGridLocked()) return;
 
         if (isDragging && activeCard) {
             const x = e.clientX - dragOffset.x;
@@ -161,8 +146,6 @@
         if (isResizing && activeCard) {
             const img = activeCard.querySelector('img');
             const deltaX = e.clientX - resizeStartX;
-            const deltaY = e.clientY - resizeStartY;
-
             const newWidth = Math.max(150, resizeStartWidth + deltaX);
             const aspectRatio = resizeStartHeight / resizeStartWidth;
             const newHeight = newWidth * aspectRatio;
@@ -172,17 +155,31 @@
         }
     });
 
-    // Global mouse up handler
     document.addEventListener('mouseup', function() {
-        // Don't handle mouseup if grid is locked
-        if (window.isGridLocked && window.isGridLocked()) {
-            return;
-        }
+        if (window.isGridLocked && window.isGridLocked()) return;
 
         isDragging = false;
         isResizing = false;
         activeCard = null;
     });
+
+    // NEW FEATURE — toggle captions
+    function setNamesVisibility(visible) {
+        areNamesVisible = visible;
+        document.querySelectorAll('.photo-card .photo-caption').forEach(caption => {
+            caption.style.display = visible ? '' : 'none';
+        });
+
+        const namesBtn = document.querySelector('[title="Names"]');
+        if (namesBtn) {
+            namesBtn.setAttribute('aria-pressed', visible ? 'true' : 'false');
+            namesBtn.classList.toggle('active', visible);
+        }
+    }
+
+    function toggleNamesVisibility() {
+        setNamesVisibility(!areNamesVisible);
+    }
 
     function createPhotoCard(imageUrl, photographer, isUploaded) {
         const card = document.createElement('div');
@@ -192,7 +189,6 @@
         img.src = imageUrl;
         img.alt = photographer;
 
-        // Load image to get natural aspect ratio
         img.onload = function() {
             const aspectRatio = img.naturalHeight / img.naturalWidth;
             const width = 300;
@@ -202,6 +198,13 @@
 
         card.appendChild(img);
 
+        // NEW caption element
+        const caption = document.createElement('div');
+        caption.className = 'photo-caption';
+        caption.textContent = photographer || 'Unknown';
+        caption.style.display = areNamesVisible ? '' : 'none';
+        card.appendChild(caption);
+
         makeCardInteractive(card);
 
         return card;
@@ -210,6 +213,7 @@
     function handleFileUpload(event) {
         const files = event.target.files;
         const container = document.getElementById('photo-container');
+
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
             if (file.type.startsWith('image/')) {
@@ -228,8 +232,10 @@
             alert('Loading photos... please try again in a moment.');
             return;
         }
+
         const container = document.getElementById('photo-container');
         let added = 0;
+
         while (added < count && currentPhotoIndex < csvData.length) {
             const photo = csvData[currentPhotoIndex];
             const card = createPhotoCard(photo.link, photo.photographer, false);
@@ -237,6 +243,7 @@
             currentPhotoIndex++;
             added++;
         }
+
         if (currentPhotoIndex >= csvData.length) {
             currentPhotoIndex = 0;
         }
@@ -265,5 +272,15 @@
         document.getElementById('add1PhotoBtn').onclick = function() {
             addPhotosFromCSV(1);
         };
+
+        // initialize Names toggle button
+        const namesBtn = document.querySelector('[title="Names"]');
+        if (namesBtn) {
+            namesBtn.onclick = function() {
+                toggleNamesVisibility();
+            };
+
+            setNamesVisibility(areNamesVisible);
+        }
     };
 })();
