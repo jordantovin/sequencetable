@@ -1,5 +1,5 @@
 // ===============================
-// RIGHT CLICK MENU FOR PHOTO CARDS
+// RIGHT CLICK MENU FOR PHOTO CARDS (Batch-enabled)
 // ===============================
 
 window.addEventListener("load", function() {
@@ -14,22 +14,21 @@ window.addEventListener("load", function() {
 
     // -------------------------------------------
     // UNIVERSAL SELECTION LOGIC
-    // (same logic originals use)
-// -------------------------------------------
+    // -------------------------------------------
     function selectCard(card, additive = false) {
         if (!additive) {
-            document.querySelectorAll(".photo-card.selected").forEach(c => c.classList.remove("selected"));
+            document.querySelectorAll(".photo-card.selected")
+                .forEach(c => c.classList.remove("selected"));
         }
         card.classList.add("selected");
     }
 
-    // Make system-wide selection discoverable
     window.getSelectedCards = function() {
         return Array.from(document.querySelectorAll(".photo-card.selected"));
     };
 
     // -------------------------------------------
-    // BASIC DRAG + SELECT BEHAVIOR FOR CLONES
+    // DRAG + CLICK SELECTION FOR CLONES
     // -------------------------------------------
     function attachCloneBehavior(card) {
 
@@ -54,16 +53,14 @@ window.addEventListener("load", function() {
 
         card.addEventListener("mousedown", e => {
             if (e.button !== 0) return;
-
-            // Skip if clicking resize/rotate handles
             if (e.target.closest(".resize-handle") || e.target.closest(".rotate-handle")) return;
 
             selectCard(card, e.shiftKey);
 
-            // Begin drag
             isDragging = true;
             dragStartX = e.clientX;
             dragStartY = e.clientY;
+
             cardStartX = parseFloat(card.dataset.x);
             cardStartY = parseFloat(card.dataset.y);
 
@@ -86,7 +83,6 @@ window.addEventListener("load", function() {
             isDragging = false;
         });
 
-        // Normal click selection
         card.addEventListener("click", e => {
             if (e.button !== 0) return;
             selectCard(card, e.shiftKey);
@@ -104,6 +100,11 @@ window.addEventListener("load", function() {
         e.preventDefault();
         targetCard = card;
 
+        // If right-clicking a card that is *not* selected → select only it
+        if (!card.classList.contains("selected")) {
+            selectCard(card);
+        }
+
         menu.style.left = `${e.pageX}px`;
         menu.style.top = `${e.pageY}px`;
         menu.style.display = "block";
@@ -114,60 +115,72 @@ window.addEventListener("load", function() {
     });
 
     // -------------------------------------------
-    // CONTEXT MENU HANDLE ACTIONS
+    // CONTEXT MENU ACTIONS — BATCH ENABLED
     // -------------------------------------------
     menu.addEventListener("click", e => {
-
-        if (!targetCard) return;
-        menu.style.display = "none";
 
         const action = e.target.dataset.action;
         if (!action) return;
 
+        menu.style.display = "none";
+
+        // ⭐ ALL SELECTED CARDS
+        const selectedCards = window.getSelectedCards();
+        if (selectedCards.length === 0) return;
+
         switch (action) {
 
-            // DELETE
+            // --------------------------------------------------
+            // BATCH DELETE
+            // --------------------------------------------------
             case "delete":
-                targetCard.remove();
+                selectedCards.forEach(card => card.remove());
                 break;
 
-            // REMOVE FRAME ONLY
+            // --------------------------------------------------
+            // BATCH REMOVE FRAME
+            // --------------------------------------------------
             case "remove-frame":
-                const frame = targetCard.querySelector(".photo-frame");
-                if (frame) {
-                    frame.style.boxShadow = "none";
-                    frame.style.padding = "0";
-                    frame.style.background = "transparent";
-                    frame.style.setProperty("--frame-thickness", "0px");
-                }
+                selectedCards.forEach(card => {
+                    const frame = card.querySelector(".photo-frame");
+                    if (frame) {
+                        frame.style.boxShadow = "none";
+                        frame.style.padding = "0";
+                        frame.style.background = "transparent";
+                        frame.style.setProperty("--frame-thickness", "0px");
+                    }
+                });
                 break;
 
-            // DUPLICATE WITH FULL FUNCTIONALITY
+            // --------------------------------------------------
+            // BATCH DUPLICATE
+            // --------------------------------------------------
             case "duplicate":
 
-                const clone = targetCard.cloneNode(true);
+                const container = document.getElementById("photo-container");
 
-                const x = parseFloat(targetCard.dataset.x);
-                const y = parseFloat(targetCard.dataset.y);
-                const rot = parseFloat(targetCard.dataset.rotation) || 0;
+                selectedCards.forEach(card => {
+                    const clone = card.cloneNode(true);
 
-                clone.dataset.x = x + 30;
-                clone.dataset.y = y + 30;
-                clone.dataset.rotation = rot;
+                    const x = parseFloat(card.dataset.x);
+                    const y = parseFloat(card.dataset.y);
+                    const rot = parseFloat(card.dataset.rotation) || 0;
 
-                clone.style.transform =
-                    `translate(${x + 30}px, ${y + 30}px) rotate(${rot}deg)`;
+                    clone.dataset.x = x + 30;
+                    clone.dataset.y = y + 30;
+                    clone.dataset.rotation = rot;
 
-                document.getElementById("photo-container").appendChild(clone);
+                    clone.style.transform =
+                        `translate(${x + 30}px, ${y + 30}px) rotate(${rot}deg)`;
 
-                // ⭐ NOW THE KEY PART:
-                // give duplicate full dragging + selection
-                attachCloneBehavior(clone);
+                    container.appendChild(clone);
+
+                    // Re-enable drag, selection, context menu behavior
+                    attachCloneBehavior(clone);
+                });
 
                 break;
         }
-
-        targetCard = null;
     });
 
 });
