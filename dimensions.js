@@ -132,20 +132,22 @@
         const label = card.querySelector(".photo-dimensions");
         if (!label) return;
 
-        // Get separate measurements for picture and frame
-        const dims = window.getCardDimensions?.(card);
-        if (!dims) return;
+        // Get the img and frame elements directly
+        const img = card.querySelector("img");
+        const frame = card.querySelector(".photo-frame");
+        
+        if (!img || !frame) return;
 
         const scaleX = window.currentWallInches.width / wall.offsetWidth;
         const scaleY = window.currentWallInches.height / wall.offsetHeight;
 
-        // Picture dimensions (actual image only)
-        const picWIn = dims.picture.width * scaleX;
-        const picHIn = dims.picture.height * scaleY;
+        // Picture dimensions (actual image only - the photo itself)
+        const picWIn = img.offsetWidth * scaleX;
+        const picHIn = img.offsetHeight * scaleY;
 
         // Frame dimensions (image + matte + frame border)
-        const frameWIn = dims.frame.width * scaleX;
-        const frameHIn = dims.frame.height * scaleY;
+        const frameWIn = frame.offsetWidth * scaleX;
+        const frameHIn = frame.offsetHeight * scaleY;
 
         // Display as two lines
         label.innerHTML = `${picWIn.toFixed(2)} in × ${picHIn.toFixed(2)} in<br>${frameWIn.toFixed(2)} in × ${frameHIn.toFixed(2)} in`;
