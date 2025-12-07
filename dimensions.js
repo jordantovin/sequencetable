@@ -31,20 +31,31 @@
         // Construct the CSS box-shadow string using the selected unit
         const frameUnit = settings.unit;
         
+        // 💡 PATCH: Calculate the total thickness to push the caption down
+        const totalThickness = settings.matteThickness + settings.frameThickness;
+        const totalBorder = `${totalThickness}${frameUnit}`; // e.g., '70px'
+
         // 1. Matte Shadow (inner inset shadow)
         const matteSpread = `${settings.matteThickness}${frameUnit}`;
-        const matteShadow = `inset 0 0 0 ${matteSpread} ${settings.matteColor || '#FFFFFF'}`;
+        const matteShadow = `inset 0 0 0 ${matteSpread} ${'#FFFFFF'}`;
         
         // 2. Frame Shadow (outer border-like shadow)
         const frameSpread = `${settings.frameThickness}${frameUnit}`;
-        
-        // Note: The total distance from the image edge to the outside of the frame 
-        // will be MatteThickness + FrameThickness.
         const frameShadow = `0 0 0 ${frameSpread} ${settings.frameColor}`;
         
         // Apply both shadows
         photoFrame.style.boxShadow = `${frameShadow}, ${matteShadow}`;
         
+        // 💡 PATCH IMPLEMENTATION: Push the photographer name down 
+        // by adding margin to the bottom of the frame element.
+        photoFrame.style.marginBottom = totalBorder;
+
+        // Add a small fixed spacing margin to the caption for separation
+        const caption = card.querySelector('.photo-caption');
+        if (caption) {
+            caption.style.marginTop = '8px'; 
+        }
+
         // Store data attributes on the card for persistence/resizing
         card.dataset.frameSettings = JSON.stringify(settings);
         
