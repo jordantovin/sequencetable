@@ -171,31 +171,26 @@ body {
 .photo-card {
     position: absolute;
     user-select: none;
-    display: inline-block;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
     cursor: move;
     transform-origin: center center;
     z-index: 9999 !important;
-}
-
-.photo-card > * {
-    display: block;
-    margin: 0;
-}
-
-.photo-card .photo-caption,
-.photo-card .photo-dimensions {
-    margin-top: 6px;
 }
 
 .photo-frame {
     position: relative;
     display: inline-block;
     outline: none;
+    margin: 0;
+    line-height: 0;
 }
 
 .photo-card.selected .photo-frame {
     outline: 3px solid #4285f4;
-    outline-offset: 2px;
+    outline-offset: 3px;
 }
 
 .photo-caption {
