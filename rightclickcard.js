@@ -12,20 +12,26 @@ window.addEventListener("load", function() {
         return;
     }
 
-    // Fallback: define getSelectedCards if not already provided
-    if (!window.getSelectedCards) {
-        window.getSelectedCards = function() {
-            return Array.from(document.querySelectorAll(".photo-card.selected"));
-        };
+    // -------------------------------------------
+    // UNIVERSAL SELECTION LOGIC
+    // (same logic originals use)
+// -------------------------------------------
+    function selectCard(card, additive = false) {
+        if (!additive) {
+            document.querySelectorAll(".photo-card.selected").forEach(c => c.classList.remove("selected"));
+        }
+        card.classList.add("selected");
     }
 
-    // -----------------------------
-    // Helper: attach basic behavior to a clone
-    // (drag + click-to-select)
-    // -----------------------------
+    // Make system-wide selection discoverable
+    window.getSelectedCards = function() {
+        return Array.from(document.querySelectorAll(".photo-card.selected"));
+    };
+
+    // -------------------------------------------
+    // BASIC DRAG + SELECT BEHAVIOR FOR CLONES
+    // -------------------------------------------
     function attachCloneBehavior(card) {
-        // Mark it as a clone so we know we manage its drag
-        card.dataset.isClone = "1";
 
         let isDragging = false;
         let dragStartX = 0;
@@ -33,46 +39,38 @@ window.addEventListener("load", function() {
         let cardStartX = 0;
         let cardStartY = 0;
 
-        // Ensure dataset.x / y exist
         if (!card.dataset.x) card.dataset.x = "0";
         if (!card.dataset.y) card.dataset.y = "0";
         if (!card.dataset.rotation) card.dataset.rotation = "0";
 
         function updateTransform() {
-            const x = parseFloat(card.dataset.x) || 0;
-            const y = parseFloat(card.dataset.y) || 0;
-            const rotation = parseFloat(card.dataset.rotation) || 0;
-            card.style.transform = `translate(${x}px, ${y}px) rotate(${rotation}deg)`;
+            const x = parseFloat(card.dataset.x);
+            const y = parseFloat(card.dataset.y);
+            const rot = parseFloat(card.dataset.rotation);
+            card.style.transform = `translate(${x}px, ${y}px) rotate(${rot}deg)`;
         }
 
         updateTransform();
 
-        // Mouse down to start drag
-        card.addEventListener("mousedown", (e) => {
-            // Left button only and not on resize/rotate handles
+        card.addEventListener("mousedown", e => {
             if (e.button !== 0) return;
-            if (e.target.closest(".resize-handle") || e.target.closest(".rotate-handle")) {
-                return;
-            }
 
+            // Skip if clicking resize/rotate handles
+            if (e.target.closest(".resize-handle") || e.target.closest(".rotate-handle")) return;
+
+            selectCard(card, e.shiftKey);
+
+            // Begin drag
             isDragging = true;
             dragStartX = e.clientX;
             dragStartY = e.clientY;
-            cardStartX = parseFloat(card.dataset.x) || 0;
-            cardStartY = parseFloat(card.dataset.y) || 0;
-
-            // Also handle selection on click
-            if (!e.shiftKey) {
-                document.querySelectorAll(".photo-card.selected").forEach(c => {
-                    if (c !== card) c.classList.remove("selected");
-                });
-            }
-            card.classList.add("selected");
+            cardStartX = parseFloat(card.dataset.x);
+            cardStartY = parseFloat(card.dataset.y);
 
             e.preventDefault();
         });
 
-        document.addEventListener("mousemove", (e) => {
+        document.addEventListener("mousemove", e => {
             if (!isDragging) return;
 
             const dx = e.clientX - dragStartX;
@@ -80,6 +78,7 @@ window.addEventListener("load", function() {
 
             card.dataset.x = cardStartX + dx;
             card.dataset.y = cardStartY + dy;
+
             updateTransform();
         });
 
@@ -87,18 +86,10 @@ window.addEventListener("load", function() {
             isDragging = false;
         });
 
-        // Simple click selection (for cases where drag didn't start)
-        card.addEventListener("click", (e) => {
+        // Normal click selection
+        card.addEventListener("click", e => {
             if (e.button !== 0) return;
-            // Ignore if coming from context menu open
-            if (e.detail === 0) return;
-
-            if (!e.shiftKey) {
-                document.querySelectorAll(".photo-card.selected").forEach(c => {
-                    if (c !== card) c.classList.remove("selected");
-                });
-            }
-            card.classList.add("selected");
+            selectCard(card, e.shiftKey);
         });
     }
 
@@ -108,26 +99,22 @@ window.addEventListener("load", function() {
     document.addEventListener("contextmenu", e => {
 
         const card = e.target.closest(".photo-card");
-        if (!card) return; // let normal right-click happen for everything else
+        if (!card) return;
 
         e.preventDefault();
         targetCard = card;
 
-        // Position the menu
         menu.style.left = `${e.pageX}px`;
         menu.style.top = `${e.pageY}px`;
         menu.style.display = "block";
     });
 
-    // -------------------------------------------
-    // CLICK ANYWHERE → HIDE MENU
-    // -------------------------------------------
     document.addEventListener("click", () => {
         menu.style.display = "none";
     });
 
     // -------------------------------------------
-    // CONTEXT MENU OPTION HANDLING
+    // CONTEXT MENU HANDLE ACTIONS
     // -------------------------------------------
     menu.addEventListener("click", e => {
 
@@ -139,18 +126,13 @@ window.addEventListener("load", function() {
 
         switch (action) {
 
-            // --------------------------------------------------
-            // DELETE CARD
-            // --------------------------------------------------
-            case "delete": {
+            // DELETE
+            case "delete":
                 targetCard.remove();
                 break;
-            }
 
-            // --------------------------------------------------
             // REMOVE FRAME ONLY
-            // --------------------------------------------------
-            case "remove-frame": {
+            case "remove-frame":
                 const frame = targetCard.querySelector(".photo-frame");
                 if (frame) {
                     frame.style.boxShadow = "none";
@@ -159,37 +141,30 @@ window.addEventListener("load", function() {
                     frame.style.setProperty("--frame-thickness", "0px");
                 }
                 break;
-            }
 
-            // --------------------------------------------------
-            // DUPLICATE CARD — clone with full basic behavior
-            // --------------------------------------------------
-            case "duplicate": {
+            // DUPLICATE WITH FULL FUNCTIONALITY
+            case "duplicate":
+
                 const clone = targetCard.cloneNode(true);
 
-                // Current position
-                const x = parseFloat(targetCard.dataset.x) || 0;
-                const y = parseFloat(targetCard.dataset.y) || 0;
-                const rotation = targetCard.dataset.rotation || "0";
+                const x = parseFloat(targetCard.dataset.x);
+                const y = parseFloat(targetCard.dataset.y);
+                const rot = parseFloat(targetCard.dataset.rotation) || 0;
 
-                // Offset so we can see it
-                const newX = x + 30;
-                const newY = y + 30;
+                clone.dataset.x = x + 30;
+                clone.dataset.y = y + 30;
+                clone.dataset.rotation = rot;
 
-                clone.dataset.x = newX;
-                clone.dataset.y = newY;
-                clone.dataset.rotation = rotation;
+                clone.style.transform =
+                    `translate(${x + 30}px, ${y + 30}px) rotate(${rot}deg)`;
 
-                clone.style.transform = `translate(${newX}px, ${newY}px) rotate(${rotation}deg)`;
+                document.getElementById("photo-container").appendChild(clone);
 
-                const container = document.getElementById("photo-container");
-                container.appendChild(clone);
-
-                // Attach our own drag + select behavior to the clone
+                // ⭐ NOW THE KEY PART:
+                // give duplicate full dragging + selection
                 attachCloneBehavior(clone);
 
                 break;
-            }
         }
 
         targetCard = null;
