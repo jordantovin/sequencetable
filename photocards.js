@@ -1,6 +1,7 @@
 /* ==========================================================
    PHOTO CARDS — FULL MERGED VERSION
    Adds .photo-dimensions + updateCardDimensionsText integration
+   Dimensions now measure PICTURE only (not frame/matte)
    ========================================================== */
 
 (function() {
@@ -98,6 +99,11 @@
             const ratio = img.naturalHeight / img.naturalWidth;
             img.style.width = "300px";
             img.style.height = `${300 * ratio}px`;
+            
+            // Store natural dimensions on the image for dimension calculations
+            img.dataset.naturalWidth = img.naturalWidth;
+            img.dataset.naturalHeight = img.naturalHeight;
+            
             window.updateCardDimensionsText?.(card);
         };
 
