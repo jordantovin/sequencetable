@@ -1,22 +1,24 @@
-// ==========================
-// FRAME LOGIC + WALL SYSTEM
-// with matching physical scale
-// ==========================
+// =====================================================
+// FRAME LOGIC + WALL SYSTEM + DIMENSIONS DISPLAY
+// =====================================================
 
 (function() {
 
-    const applyFrameBtn   = document.getElementById('applyFrameBtn');
+    const applyFrameBtn = document.getElementById('applyFrameBtn');
 
     // WALL INPUTS
     const wallWidthInput  = document.getElementById("wallWidth");
     const wallHeightInput = document.getElementById("wallHeight");
     const wallUnitInput   = document.getElementById("wallUnit");
-
     const buildWallBtn    = document.getElementById("buildWallBtn");
 
-    const contentArea     = document.querySelector(".content-area");
+    // DIMENSIONS TOGGLE
+    const dimensionsToggleBtn = document.getElementById("dimensionsToggleBtn");
+    let showDimensions = false;
 
-    // Make a wall canvas that appears when hammer is clicked
+    const contentArea = document.querySelector(".content-area");
+
+    // Create a wall canvas
     const wallCanvas = document.createElement("div");
     wallCanvas.id = "wallCanvas";
     wallCanvas.style.position = "absolute";
@@ -29,7 +31,7 @@
     wallCanvas.style.zIndex = "0";
     contentArea.appendChild(wallCanvas);
 
-    // Conversion factors to inches for wall
+    // Unit conversion (wall)
     const WALL_UNIT_TO_IN = {
         "in": 1,
         "ft": 12,
@@ -37,18 +39,15 @@
         "m": 39.3701
     };
 
-    // Conversion factors to inches for frame/matte
+    // Unit conversion for frame/matte
     const FRAME_UNIT_TO_IN = {
         "in": 1,
         "mm": 0.0393701,
-        // px is handled specially (no conversion)
-        "px": null
+        "px": null  // raw pixels
     };
 
-    const CAPTION_GAP_PX = 10;
-
-    // current wall scale (pixels per inch)
     let wallScalePxPerInch = 1;
+    const CAPTION_GAP_PX = 10;
 
     // ------------------------------
     // FRAME SETTINGS
@@ -62,13 +61,10 @@
         };
     }
 
-    // Convert a thickness (frame/matte) to pixels, respecting wall scale
+    // Convert thickness to pixels using wall scale
     function thicknessToPx(value, unit) {
-        if (unit === 'px') {
-            return value; // user explicitly wants screen pixels
-        }
-        const factorIn = FRAME_UNIT_TO_IN[unit] || 1;
-        const inches   = value * factorIn;
+        if (unit === 'px') return value;
+        const inches = value * (FRAME_UNIT_TO_IN[unit] || 1);
         return inches * wallScalePxPerInch;
     }
 
@@ -79,118 +75,126 @@
         const photoFrame = card.querySelector('.photo-frame');
         if (!photoFrame) return;
 
-        // get pixel sizes using current wall scale
         const framePx = thicknessToPx(settings.frameThickness, settings.unit);
         const mattePx = thicknessToPx(settings.matteThickness, settings.unit);
 
-        // Matte (inner padding)
+        // Matte padding
         photoFrame.style.padding = `${mattePx}px`;
-        photoFrame.style.backgroundColor = '#FFFFFF';
+        photoFrame.style.background = "#fff";
 
-        // Frame border via box-shadow
-        const frameShadowFinal = `0 0 0 ${framePx}px ${settings.frameColor}`;
-        photoFrame.style.boxShadow = frameShadowFinal;
-
-        // For blue outline offset
+        // Frame box-shadow
+        photoFrame.style.boxShadow = `0 0 0 ${framePx}px ${settings.frameColor}`;
         photoFrame.style.setProperty('--frame-thickness', `${framePx}px`);
 
-        // Caption spacing (frame thickness + fixed gap)
+        // Caption spacing
         photoFrame.style.marginBottom = `${framePx + CAPTION_GAP_PX}px`;
-        const caption = card.querySelector('.photo-caption');
-        if (caption) caption.style.marginTop = '0';
 
         card.dataset.frameSettings = JSON.stringify(settings);
-        photoFrame.classList.add('has-frame');
+        photoFrame.classList.add("has-frame");
+
+        updateCardDimensionsText(card); // UPDATE SIZE IF VISIBLE
     }
 
-    // ------------------------------
-    // APPLY FRAME BUTTON
-    // ------------------------------
     function handleApplyFrameClick() {
-        const cardsToFrame = window.getSelectedCards ? window.getSelectedCards() : [];
-        
-        if (cardsToFrame.length === 0) {
-            console.warn('No photo cards are currently selected.');
-            return;
-        }
-        
-        const settings = getFrameSettings();
-        cardsToFrame.forEach(card => applyFrameToCard(card, settings));
+        const cards = window.getSelectedCards ? window.getSelectedCards() : [];
+        if (!cards.length) return;
 
-        console.log(`Applied frame to ${cardsToFrame.length} selected card(s).`);
+        const settings = getFrameSettings();
+        cards.forEach(c => applyFrameToCard(c, settings));
     }
 
     // ======================================================
-    //                WALL SIZE + RATIO SYSTEM
+    // BUILD WALL + RATIO
     // ======================================================
-
     function buildWallBox() {
-
-        if (!wallWidthInput || !wallHeightInput || !wallUnitInput) return;
 
         let W = parseFloat(wallWidthInput.value);
         let H = parseFloat(wallHeightInput.value);
         let U = wallUnitInput.value;
 
-        if (!W || !H || !WALL_UNIT_TO_IN[U]) {
-            console.warn("Invalid wall dimensions");
-            return;
-        }
+        if (!W || !H) return;
 
-        // Convert to inches
         let W_in = W * WALL_UNIT_TO_IN[U];
         let H_in = H * WALL_UNIT_TO_IN[U];
+        let ratio = W_in / H_in;
 
-        let wallRatio = W_in / H_in;
-
-        // Available browser space (biggest possible wall)
-        const screenW = window.innerWidth  - 80;  // margins
-        const screenH = window.innerHeight - 160; // header space
+        const screenW = window.innerWidth - 80;
+        const screenH = window.innerHeight - 160;
 
         const screenRatio = screenW / screenH;
 
         let renderW, renderH;
-
-        if (wallRatio > screenRatio) {
+        if (ratio > screenRatio) {
             renderW = screenW;
-            renderH = screenW / wallRatio;
+            renderH = screenW / ratio;
         } else {
             renderH = screenH;
-            renderW = screenH * wallRatio;
+            renderW = screenH * ratio;
         }
 
-        // APPLY wall box dimensions
-        wallCanvas.style.width  = `${renderW}px`;
+        wallCanvas.style.width = `${renderW}px`;
         wallCanvas.style.height = `${renderH}px`;
         wallCanvas.style.display = "block";
 
-        // update global scale (pixels per inch)
         wallScalePxPerInch = renderW / W_in;
-        // (renderH / H_in would be equivalent)
 
-        console.log("Wall built:", {
-            wallPhysical: { W_in, H_in },
-            renderPixels: { renderW, renderH },
-            scalePxPerInch: wallScalePxPerInch
+        // Update dimensions for every card
+        document.querySelectorAll(".photo-card").forEach(updateCardDimensionsText);
+    }
+
+    // ======================================================
+    // DIMENSIONS-UNDER-NAME SYSTEM
+    // ======================================================
+
+    function updateCardDimensionsText(card) {
+        if (!showDimensions) {
+            const dim = card.querySelector(".photo-dimensions");
+            if (dim) dim.remove();
+            return;
+        }
+
+        const img = card.querySelector("img");
+        const frame = card.querySelector(".photo-frame");
+
+        if (!img || !frame) return;
+
+        // Physical size calculation
+        const pixelW = img.naturalWidth;
+        const pixelH = img.naturalHeight;
+
+        // Convert px → inches using wall scale
+        const physW_in = (frame.offsetWidth  / wallScalePxPerInch).toFixed(2);
+        const physH_in = (frame.offsetHeight / wallScalePxPerInch).toFixed(2);
+
+        let dim = card.querySelector(".photo-dimensions");
+        if (!dim) {
+            dim = document.createElement("div");
+            dim.className = "photo-dimensions";
+            dim.style.fontSize = "11px";
+            dim.style.marginTop = "4px";
+            dim.style.opacity = "0.7";
+            dim.style.pointerEvents = "none";
+            card.appendChild(dim);
+        }
+
+        dim.textContent = `${physW_in} × ${physH_in} in`;
+    }
+
+    // Toggle dimensions on/off
+    if (dimensionsToggleBtn) {
+        dimensionsToggleBtn.addEventListener("click", () => {
+            showDimensions = !showDimensions;
+            document.querySelectorAll(".photo-card")
+                .forEach(updateCardDimensionsText);
         });
     }
 
-    // ------------------------------
-    // BUILD WALL BUTTON (HAMMER)
-// ------------------------------
-    if (buildWallBtn) {
-        buildWallBtn.addEventListener("click", buildWallBox);
-    }
-
-    // ------------------------------
+    // ======================================================
     // INIT
-    // ------------------------------
+    // ======================================================
     window.addEventListener("load", () => {
-        if (applyFrameBtn) {
-            applyFrameBtn.addEventListener('click', handleApplyFrameClick);
-        }
-        // optional: build a default wall once on load
-        // buildWallBox();
+        if (applyFrameBtn) applyFrameBtn.addEventListener("click", handleApplyFrameClick);
+        if (buildWallBtn) buildWallBtn.addEventListener("click", buildWallBox);
     });
 
 })();
