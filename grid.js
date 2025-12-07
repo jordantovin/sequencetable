@@ -99,7 +99,7 @@
     }
 
     // ------------------------------
-    // Logic to apply the lock state (REPLACED toggleGridLock)
+    // Logic to apply the lock state
     // ------------------------------
     function updateLockState(locked) {
         const lockBtn = document.querySelector('[title="Lock grid"]');
@@ -210,28 +210,44 @@
             if (card === slideCard) return;
 
             const rect = card.getBoundingClientRect();
-            // Check if mouse is near the center of the other card
+            
+            // Check if the cursor is over the target card
             if (
-                e.clientX >= rect.left + rect.width * 0.25 &&
-                e.clientX <= rect.right - rect.width * 0.25 &&
-                e.clientY >= rect.top + rect.height * 0.25 &&
-                e.clientY <= rect.bottom - rect.height * 0.25
+                e.clientX >= rect.left &&
+                e.clientX <= rect.right &&
+                e.clientY >= rect.top &&
+                e.clientY <= rect.bottom
             ) {
-                newTargetIndex = index;
+                // Determine insertion point based on mouse position relative to card center
+                const cardMidX = rect.left + rect.width / 2;
+                
+                // If moving left, insert before the card (index)
+                if (e.clientX < cardMidX) {
+                    newTargetIndex = index;
+                } 
+                // If moving right, insert after the card (index + 1)
+                else {
+                    newTargetIndex = index + 1;
+                }
             }
         });
+        
+        // Correct the target index if it falls after the current index (to maintain smooth flow)
+        if (newTargetIndex > slideIndex) {
+            newTargetIndex--;
+        }
 
         // Perform reorder in real-time if a target is found and it's a new position
         if (newTargetIndex !== -1 && newTargetIndex !== slideIndex) {
             
-            // Re-sequence the array (removes old, inserts new)
+            // 1. Re-sequence the array (removes old, inserts new)
             gridCards.splice(slideIndex, 1);
             gridCards.splice(newTargetIndex, 0, slideCard);
             
-            // Update the slide index
+            // 2. Update the slide index
             slideIndex = newTargetIndex;
             
-            // Re-arrange the grid for the smooth sliding effect
+            // 3. Re-arrange the grid for the smooth sliding effect
             arrangeCardsInGrid(); 
         }
     });
@@ -255,7 +271,7 @@
     });
 
     // ------------------------------
-    // Initialize buttons & state (FIXED click handler)
+    // Initialize buttons & state
     // ------------------------------
     window.addEventListener('load', () => {
         
