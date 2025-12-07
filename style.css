@@ -5,38 +5,35 @@
 }
 
 /* ======================================================= */
-/* 💡 PATCH: Selection Indicator Fix (Using Outline) */
-/* This preserves the custom frame (box-shadow) and adds the blue selection line outside it. */
+/* PERFECT BLUE OUTLINE AROUND THE ENTIRE FRAME ON SELECT */
 /* ======================================================= */
 
-/* Remove border from the main card container */
-.photo-card.selected {
-    border: none; 
+/* Default: no borders */
+.photo-card {
+    border: none !important;
+    outline: none !important;
 }
 
-.photo-card.selected .photo-frame {
-    /* 1. Ensure the frame shadow is NOT wiped out. */
-    box-shadow: var(--custom-frame-shadow);
-    
-    /* 2. Use 'outline' which draws OUTSIDE the box-shadow boundary. */
-    outline: 3px solid #4285F4;
-    outline-offset: 2px; /* Add a small gap between the frame and the outline */
-    
-    /* Clear redundant properties */
-    border: none; 
-}
-
-/* Apply the custom frame shadow set by JavaScript by default, without selection */
 .photo-frame {
+    outline: none !important;
     box-shadow: var(--custom-frame-shadow);
-    /* Ensure the existing frame styles are respected */
-    position: relative;
-    display: inline-block;
-    
-    /* Ensure no default outline is visible when not selected */
-    outline: none; 
 }
 
+/* Selected state: outline wraps around the entire framed card */
+.photo-card.selected {
+    outline: 3px solid #4285F4 !important;
+    outline-offset: 8px !important; /* pushes blue line OUTSIDE the frame */
+    border: none !important;
+}
+
+/* Ensure frame shadow stays intact */
+.photo-card.selected .photo-frame {
+    box-shadow: var(--custom-frame-shadow) !important;
+}
+
+/* ======================================================= */
+/* PAGE & HEADER UI */
+/* ======================================================= */
 
 body {
     font-family: 'Google Sans', 'Roboto', Arial, sans-serif;
@@ -149,7 +146,9 @@ body {
     min-height: 100%;
 }
 
-/* ======================= PHOTO CARD ======================= */
+/* ======================================================= */
+/* PHOTO CARD */
+/* ======================================================= */
 
 .photo-card {
     position: absolute;
@@ -170,7 +169,14 @@ body {
     pointer-events: none;
 }
 
-/* CAPTION BELOW THE IMAGE */
+/* FRAME WRAPPER */
+.photo-frame {
+    position: relative;
+    display: inline-block;
+    background: white;
+}
+
+/* CAPTION */
 .photo-caption {
     position: static !important;
     padding: 8px 12px;
@@ -188,7 +194,9 @@ body {
     pointer-events: none;
 }
 
-/* ======================= RESIZE & ROTATE HANDLES ======================= */
+/* ======================================================= */
+/* ROTATE + RESIZE HANDLES */
+/* ======================================================= */
 
 .resize-handle {
     position: absolute;
@@ -244,7 +252,7 @@ body {
     opacity: 1;
 }
 
-/* SHOW HANDLES ON SELECT (in addition to hover) */
+/* SHOW HANDLES ON SELECT */
 .photo-card.selected .resize-handle,
 .photo-card.selected .rotate-handle {
     opacity: 1;
