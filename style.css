@@ -1,267 +1,461 @@
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+: * {
+
+    margin: 0;
+
+    padding: 0;
+
+    box-sizing: border-box;
+
 }
+
+
 
 body {
-    font-family: 'Google Sans', 'Roboto', Arial, sans-serif;
-    background-color: #f9f9f9; /* Fixed incorrect quote */
-    overflow: hidden;
+
+    font-family: 'Google Sans', 'Roboto', Arial, sans-serif;
+
+    background-color: #f9f9f9';
+
+    overflow: hidden;
+
 }
+
+
 
 .header {
-    background-color: #fff;
-    border-bottom: 1px solid #dadce0;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 10000;
+
+    background-color: #fff;
+
+    border-bottom: 1px solid #dadce0;
+
+    position: fixed;
+
+    top: 0;
+
+    left: 0;
+
+    right: 0;
+
+    z-index: 10000;
+
 }
+
+
 
 .menu-bar {
-    display: flex;
-    align-items: center;
-    padding: 8px 16px;
-    gap: 8px;
+
+    display: flex;
+
+    align-items: center;
+
+    padding: 8px 16px;
+
+    gap: 8px;
+
 }
+
+
 
 .doc-title {
-    font-size: 18px;
-    color: #202124;
-    padding: 8px 12px;
-    cursor: pointer;
-    transition: background-color 0.2s;
+
+    font-size: 18px;
+
+    color: #202124;
+
+    padding: 8px 12px;
+
+    cursor: pointer;
+
+    transition: background-color 0.2s;
+
 }
+
+
 
 .doc-title:hover {
-    background-color: #f1f3f4;
+
+    background-color: #f1f3f4;
+
 }
+
+
 
 .menu-items {
-    display: flex;
-    gap: 4px;
-    margin-left: 8px;
+
+    display: flex;
+
+    gap: 4px;
+
+    margin-left: 8px;
+
 }
+
+
 
 .menu-item {
-    padding: 8px 12px;
-    color: #444746;
-    font-size: 14px;
-    cursor: pointer;
-    transition: background-color 0.2s;
+
+    padding: 8px 12px;
+
+    color: #444746;
+
+    font-size: 14px;
+
+    cursor: pointer;
+
+    transition: background-color 0.2s;
+
 }
+
+
 
 .menu-item:hover {
-    background-color: #f1f3f4; /* Fixed incorrect quote */
+
+    background-color: #f1f3f4';
+
 }
+
+
 
 .toolbar {
-    /* 💡 FIX: Allow the toolbar items to wrap if they exceed the width 
-       or use flex-wrap: nowrap and overflow-x: auto; if you prefer horizontal scrolling. */
+
     display: flex;
+
     align-items: center;
+
     padding: 8px 16px;
-    background-color: #fff; /* Fixed incorrect quote */
+
+    background-color: #fff';
+
     gap: 4px;
-    border-bottom: 1px solid #dadce0; /* Fixed incorrect quote */
-    flex-wrap: wrap; 
+
+    border-bottom: 1px solid #dadce0';
+
 }
+
+
 
 .toolbar-icon {
-    width: 36px;
-    height: 36px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: background-color 0.2s;
-    color: #444746; /* Fixed incorrect quote */
-    font-size: 20px;
-    position: relative;
+
+    width: 36px;
+
+    height: 36px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    cursor: pointer;
+
+    transition: background-color 0.2s;
+
+    color: #444746';
+
+    font-size: 20px;
+
+    position: relative;
+
 }
+
+
 
 .toolbar-icon:hover {
-    background-color: #f1f3f4;
+
+    background-color: #f1f3f4;
+
 }
+
+
 
 .toolbar-icon svg {
-    width: 20px;
-    height: 20px;
-    fill: #444746;
+
+    width: 20px;
+
+    height: 20px;
+
+    fill: #444746;
+
 }
+
+
 
 .divider {
-    width: 1px;
-    height: 24px;
-    background-color: #dadce0;
-    margin: 0 4px;
+
+    width: 1px;
+
+    height: 24px;
+
+    background-color: #dadce0;
+
+    margin: 0 4px;
+
 }
+
+
 
 .content-area {
-    position: fixed;
-    top: 120px;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    overflow: hidden;
+
+    position: fixed;
+
+    top: 120px;
+
+    left: 0;
+
+    right: 0;
+
+    bottom: 0;
+
+    overflow: hidden;
+
 }
+
+
 
 .content-area.scrollable {
-    overflow: auto;
+
+    overflow: auto;
+
 }
 
+
+
 #photo-container {
-    position: relative;
-    width: 100%;
-    min-height: 100%;
+
+    position: relative;
+
+    width: 100%;
+
+    min-height: 100%;
+
 }
+
+
 
 /* ======================= PHOTO CARD ======================= */
 
+
+
 .photo-card {
-    position: absolute;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-    cursor: move;
-    user-select: none;
-    z-index: 1000;
-    transform-origin: center center;
-    /* 💡 FIX: Ensure smooth sliding (was 0.1s, changed to standard 0.3s for better fluidity) */
-    transition: transform 0.3s ease-out; 
+
+    position: absolute;
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+    gap: 6px;
+
+    cursor: move;
+
+    user-select: none;
+
+    z-index: 1000;
+
+    transform-origin: center center;
+
+    transition: transform 0.1s ease-out;
+
 }
+
+
 
 /* IMAGE WRAPPER TO HOLD HANDLES */
+
 .photo-frame {
-    position: relative;
-    display: inline-block;
-    /* 💡 NEW: Ensure smooth application of frame box-shadow */
-    transition: box-shadow 0.3s ease; 
+
+    position: relative;
+
+    display: inline-block;
+
 }
+
+
 
 /* IMAGE */
+
 .photo-card img {
-    display: block;
-    pointer-events: none;
+
+    display: block;
+
+    pointer-events: none;
+
 }
+
+
 
 /* CAPTION BELOW THE IMAGE */
+
 .photo-caption {
-    position: static !important;
-    padding: 8px 12px;
-    margin-top: 4px;
 
-    background: #e0e0e0;
-    color: #202124;
+    position: static !important;
 
-    font-family: 'Courier New', monospace;
-    font-size: 14px;
-    text-align: center;
+    padding: 8px 12px;
 
-    border-radius: 4px;
-    width: fit-content;
-    pointer-events: none;
-}
+    margin-top: 4px;
 
-/* ======================= FRAME & MATTE CONTROLS (NEW) ======================= */
 
-/* Styles to clean up the appearance and alignment of the new inputs */
-.frame-setting-input {
-    border: 1px solid #dadce0;
-    padding: 2px 4px;
+
+    background: #e0e0e0;
+
+    color: #202124;
+
+
+
+    font-family: 'Courier New', monospace;
+
+    font-size: 14px;
+
+    text-align: center;
+
+
+
     border-radius: 4px;
-    height: 24px; 
+
+    width: fit-content;
+
+    pointer-events: none;
+
 }
 
-/* Style the color pickers */
-#frameColor, #matteColor {
-    width: 24px;
-    height: 24px;
-    padding: 0;
-    border: none;
-    background: none;
-    cursor: pointer;
-}
-#frameColor::-webkit-color-swatch-wrapper,
-#matteColor::-webkit-color-swatch-wrapper {
-    padding: 0;
-}
-#frameColor::-webkit-color-swatch,
-#matteColor::-webkit-color-swatch {
-    border: 1px solid #dadce0;
-    border-radius: 4px;
-}
 
 
 /* ======================= RESIZE & ROTATE HANDLES ======================= */
 
+
+
 .resize-handle {
-    position: absolute;
-    bottom: 6px;
-    right: 6px;
 
-    width: 32px;
-    height: 32px;
+    position: absolute;
 
-    background: rgba(255, 255, 255, 0.9);
-    border: 1px solid #ccc;
-    font-size: 20px;
+    bottom: 6px;
 
-    cursor: nwse-resize;
-    color: #5f6368;
+    right: 6px;
 
-    display: flex;
-    align-items: center;
-    justify-content: center;
 
-    opacity: 0;
-    transition: opacity 0.2s;
-    z-index: 20;
+
+    width: 32px;
+
+    height: 32px;
+
+
+
+    background: rgba(255, 255, 255, 0.9);
+
+    border: 1px solid #ccc;
+
+    font-size: 20px;
+
+
+
+    cursor: nwse-resize;
+
+    color: #5f6368;
+
+
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+
+
+    opacity: 0;
+
+    transition: opacity 0.2s;
+
+    z-index: 20;
+
 }
+
+
 
 .rotate-handle {
-    position: absolute;
-    top: 6px;
-    left: 6px;
 
-    width: 32px;
-    height: 32px;
+    position: absolute;
 
-    background: rgba(255, 255, 255, 0.9);
-    border: 1px solid #ccc;
-    font-size: 20px;
+    top: 6px;
 
-    cursor: grab;
-    color: #5f6368;
+    left: 6px;
 
-    display: flex;
-    align-items: center;
-    justify-content: center;
 
-    opacity: 0;
-    transition: opacity 0.2s;
-    z-index: 20;
+
+    width: 32px;
+
+    height: 32px;
+
+
+
+    background: rgba(255, 255, 255, 0.9);
+
+    border: 1px solid #ccc;
+
+    font-size: 20px;
+
+
+
+    cursor: grab;
+
+    color: #5f6368;
+
+
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+
+
+    opacity: 0;
+
+    transition: opacity 0.2s;
+
+    z-index: 20;
+
 }
+
+
 
 /* SHOW HANDLES ON HOVER */
+
 .photo-card:hover .resize-handle,
+
 .photo-card:hover .rotate-handle {
-    opacity: 1;
+
+    opacity: 1;
+
 }
+
+
 
 .resize-handle:hover {
-    background: #4285f4;
-    color: #fff;
+
+    background: #4285f4;
+
+    color: #fff;
+
 }
+
+
 
 .rotate-handle:hover {
-    background: #34a853;
-    color: #fff;
+
+    background: #34a853;
+
+    color: #fff;
+
 }
 
+
+
 .rotate-handle:active {
-    cursor: grabbing;
+
+    cursor: grabbing;
+
 }
