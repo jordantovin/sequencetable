@@ -5,16 +5,16 @@
 }
 
 /* ======================================================= */
-/* PERFECT BLUE OUTLINE ONLY AROUND THE FRAME — NOT CAPTION */
+/* PERFECT BLUE OUTLINE OUTSIDE THE GREY FRAME (NOT CAPTION) */
 /* ======================================================= */
 
-/* Photo-card never gets an outline */
+/* Photo-card never gets the outline */
 .photo-card {
     border: none !important;
     outline: none !important;
 }
 
-/* Frame wrapper gets frame shadow normally */
+/* Frame wrapper (receives frame shadow + selection outline) */
 .photo-frame {
     outline: none !important;
     box-shadow: var(--custom-frame-shadow);
@@ -22,13 +22,13 @@
     display: inline-block;
 }
 
-/* Selected state: ONLY outline the frame, NOT the caption */
+/* Selected: apply outline OUTSIDE the frame using JS-provided --frame-thickness */
 .photo-card.selected .photo-frame {
     outline: 3px solid #4285F4 !important;
-    outline-offset: 6px !important; /* moves blue line outside grey frame */
+    outline-offset: calc(var(--frame-thickness) + 4px) !important;
 }
 
-/* Ensure caption is NOT affected */
+/* Ensure caption is never outlined */
 .photo-card.selected {
     outline: none !important;
     border: none !important;
