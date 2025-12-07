@@ -6,7 +6,7 @@
 
 body {
     font-family: 'Google Sans', 'Roboto', Arial, sans-serif;
-    background-color: #f9f9f9;
+    background-color: #f9f9f9';
     overflow: hidden;
 }
 
@@ -54,16 +54,16 @@ body {
 }
 
 .menu-item:hover {
-    background-color: #f1f3f4;
+    background-color: #f1f3f4';
 }
 
 .toolbar {
     display: flex;
     align-items: center;
     padding: 8px 16px;
-    background-color: #fff;
+    background-color: #fff';
     gap: 4px;
-    border-bottom: 1px solid #dadce0;
+    border-bottom: 1px solid #dadce0';
 }
 
 .toolbar-icon {
@@ -74,7 +74,7 @@ body {
     justify-content: center;
     cursor: pointer;
     transition: background-color 0.2s;
-    color: #444746;
+    color: #444746';
     font-size: 20px;
     position: relative;
 }
@@ -115,109 +115,116 @@ body {
     min-height: 100%;
 }
 
-/* ============ PHOTO CARD BELOW-CAPTION LAYOUT ============ */
+/* ======================= PHOTO CARD ======================= */
 
 .photo-card {
     position: absolute;
     display: flex;
-    flex-direction: column;   /* stack image + caption vertically */
+    flex-direction: column;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     cursor: move;
     user-select: none;
     z-index: 1000;
     transform-origin: center center;
 }
 
+/* IMAGE WRAPPER TO HOLD HANDLES */
 .photo-frame {
     position: relative;
     display: inline-block;
 }
 
-.photo-card.drag-over {
-    border: 2px dashed #4285f4;
-}
-
+/* IMAGE */
 .photo-card img {
     display: block;
     pointer-events: none;
 }
 
-/* ------- NEW CAPTION SYSTEM BELOW IMAGE -------- */
-
+/* CAPTION BELOW THE IMAGE */
 .photo-caption {
     position: static !important;
-    margin-top: 4px;
     padding: 8px 12px;
+    margin-top: 4px;
+
+    background: #e0e0e0;
     color: #202124;
-    font-family: 'Courier New', Courier, monospace;
+
+    font-family: 'Courier New', monospace;
     font-size: 14px;
     text-align: center;
-    width: fit-content;       /* shrink wrap */
+
+    border-radius: 4px;
+    width: fit-content;
     pointer-events: none;
-    box-shadow: none;         /* removed overlay look */
 }
 
-/* ========================================================= */
+/* ======================= RESIZE & ROTATE HANDLES ======================= */
 
 .resize-handle {
     position: absolute;
-    bottom: 8px;
-    right: 8px;
+    bottom: 6px;
+    right: 6px;
+
     width: 32px;
     height: 32px;
+
     background: rgba(255, 255, 255, 0.9);
     border: 1px solid #ccc;
     font-size: 20px;
+
     cursor: nwse-resize;
     color: #5f6368;
+
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 10;
-    user-select: none;
+
     opacity: 0;
     transition: opacity 0.2s;
+    z-index: 20;
 }
 
-.photo-card:hover .resize-handle {
+.rotate-handle {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+
+    width: 32px;
+    height: 32px;
+
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid #ccc;
+    font-size: 20px;
+
+    cursor: grab;
+    color: #5f6368;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    opacity: 0;
+    transition: opacity 0.2s;
+    z-index: 20;
+}
+
+/* SHOW HANDLES ON HOVER */
+.photo-card:hover .resize-handle,
+.photo-card:hover .rotate-handle {
     opacity: 1;
 }
 
 .resize-handle:hover {
     background: #4285f4;
-    color: white;
-}
-
-.rotate-handle {
-    position: absolute;
-    top: 8px;
-    left: 8px;
-    width: 32px;
-    height: 32px;
-    background: rgba(255, 255, 255, 0.9);
-    border: 1px solid #ccc;
-    font-size: 20px;
-    cursor: grab;
-    color: #5f6368;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 10;
-    user-select: none;
-    opacity: 0;
-    transition: opacity 0.2s;
-}
-
-.photo-card:hover .rotate-handle {
-    opacity: 1;
-}
-
-.rotate-handle:active {
-    cursor: grabbing;
+    color: #fff;
 }
 
 .rotate-handle:hover {
     background: #34a853;
-    color: white;
+    color: #fff;
+}
+
+.rotate-handle:active {
+    cursor: grabbing;
 }
