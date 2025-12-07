@@ -127,7 +127,6 @@ body {
     user-select: none;
     z-index: 1000;
     transform-origin: center center;
-    transition: transform 0.3s ease-out;
 }
 
 /* IMAGE WRAPPER TO HOLD HANDLES */
