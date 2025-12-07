@@ -37,7 +37,7 @@ window.addEventListener("load", function() {
     });
 
     // -------------------------------------------
-    // CLICK INSIDE CONTEXT MENU
+    // CONTEXT MENU OPTION HANDLING
     // -------------------------------------------
     menu.addEventListener("click", e => {
 
@@ -60,6 +60,7 @@ window.addEventListener("load", function() {
             // REMOVE FRAME ONLY
             // --------------------------------------------------
             case "remove-frame":
+
                 const frame = targetCard.querySelector(".photo-frame");
                 if (frame) {
                     frame.style.boxShadow = "none";
@@ -67,16 +68,17 @@ window.addEventListener("load", function() {
                     frame.style.background = "transparent";
                     frame.style.setProperty("--frame-thickness", "0px");
                 }
+
                 break;
 
             // --------------------------------------------------
-            // DUPLICATE CARD — FULL FUNCTIONALITY CLONE
+            // DUPLICATE CARD — Full Functional Clone
             // --------------------------------------------------
             case "duplicate":
 
                 const clone = targetCard.cloneNode(true);
 
-                // Position offset so the duplicate is visible
+                // Position offset so clone doesn't overlap
                 const x = parseFloat(targetCard.dataset.x) || 0;
                 const y = parseFloat(targetCard.dataset.y) || 0;
 
@@ -84,16 +86,16 @@ window.addEventListener("load", function() {
                 clone.dataset.y = y + 30;
 
                 const rotation = clone.dataset.rotation || "0";
-                clone.style.transform = `translate(${x + 30}px, ${y + 30}px) rotate(${rotation}deg)`;
+                clone.style.transform =
+                    `translate(${x + 30}px, ${y + 30}px) rotate(${rotation}deg)`;
 
-                const container = document.getElementById("photo-container");
-                container.appendChild(clone);
+                document.getElementById("photo-container").appendChild(clone);
 
-                // ⭐ Reinitialize full card functionality if available
+                // ⭐ FULL FUNCTIONALITY RESTORED HERE
                 if (window.initializePhotoCard) {
                     window.initializePhotoCard(clone);
                 } else {
-                    console.warn("⚠️ No initializePhotoCard() found. Duplicate will not have full functionality.");
+                    console.warn("⚠️ Missing initializePhotoCard(). Duplicate will not be interactive.");
                 }
 
                 break;
