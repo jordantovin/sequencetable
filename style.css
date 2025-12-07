@@ -5,30 +5,33 @@
 }
 
 /* ======================================================= */
-/* PERFECT BLUE OUTLINE AROUND THE ENTIRE FRAME ON SELECT */
+/* PERFECT BLUE OUTLINE ONLY AROUND THE FRAME — NOT CAPTION */
 /* ======================================================= */
 
-/* Default: no borders */
+/* Photo-card never gets an outline */
 .photo-card {
     border: none !important;
     outline: none !important;
 }
 
+/* Frame wrapper gets frame shadow normally */
 .photo-frame {
     outline: none !important;
     box-shadow: var(--custom-frame-shadow);
+    position: relative;
+    display: inline-block;
 }
 
-/* Selected state: outline wraps around the entire framed card */
-.photo-card.selected {
-    outline: 3px solid #4285F4 !important;
-    outline-offset: 8px !important; /* pushes blue line OUTSIDE the frame */
-    border: none !important;
-}
-
-/* Ensure frame shadow stays intact */
+/* Selected state: ONLY outline the frame, NOT the caption */
 .photo-card.selected .photo-frame {
-    box-shadow: var(--custom-frame-shadow) !important;
+    outline: 3px solid #4285F4 !important;
+    outline-offset: 6px !important; /* moves blue line outside grey frame */
+}
+
+/* Ensure caption is NOT affected */
+.photo-card.selected {
+    outline: none !important;
+    border: none !important;
 }
 
 /* ======================================================= */
@@ -169,14 +172,7 @@ body {
     pointer-events: none;
 }
 
-/* FRAME WRAPPER */
-.photo-frame {
-    position: relative;
-    display: inline-block;
-    background: white;
-}
-
-/* CAPTION */
+/* CAPTION BELOW IMAGE */
 .photo-caption {
     position: static !important;
     padding: 8px 12px;
