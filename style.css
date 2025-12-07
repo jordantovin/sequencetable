@@ -8,13 +8,11 @@
 /* PERFECT BLUE OUTLINE OUTSIDE THE GREY FRAME (NOT CAPTION) */
 /* ======================================================= */
 
-/* Photo-card never gets the outline */
 .photo-card {
     border: none !important;
     outline: none !important;
 }
 
-/* Frame wrapper (receives frame shadow + selection outline) */
 .photo-frame {
     outline: none !important;
     box-shadow: var(--custom-frame-shadow);
@@ -22,13 +20,11 @@
     display: inline-block;
 }
 
-/* Selected: apply outline OUTSIDE the frame using JS-provided --frame-thickness */
 .photo-card.selected .photo-frame {
     outline: 3px solid #4285F4 !important;
     outline-offset: calc(var(--frame-thickness) + 4px) !important;
 }
 
-/* Ensure caption is never outlined */
 .photo-card.selected {
     outline: none !important;
     border: none !important;
@@ -110,7 +106,6 @@ body {
     transition: background-color 0.2s;
     color: #444746;
     font-size: 20px;
-    position: relative;
     border-radius: 6px;
 }
 
@@ -156,31 +151,32 @@ body {
     color: #555;
 }
 
-/* Color input */
+/* COLOR PICKER — circular */
 .color-input {
     width: 26px;
     height: 26px;
     padding: 0;
     border: none;
     cursor: pointer;
-    border-radius: 4px;
+    border-radius: 50%;         /* 🔥 circle */
     background: none;
+    overflow: hidden;           /* ensures circle crop on native UI */
 }
 
-/* Number input */
+/* NUMBER INPUT — square w/ 2px radius */
 .number-input {
     width: 48px;
     padding: 4px 2px;
     font-size: 13px;
-    border-radius: 4px;
+    border-radius: 2px;         /* 🔥 subtle rounded edges */
     border: 1px solid #ccc;
+    text-align: center;
 }
 
-/* Unit dropdown */
 .unit-select {
     padding: 4px 6px;
     font-size: 13px;
-    border-radius: 4px;
+    border-radius: 2px;         /* match the number-input */
     border: 1px solid #ccc;
 }
 
@@ -220,17 +216,15 @@ body {
     transition: transform 0.1s ease-out;
 }
 
-/* IMAGE */
 .photo-card img {
     display: block;
     pointer-events: none;
 }
 
-/* CAPTION BELOW IMAGE */
 .photo-caption {
     position: static !important;
     padding: 8px 12px;
-    margin-top: 0px;
+    margin-top: 0;
 
     background: #e0e0e0;
     color: #202124;
@@ -256,13 +250,12 @@ body {
     width: 32px;
     height: 32px;
 
-    background: rgba(255, 255, 255, 0.9);
+    background: rgba(255,255,255,0.9);
     border: 1px solid #ccc;
     font-size: 20px;
 
     cursor: nwse-resize;
     color: #5f6368;
-
     display: flex;
     align-items: center;
     justify-content: center;
@@ -280,13 +273,12 @@ body {
     width: 32px;
     height: 32px;
 
-    background: rgba(255, 255, 255, 0.9);
+    background: rgba(255,255,255,0.9);
     border: 1px solid #ccc;
     font-size: 20px;
 
     cursor: grab;
     color: #5f6368;
-
     display: flex;
     align-items: center;
     justify-content: center;
@@ -296,13 +288,11 @@ body {
     z-index: 20;
 }
 
-/* SHOW HANDLES ON HOVER */
 .photo-card:hover .resize-handle,
 .photo-card:hover .rotate-handle {
     opacity: 1;
 }
 
-/* SHOW HANDLES ON SELECT */
 .photo-card.selected .resize-handle,
 .photo-card.selected .rotate-handle {
     opacity: 1;
