@@ -202,11 +202,17 @@
     wallUnitInput.addEventListener("change", updateWall);
 
     buildWallBtn.addEventListener("click", () => {
-        wall.style.display = "block";
-        updateWall();
+        if (wall.style.display === "block") {
+            // Hide the wall
+            wall.style.display = "none";
+        } else {
+            // Show and build the wall
+            wall.style.display = "block";
+            updateWall();
+        }
     });
 
     window.addEventListener("resize", updateWall);
-    window.addEventListener("load", updateWall);
+    // Wall is hidden by default - only shown when hammer button is clicked
 
 })();
