@@ -171,14 +171,20 @@ body {
 .photo-card {
     position: absolute;
     user-select: none;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0px;
-
+    display: inline-block;
     cursor: move;
     transform-origin: center center;
     z-index: 9999 !important;
+}
+
+.photo-card > * {
+    display: block;
+    margin: 0;
+}
+
+.photo-card .photo-caption,
+.photo-card .photo-dimensions {
+    margin-top: 6px;
 }
 
 .photo-frame {
@@ -189,7 +195,7 @@ body {
 
 .photo-card.selected .photo-frame {
     outline: 3px solid #4285f4;
-    outline-offset: calc(var(--frame-thickness) + 4px);
+    outline-offset: 2px;
 }
 
 .photo-caption {
@@ -201,6 +207,7 @@ body {
     background: transparent;
     border-radius: 0;
     pointer-events: none;
+    text-align: center;
 }
 
 /* =============================== */
