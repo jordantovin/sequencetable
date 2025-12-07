@@ -1,7 +1,6 @@
 /* ==========================================================
    PHOTO CARDS — FULL MERGED VERSION
-   Adds .photo-dimensions + updateCardDimensionsText integration
-   Dimensions now measure PICTURE only (not frame/matte)
+   Dimensions show PICTURE and FRAME separately (two lines)
    ========================================================== */
 
 (function() {
@@ -253,19 +252,19 @@
        HELPERS
        ========================================================== */
     
-    // Helper function to get picture and frame dimensions
-    // This can be called by window.updateCardDimensionsText
+    // Helper function to get picture and frame dimensions separately
+    // Returns object with picture and frame measurements
     window.getCardDimensions = function(card) {
         const img = card.querySelector("img");
         const frame = card.querySelector(".photo-frame");
         
         if (!img || !frame) return null;
         
-        // Picture dimensions (actual image only)
+        // Picture dimensions (actual image only - what you see in the photo)
         const pictureWidth = img.offsetWidth;
         const pictureHeight = img.offsetHeight;
         
-        // Frame dimensions (includes matte and frame border)
+        // Frame dimensions (includes matte and frame border - total framed size)
         const frameWidth = frame.offsetWidth;
         const frameHeight = frame.offsetHeight;
         
@@ -356,6 +355,8 @@
             addPhotosFromCSV(1);
 
         const namesBtn = document.querySelector('[title="Names"]');
-        namesBtn.onclick = toggleNamesVisibility;
+        if (namesBtn) {
+            namesBtn.onclick = toggleNamesVisibility;
+        }
     };
 })();
