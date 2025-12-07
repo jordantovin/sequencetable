@@ -115,10 +115,12 @@ body {
     min-height: 100%;
 }
 
+/* ============ PHOTO CARD BELOW-CAPTION LAYOUT ============ */
+
 .photo-card {
     position: absolute;
     display: flex;
-    flex-direction: column;
+    flex-direction: column;   /* stack image + caption vertically */
     align-items: center;
     gap: 8px;
     cursor: move;
@@ -141,24 +143,28 @@ body {
     pointer-events: none;
 }
 
+/* ------- NEW CAPTION SYSTEM BELOW IMAGE -------- */
+
 .photo-caption {
+    position: static !important;
+    margin-top: 4px;
+    padding: 8px 12px;
+
+    background: #e0e0e0;     /* solid grey block */
+    color: #202124;
+
     font-family: 'Courier New', Courier, monospace;
     font-size: 14px;
-    color: #202124;
+
     text-align: center;
-    width: 100%;
-    position: absolute;
-    bottom: 8px;
-    left: 8px;
-    right: 8px;
-    padding: 6px 10px;
-    background: rgba(0, 0, 0, 0.6);
-    color: #fff;
-    font-size: 14px;
-    border-radius: 6px;
+    width: fit-content;       /* shrink wrap */
+    border-radius: 4px;
+
     pointer-events: none;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+    box-shadow: none;         /* removed overlay look */
 }
+
+/* ========================================================= */
 
 .resize-handle {
     position: absolute;
