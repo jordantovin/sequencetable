@@ -12,7 +12,46 @@
     let resizeStartHeight = 0;
 
     let areNamesVisible = true;
+    
+    // 💡 NEW: Selection Tracking
+    const selectedCards = new Set();
 
+    /* ============ SELECTION FUNCTIONS ============ */
+    
+    // Function to handle adding/removing the 'selected' class
+    function handleCardSelection(card, event) {
+        // Prevent selection when dragging/resizing
+        if (event.target.closest('.resize-handle') || event.target.closest('.rotate-handle')) {
+            return;
+        }
+
+        const isCurrentlySelected = card.classList.contains('selected');
+        
+        // Handle multi-select with Ctrl/Cmd or Shift
+        if (!event.ctrlKey && !event.metaKey && !event.shiftKey) {
+            // Clear all others unless the clicked card was already the only one selected
+            if (!isCurrentlySelected || selectedCards.size > 1) {
+                selectedCards.forEach(c => {
+                    c.classList.remove('selected');
+                });
+                selectedCards.clear();
+            }
+        }
+        
+        // Toggle selection status
+        if (isCurrentlySelected) {
+            card.classList.remove('selected');
+            selectedCards.delete(card);
+        } else {
+            card.classList.add('selected');
+            selectedCards.add(card);
+        }
+    }
+    
+    // 💡 NEW: Global function to expose selected cards
+    window.getSelectedCards = () => Array.from(selectedCards);
+
+    /* ============ CSV LOADING ============ */
     async function loadCSVData() {
         try {
             const response = await fetch(
@@ -76,10 +115,16 @@
         card.dataset.y = randY;
 
         updateCardTransform(card);
+        
+        // 💡 NEW: Attach selection handler to the card
+        card.addEventListener('click', (e) => handleCardSelection(card, e));
 
         card.addEventListener('mousedown', function(e) {
             if (e.target.classList.contains('resize-handle')) return;
             if (e.target.classList.contains('rotate-handle')) return;
+            
+            // Allow drag only if the target isn't a caption (to allow text selection)
+            if (e.target.classList.contains('photo-caption')) return; 
 
             isDragging = true;
             activeCard = card;
@@ -91,7 +136,7 @@
             e.preventDefault();
         });
 
-        /* HANDLE CREATION */
+        /* HANDLE CREATION (Resize & Rotate) */
         const frame = card.querySelector('.photo-frame');
 
         const resizeHandle = document.createElement("div");
