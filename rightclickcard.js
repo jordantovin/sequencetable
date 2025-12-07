@@ -2,32 +2,45 @@
 // RIGHT CLICK MENU FOR PHOTO CARDS
 // ===============================
 
-(function() {
+window.addEventListener("load", function() {
 
     const menu = document.getElementById("photoContextMenu");
     let targetCard = null;
 
-    // Prevent browser default right click
+    if (!menu) {
+        console.error("❌ photoContextMenu element not found. Add it to your HTML.");
+        return;
+    }
+
+    // -------------------------------------------
+    // RIGHT CLICK ON PHOTO CARD
+    // -------------------------------------------
     document.addEventListener("contextmenu", e => {
+
         const card = e.target.closest(".photo-card");
-        if (!card) return;
+        if (!card) return; // let normal right-click happen for everything else
 
         e.preventDefault();
         targetCard = card;
 
-        // Position menu
+        // Position the menu
         menu.style.left = `${e.pageX}px`;
         menu.style.top = `${e.pageY}px`;
         menu.style.display = "block";
     });
 
-    // Hide menu when clicking anywhere else
+    // -------------------------------------------
+    // CLICK ANYWHERE → HIDE MENU
+    // -------------------------------------------
     document.addEventListener("click", () => {
         menu.style.display = "none";
     });
 
-    // Handle clicks inside menu
+    // -------------------------------------------
+    // CLICK INSIDE CONTEXT MENU
+    // -------------------------------------------
     menu.addEventListener("click", e => {
+
         if (!targetCard) return;
         menu.style.display = "none";
 
@@ -36,16 +49,16 @@
 
         switch (action) {
 
-            // ------------------------------
+            // --------------------------------------------------
             // DELETE CARD
-            // ------------------------------
+            // --------------------------------------------------
             case "delete":
                 targetCard.remove();
                 break;
 
-            // ------------------------------
+            // --------------------------------------------------
             // REMOVE FRAME ONLY
-            // ------------------------------
+            // --------------------------------------------------
             case "remove-frame":
                 const frame = targetCard.querySelector(".photo-frame");
                 if (frame) {
@@ -56,28 +69,30 @@
                 }
                 break;
 
-            // ------------------------------
-            // DUPLICATE CARD
-            // ------------------------------
+            // --------------------------------------------------
+            // DUPLICATE CARD (ALL PROPERTIES, FRAME INCLUDED)
+            // --------------------------------------------------
             case "duplicate":
+
                 const clone = targetCard.cloneNode(true);
 
-                // Offset so it doesn't overlap exactly
+                // Offset slightly so clone is visible
                 const x = parseFloat(targetCard.dataset.x) || 0;
                 const y = parseFloat(targetCard.dataset.y) || 0;
+
                 clone.dataset.x = x + 30;
                 clone.dataset.y = y + 30;
 
-                // Apply transform
-                clone.style.transform = `translate(${x + 30}px, ${y + 30}px) rotate(${clone.dataset.rotation || 0}deg)`;
+                const rotation = clone.dataset.rotation || "0";
+                clone.style.transform = `translate(${x + 30}px, ${y + 30}px) rotate(${rotation}deg)`;
 
-                // Append to container
+                // Add clone to container
                 document.getElementById("photo-container").appendChild(clone);
+
                 break;
         }
 
         targetCard = null;
     });
 
-})();
-
+});
