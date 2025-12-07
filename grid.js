@@ -8,7 +8,6 @@
     let gridCards = [];
     let slideCard = null;
     let slideIndex = -1;
-    let swapTargetIndex = -1;
     let slideOffsetX = 0;
     let slideOffsetY = 0;
     let isSliding = false;
@@ -52,21 +51,24 @@
     }
 
     // ------------------------------
-    // Actual grid placement (UPDATED)
+    // Actual grid placement
     // ------------------------------
-    function arrangeCardsInGrid() {
+    function arrangeCardsInGrid(skipSlidingCard = false) {
         const containerWidth = window.innerWidth;
         const spacing = 20;
         const startX = 50;
         
-        // ⬇️ UPDATE: Extra space reserved for the name tag below the image
+        // Extra space reserved for the name tag below the image
         const nameSpace = 40; 
 
         let x = startX;
         let y = 150;
         let rowHeight = 0;
 
-        gridCards.forEach(card => {
+        // Filter out the sliding card if needed (for clean layout during drag)
+        const cardsToArrange = skipSlidingCard ? gridCards.filter(card => card !== slideCard) : gridCards;
+
+        cardsToArrange.forEach(card => {
             const img = card.querySelector('img');
 
             const w = img.offsetWidth || 300;
@@ -82,31 +84,34 @@
                 rowHeight = 0;
             }
 
-            card.dataset.x = x;
-            card.dataset.y = y;
-            card.dataset.rotation = 0;
-
-            updateCardTransform(card);
+            // Only update position if we are not actively sliding this card
+            if (card !== slideCard || !isSliding) { 
+                card.dataset.x = x;
+                card.dataset.y = y;
+                card.dataset.rotation = 0;
+                updateCardTransform(card);
+            }
 
             x += w + spacing;
             
-            // ⬇️ UPDATE: Determine row height based on image + name space
             rowHeight = Math.max(rowHeight, totalCardHeight);
         });
     }
 
     // ------------------------------
-    // Toggle Grid Lock
+    // Toggle Grid Lock 
     // ------------------------------
-    function toggleGridLock() {
-        isGridLocked = !isGridLocked;
+    function toggleGridLock(initialLoad = false) {
+        if (!initialLoad) {
+            isGridLocked = !isGridLocked;
+        }
 
         const lockBtn = document.querySelector('[title="Lock grid"]');
         const contentArea = document.querySelector('.content-area');
         contentArea.style.overflow = 'auto';
 
         if (isGridLocked) {
-            // SNAP INTO PLACE
+            // LOCKED state
             snapToGrid();
 
             lockBtn.innerHTML = `
@@ -123,7 +128,7 @@
                 </svg>
             `;
 
-            // Lock all cards
+            // Lock all cards visuals
             gridCards.forEach(card => {
                 card.dataset.gridLocked = 'true';
 
@@ -136,7 +141,7 @@
             });
 
         } else {
-            // UNLOCK
+            // UNLOCKED state (Default initial state)
             lockBtn.innerHTML = `
                 <svg viewBox="0 0 24 24">
                     <path d="M12 17c1.1 0 2-.9
@@ -166,7 +171,7 @@
     }
 
     // ------------------------------
-    // Sliding behavior
+    // Sliding behavior (Real-time reordering)
     // ------------------------------
     document.addEventListener('mousedown', e => {
         if (!isGridLocked) return;
@@ -197,29 +202,42 @@
         const x = e.clientX - slideOffsetX;
         const y = e.clientY - slideOffsetY;
 
+        // Update position of the actively dragged card
         slideCard.dataset.x = x;
         slideCard.dataset.y = y;
-
         updateCardTransform(slideCard);
 
-        swapTargetIndex = -1;
+        let newTargetIndex = -1;
 
+        // Find the index the sliding card is currently over
         gridCards.forEach((card, index) => {
             if (card === slideCard) return;
 
             const rect = card.getBoundingClientRect();
+            // Check if mouse is near the center of the other card
             if (
-                e.clientX >= rect.left &&
-                e.clientX <= rect.right &&
-                e.clientY >= rect.top &&
-                e.clientY <= rect.bottom
+                e.clientX >= rect.left + rect.width * 0.25 &&
+                e.clientX <= rect.right - rect.width * 0.25 &&
+                e.clientY >= rect.top + rect.height * 0.25 &&
+                e.clientY <= rect.bottom - rect.height * 0.25
             ) {
-                swapTargetIndex = index;
-                card.style.opacity = '0.5';
-            } else {
-                card.style.opacity = '1';
+                newTargetIndex = index;
             }
         });
+
+        // Perform reorder in real-time if a target is found and it's a new position
+        if (newTargetIndex !== -1 && newTargetIndex !== slideIndex) {
+            
+            // Re-sequence the array (removes old, inserts new)
+            gridCards.splice(slideIndex, 1);
+            gridCards.splice(newTargetIndex, 0, slideCard);
+            
+            // Update the slide index
+            slideIndex = newTargetIndex;
+            
+            // Re-arrange the grid for the smooth sliding effect
+            arrangeCardsInGrid(); 
+        }
     });
 
     document.addEventListener('mouseup', () => {
@@ -233,21 +251,15 @@
 
         gridCards.forEach(card => (card.style.opacity = '1'));
 
-        if (swapTargetIndex !== -1 && swapTargetIndex !== slideIndex) {
-            const temp = gridCards[slideIndex];
-            gridCards[slideIndex] = gridCards[swapTargetIndex];
-            gridCards[swapTargetIndex] = temp;
-        }
-
-        arrangeCardsInGrid();
+        // Snap the sliding card back into its new grid position
+        arrangeCardsInGrid(); 
 
         slideCard = null;
         slideIndex = -1;
-        swapTargetIndex = -1;
     });
 
     // ------------------------------
-    // Initialize buttons
+    // Initialize buttons & state
     // ------------------------------
     window.addEventListener('load', () => {
         const gridBtn = document.querySelector('[title="Grid"]');
@@ -256,7 +268,14 @@
         const lockBtn = document.querySelector('[title="Lock grid"]');
         if (lockBtn) {
             lockBtn.onclick = toggleGridLock;
+            
+            // Set initial state to unlocked and run setup
+            isGridLocked = false;
+            toggleGridLock(true); 
         }
+        
+        // Initial grid arrangement for cards loaded on startup
+        snapToGrid();
     });
 
     // ------------------------------
