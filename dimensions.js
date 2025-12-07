@@ -47,22 +47,34 @@
         if (!frame) return;
 
         const u = settings.unit;
+        
+        // Convert frame/matte measurements to pixels based on wall scale
+        let frameThicknessPx = settings.frameThickness;
+        let matteThicknessPx = settings.matteThickness;
+        
+        if (u === "in" && window.currentWallInches && wall) {
+            // Convert inches to pixels using wall scale
+            const pixelsPerInch = wall.offsetWidth / window.currentWallInches.width;
+            frameThicknessPx = settings.frameThickness * pixelsPerInch;
+            matteThicknessPx = settings.matteThickness * pixelsPerInch;
+        } else if (u === "mm" && window.currentWallInches && wall) {
+            // Convert mm to inches, then to pixels
+            const pixelsPerInch = wall.offsetWidth / window.currentWallInches.width;
+            frameThicknessPx = (settings.frameThickness / 25.4) * pixelsPerInch;
+            matteThicknessPx = (settings.matteThickness / 25.4) * pixelsPerInch;
+        }
+        // If px, use as-is
 
-        frame.style.padding = `${settings.matteThickness}${u}`;
+        frame.style.padding = `${matteThicknessPx}px`;
         frame.style.background = "#fff";
-        frame.style.boxShadow = `0 0 0 ${settings.frameThickness}${u} ${settings.frameColor}`;
-        frame.style.setProperty("--frame-thickness", `${settings.frameThickness}${u}`);
+        frame.style.boxShadow = `0 0 0 ${frameThicknessPx}px ${settings.frameColor}`;
+        frame.style.setProperty("--frame-thickness", `${frameThicknessPx}px`);
 
         const caption = card.querySelector(".photo-caption");
 
         if (caption) {
-            if (u === "px") {
-                frame.style.marginBottom = `${settings.frameThickness + CAPTION_GAP_PX}px`;
-                caption.style.marginTop = "0";
-            } else {
-                frame.style.marginBottom = `${settings.frameThickness}${u}`;
-                caption.style.marginTop = `${CAPTION_GAP_PX}px`;
-            }
+            frame.style.marginBottom = `${frameThicknessPx + CAPTION_GAP_PX}px`;
+            caption.style.marginTop = "0";
         }
 
         updateDimensions(card);
