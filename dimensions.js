@@ -1,5 +1,5 @@
 // ==========================
-// FRAME APPLICATION LOGIC (Final Version with Fixed Gap)
+// FRAME APPLICATION LOGIC (Final Version with Fixed Gap + Outline Fix)
 // ==========================
 
 (function() {
@@ -34,48 +34,32 @@
         const frameUnit = settings.unit;
         
         // --- 1. Matte (Inner border next to image): Use PADDING ---
-        // Padding size is the matte thickness
         photoFrame.style.padding = `${settings.matteThickness}${frameUnit}`;
-        
-        // Set the background color of the photoFrame to the matte color
-        photoFrame.style.backgroundColor = '#FFFFFF'; // Assuming white matte
+        photoFrame.style.backgroundColor = '#FFFFFF'; // matte color
         
         // --- 2. Frame (Outer border): Use BOX-SHADOW ---
-        // Shadow spread is the frame thickness, it starts outside the padding (matte)
         const frameSpread = `${settings.frameThickness}${frameUnit}`;
         const frameShadowFinal = `0 0 0 ${frameSpread} ${settings.frameColor}`;
         photoFrame.style.boxShadow = frameShadowFinal;
+
+        // 💡 NEW: expose frame thickness so CSS outline can sit OUTSIDE the grey frame
+        photoFrame.style.setProperty('--frame-thickness', `${settings.frameThickness}${frameUnit}`);
         
         // --- 3. Caption Spacing Fix ---
-        
-        // We set the margin-bottom to the thickness of the frame (box-shadow) 
-        // plus the fixed CAPTION_GAP_PX.
-        
         if (frameUnit === 'px') {
-             // If in pixels, use direct math to combine frame thickness and the fixed gap.
-             photoFrame.style.marginBottom = `${settings.frameThickness + CAPTION_GAP_PX}px`;
-             
-             // Clear the caption's margin-top, as the entire gap is handled by photoFrame.marginBottom
-             const caption = card.querySelector('.photo-caption');
-             if (caption) {
-                caption.style.marginTop = '0'; 
-             }
+            photoFrame.style.marginBottom = `${settings.frameThickness + CAPTION_GAP_PX}px`;
+            const caption = card.querySelector('.photo-caption');
+            if (caption) caption.style.marginTop = '0';
         } else {
-             // If not in pixels (e.g., 'in' or 'mm'), apply the frame thickness as margin 
-             // and the fixed gap on the caption's margin-top as a safer fallback.
-             
-             photoFrame.style.marginBottom = `${settings.frameThickness}${frameUnit}`;
-             
-             const caption = card.querySelector('.photo-caption');
-             if (caption) {
-                caption.style.marginTop = `${CAPTION_GAP_PX}px`;
-             }
+            photoFrame.style.marginBottom = `${settings.frameThickness}${frameUnit}`;
+            const caption = card.querySelector('.photo-caption');
+            if (caption) caption.style.marginTop = `${CAPTION_GAP_PX}px`;
         }
 
-        // Store data attributes on the card for persistence/resizing
+        // Store settings for persistence
         card.dataset.frameSettings = JSON.stringify(settings);
         
-        // Optional: Add a class for visual targeting
+        // Optional: class marker
         photoFrame.classList.add('has-frame');
     }
 
@@ -83,7 +67,6 @@
     // Main Button Click Handler
     // ------------------------------
     function handleApplyFrameClick() {
-        // Access the function exposed by photocards.js
         const cardsToFrame = window.getSelectedCards ? window.getSelectedCards() : [];
         
         if (cardsToFrame.length === 0) {
