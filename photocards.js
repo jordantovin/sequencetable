@@ -13,7 +13,7 @@
     let areNamesVisible = false;
     
     // 💡 NEW: Magnetic snapping toggle
-    let isMagneticSnappingEnabled = true;
+    let isMagneticSnappingEnabled = false; // Start DISABLED
     
     // 💡 NEW: Selection Tracking Set
     const selectedCards = new Set();
@@ -730,8 +730,7 @@
         const magnetBtn = document.getElementById('magnetToggleBtn');
         if (magnetBtn) {
             magnetBtn.onclick = toggleMagneticSnapping;
-            // Start with magnetic snapping enabled
-            magnetBtn.classList.add('active');
+            // Start with magnetic snapping disabled (no active class)
         }
     };
 })();
