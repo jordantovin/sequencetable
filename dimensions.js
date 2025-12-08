@@ -1,6 +1,7 @@
 // ==========================================================
 // FRAME SYSTEM + WALL SCALING + REAL-TIME DIMENSIONS + WALL COLOR
 // Updated to show PICTURE and FRAME dimensions separately
+// Picture dimensions are clickable (handled by photo-cards.js)
 // ==========================================================
 
 (function () {
@@ -137,7 +138,9 @@
 
     /* ==========================================================
        UPDATE DIMENSIONS FOR EACH CARD
-       Now shows TWO lines: Picture dimensions + Frame dimensions
+       Updates the two separate spans:
+       - .picture-dimensions: Picture dimensions (clickable, handled by photo-cards.js)
+       - .frame-dimensions: Frame dimensions (read-only)
        ========================================================== */
     function updateDimensions(card) {
         if (!window.currentWallInches) return;
@@ -187,8 +190,18 @@
         const frameWIn = totalFrameWidth * scaleX;
         const frameHIn = totalFrameHeight * scaleY;
 
-        // Display as two lines
-        label.innerHTML = `${picWIn.toFixed(2)} in × ${picHIn.toFixed(2)} in<br>${frameWIn.toFixed(2)} in × ${frameHIn.toFixed(2)} in`;
+        // Check for the new span structure from photo-cards.js
+        const pictureDimSpan = label.querySelector('.picture-dimensions');
+        const frameDimSpan = label.querySelector('.frame-dimensions');
+
+        if (pictureDimSpan && frameDimSpan) {
+            // New structure: update the separate clickable spans
+            pictureDimSpan.textContent = `📷 ${picWIn.toFixed(2)}" × ${picHIn.toFixed(2)}"`;
+            frameDimSpan.textContent = `🖼️ ${frameWIn.toFixed(2)}" × ${frameHIn.toFixed(2)}"`;
+        } else {
+            // Legacy fallback: use innerHTML
+            label.innerHTML = `${picWIn.toFixed(2)} in × ${picHIn.toFixed(2)} in<br>${frameWIn.toFixed(2)} in × ${frameHIn.toFixed(2)} in`;
+        }
     }
 
     window.updateCardDimensionsText = updateDimensions;
