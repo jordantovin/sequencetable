@@ -157,7 +157,7 @@
         const scaleX = window.currentWallInches.width / wall.offsetWidth;
         const scaleY = window.currentWallInches.height / wall.offsetHeight;
 
-        // Picture dimensions (actual image only - the photo itself)
+        // Picture dimensions (actual image only - the photo itself) in INCHES
         const picWIn = img.offsetWidth * scaleX;
         const picHIn = img.offsetHeight * scaleY;
 
@@ -190,17 +190,42 @@
         const frameWIn = totalFrameWidth * scaleX;
         const frameHIn = totalFrameHeight * scaleY;
 
+        // Get the current measurement unit from the dropdown
+        const measurementUnitEl = document.getElementById("measurementUnit");
+        const displayUnit = measurementUnitEl ? measurementUnitEl.value : "in";
+
+        // Convert from inches to the display unit
+        let picW, picH, frameW, frameH, unitLabel;
+        
+        if (displayUnit === "mm") {
+            // Convert inches to mm (1 inch = 25.4 mm)
+            picW = picWIn * 25.4;
+            picH = picHIn * 25.4;
+            frameW = frameWIn * 25.4;
+            frameH = frameHIn * 25.4;
+            unitLabel = "mm";
+        } else {
+            // Default to inches
+            picW = picWIn;
+            picH = picHIn;
+            frameW = frameWIn;
+            frameH = frameHIn;
+            unitLabel = '"';
+        }
+
         // Check for the new span structure from photo-cards.js
         const pictureDimSpan = label.querySelector('.picture-dimensions');
         const frameDimSpan = label.querySelector('.frame-dimensions');
 
         if (pictureDimSpan && frameDimSpan) {
-            // New structure: update the separate clickable spans
-            pictureDimSpan.textContent = `Photo ${picWIn.toFixed(2)}" × ${picHIn.toFixed(2)}"`;
-            frameDimSpan.textContent = `Framed ${frameWIn.toFixed(2)}" × ${frameHIn.toFixed(2)}"`;
+            // Don't update if currently being edited (has input fields)
+            if (!pictureDimSpan.querySelector('input')) {
+                pictureDimSpan.textContent = `Photo ${picW.toFixed(2)}${unitLabel} × ${picH.toFixed(2)}${unitLabel}`;
+            }
+            frameDimSpan.textContent = `Framed ${frameW.toFixed(2)}${unitLabel} × ${frameH.toFixed(2)}${unitLabel}`;
         } else {
             // Legacy fallback: use innerHTML
-            label.innerHTML = `${picWIn.toFixed(2)} in × ${picHIn.toFixed(2)} in<br>${frameWIn.toFixed(2)} in × ${frameHIn.toFixed(2)} in`;
+            label.innerHTML = `Photo ${picW.toFixed(2)}${unitLabel} × ${picH.toFixed(2)}${unitLabel}<br>Framed ${frameW.toFixed(2)}${unitLabel} × ${frameH.toFixed(2)}${unitLabel}`;
         }
     }
 
@@ -226,6 +251,14 @@
     wallWidthInput.addEventListener("input", updateWall);
     wallHeightInput.addEventListener("input", updateWall);
     wallUnitInput.addEventListener("change", updateWall);
+
+    // Update all dimension labels when measurement unit changes
+    const measurementUnitEl = document.getElementById("measurementUnit");
+    if (measurementUnitEl) {
+        measurementUnitEl.addEventListener("change", () => {
+            document.querySelectorAll(".photo-card").forEach(updateDimensions);
+        });
+    }
 
     buildWallBtn.addEventListener("click", () => {
         // Show the wall
