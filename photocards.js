@@ -47,6 +47,171 @@
     
     // 💡 NEW: Global function to expose selected cards
     window.getSelectedCards = () => Array.from(selectedCards);
+    /* ============ GET TOTAL FRAME SIZE (including box-shadow frame border) ============ */
+    function getTotalFrameSize(card) {
+        const frame = card.querySelector('.photo-frame');
+        if (!frame) return { width: 0, height: 0 };
+        
+        // Get the frame element size (includes padding/matte)
+        let width = frame.offsetWidth;
+        let height = frame.offsetHeight;
+        
+        // Add the box-shadow frame border (stored in CSS variable)
+        const frameThicknessVar = frame.style.getPropertyValue('--frame-thickness');
+        if (frameThicknessVar) {
+            const match = frameThicknessVar.match(/^(\d+(?:\.\d+)?)(px|in|mm)$/);
+            if (match) {
+                let frameBorderPx = parseFloat(match[1]);
+                const unit = match[2];
+                
+                // Convert to pixels if needed
+                if (unit === 'in') {
+                    frameBorderPx = frameBorderPx * 96;
+                } else if (unit === 'mm') {
+                    frameBorderPx = frameBorderPx * 96 / 25.4;
+                }
+                
+                // Add border on both sides
+                width += frameBorderPx * 2;
+                height += frameBorderPx * 2;
+            }
+        }
+        
+        return { width, height };
+    }
+
+    /* ============ SNAP ALIGNMENT HELPERS ============ */
+    const SNAP_THRESHOLD = 10; // pixels - how close before snapping
+    
+    function getCardEdges(card) {
+        const x = parseFloat(card.dataset.x) || 0;
+        const y = parseFloat(card.dataset.y) || 0;
+        const size = getTotalFrameSize(card);
+        const frame = card.querySelector('.photo-frame');
+        
+        // Calculate offset from card position to frame outer edge
+        // The frame border (box-shadow) extends beyond the frame element
+        let frameOffset = 0;
+        const frameThicknessVar = frame?.style.getPropertyValue('--frame-thickness');
+        if (frameThicknessVar) {
+            const match = frameThicknessVar.match(/^(\d+(?:\.\d+)?)(px|in|mm)$/);
+            if (match) {
+                frameOffset = parseFloat(match[1]);
+                if (match[2] === 'in') frameOffset *= 96;
+                else if (match[2] === 'mm') frameOffset *= 96 / 25.4;
+            }
+        }
+        
+        return {
+            left: x - frameOffset,
+            right: x - frameOffset + size.width,
+            top: y - frameOffset,
+            bottom: y - frameOffset + size.height,
+            centerX: x - frameOffset + size.width / 2,
+            centerY: y - frameOffset + size.height / 2,
+            width: size.width,
+            height: size.height
+        };
+    }
+    
+    function findSnapPosition(activeCard, newX, newY) {
+        const activeEdges = getCardEdges(activeCard);
+        const activeSize = getTotalFrameSize(activeCard);
+        
+        // Get frame offset for active card
+        const frame = activeCard.querySelector('.photo-frame');
+        let frameOffset = 0;
+        const frameThicknessVar = frame?.style.getPropertyValue('--frame-thickness');
+        if (frameThicknessVar) {
+            const match = frameThicknessVar.match(/^(\d+(?:\.\d+)?)(px|in|mm)$/);
+            if (match) {
+                frameOffset = parseFloat(match[1]);
+                if (match[2] === 'in') frameOffset *= 96;
+                else if (match[2] === 'mm') frameOffset *= 96 / 25.4;
+            }
+        }
+        
+        // Calculate where the frame edges would be at the new position
+        const newLeft = newX - frameOffset;
+        const newRight = newX - frameOffset + activeSize.width;
+        const newTop = newY - frameOffset;
+        const newBottom = newY - frameOffset + activeSize.height;
+        const newCenterX = newX - frameOffset + activeSize.width / 2;
+        const newCenterY = newY - frameOffset + activeSize.height / 2;
+        
+        let snapX = newX;
+        let snapY = newY;
+        let snappedX = false;
+        let snappedY = false;
+        
+        // Check against all other cards
+        document.querySelectorAll('.photo-card').forEach(otherCard => {
+            if (otherCard === activeCard) return;
+            
+            const other = getCardEdges(otherCard);
+            
+            // Horizontal snapping (left, right, center)
+            if (!snappedX) {
+                // Left edge to left edge
+                if (Math.abs(newLeft - other.left) < SNAP_THRESHOLD) {
+                    snapX = other.left + frameOffset;
+                    snappedX = true;
+                }
+                // Right edge to right edge
+                else if (Math.abs(newRight - other.right) < SNAP_THRESHOLD) {
+                    snapX = other.right - activeSize.width + frameOffset;
+                    snappedX = true;
+                }
+                // Left edge to right edge (align side by side)
+                else if (Math.abs(newLeft - other.right) < SNAP_THRESHOLD) {
+                    snapX = other.right + frameOffset;
+                    snappedX = true;
+                }
+                // Right edge to left edge (align side by side)
+                else if (Math.abs(newRight - other.left) < SNAP_THRESHOLD) {
+                    snapX = other.left - activeSize.width + frameOffset;
+                    snappedX = true;
+                }
+                // Center to center
+                else if (Math.abs(newCenterX - other.centerX) < SNAP_THRESHOLD) {
+                    snapX = other.centerX - activeSize.width / 2 + frameOffset;
+                    snappedX = true;
+                }
+            }
+            
+            // Vertical snapping (top, bottom, center)
+            if (!snappedY) {
+                // Top edge to top edge
+                if (Math.abs(newTop - other.top) < SNAP_THRESHOLD) {
+                    snapY = other.top + frameOffset;
+                    snappedY = true;
+                }
+                // Bottom edge to bottom edge
+                else if (Math.abs(newBottom - other.bottom) < SNAP_THRESHOLD) {
+                    snapY = other.bottom - activeSize.height + frameOffset;
+                    snappedY = true;
+                }
+                // Top edge to bottom edge (stack vertically)
+                else if (Math.abs(newTop - other.bottom) < SNAP_THRESHOLD) {
+                    snapY = other.bottom + frameOffset;
+                    snappedY = true;
+                }
+                // Bottom edge to top edge (stack vertically)
+                else if (Math.abs(newBottom - other.top) < SNAP_THRESHOLD) {
+                    snapY = other.top - activeSize.height + frameOffset;
+                    snappedY = true;
+                }
+                // Center to center
+                else if (Math.abs(newCenterY - other.centerY) < SNAP_THRESHOLD) {
+                    snapY = other.centerY - activeSize.height / 2 + frameOffset;
+                    snappedY = true;
+                }
+            }
+        });
+        
+        return { x: snapX, y: snapY };
+    }
+
     /* ============ DIMENSION HELPER ============ */
     // Returns separate measurements for picture and frame
     window.getCardDimensions = function(card) {
@@ -418,8 +583,18 @@
     /* DRAG & RESIZE */
     document.addEventListener('mousemove', function(e) {
         if (isDragging && activeCard) {
-            activeCard.dataset.x = e.clientX - dragOffset.x;
-            activeCard.dataset.y = e.clientY - dragOffset.y;
+            let newX = e.clientX - dragOffset.x;
+            let newY = e.clientY - dragOffset.y;
+            
+            // Snap to other cards (unless holding Alt key to disable snapping)
+            if (!e.altKey) {
+                const snapped = findSnapPosition(activeCard, newX, newY);
+                newX = snapped.x;
+                newY = snapped.y;
+            }
+            
+            activeCard.dataset.x = newX;
+            activeCard.dataset.y = newY;
             updateCardTransform(activeCard);
             window.updateCardDimensionsText?.(activeCard);
         }
