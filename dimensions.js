@@ -196,8 +196,8 @@
 
         if (pictureDimSpan && frameDimSpan) {
             // New structure: update the separate clickable spans
-            pictureDimSpan.textContent = `📷 ${picWIn.toFixed(2)}" × ${picHIn.toFixed(2)}"`;
-            frameDimSpan.textContent = `🖼️ ${frameWIn.toFixed(2)}" × ${frameHIn.toFixed(2)}"`;
+            pictureDimSpan.textContent = `Photo ${picWIn.toFixed(2)}" × ${picHIn.toFixed(2)}"`;
+            frameDimSpan.textContent = `Framed ${frameWIn.toFixed(2)}" × ${frameHIn.toFixed(2)}"`;
         } else {
             // Legacy fallback: use innerHTML
             label.innerHTML = `${picWIn.toFixed(2)} in × ${picHIn.toFixed(2)} in<br>${frameWIn.toFixed(2)} in × ${frameHIn.toFixed(2)} in`;
