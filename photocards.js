@@ -95,7 +95,7 @@
         // Create inline inputs
         pictureDimSpan.innerHTML = `
             <span style="display: inline-flex; align-items: center; gap: 4px;">
-                📷 
+                Photo 
                 <input type="number" class="dim-input dim-width" value="${currentWIn}" step="0.1" min="0.1" 
                     style="width: 60px; padding: 2px 4px; border: 1px solid #666; border-radius: 3px; 
                     background: #333; color: #fff; font-size: 12px; text-align: center;">
