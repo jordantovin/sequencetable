@@ -53,8 +53,9 @@
     
     /* ============ ALIGNMENT GUIDE FUNCTIONS ============ */
     function createGuideLines() {
-        // Remove existing guides
+        // Remove existing guides and labels
         document.querySelectorAll('.snap-guide').forEach(g => g.remove());
+        document.querySelectorAll('.snap-guide-label').forEach(l => l.remove());
     }
     
     function showGuide(x1, y1, x2, y2, type) {
@@ -72,6 +73,54 @@
             guide.style.top = Math.min(y1, y2) + 'px';
             guide.style.width = '1px';
             guide.style.height = Math.abs(y2 - y1) + 'px';
+        }
+        
+        // Add measurement label if we have a wall scale
+        if (window.currentWallInches && document.getElementById("wall")) {
+            const wall = document.getElementById("wall");
+            const scaleX = window.currentWallInches.width / wall.offsetWidth;
+            const scaleY = window.currentWallInches.height / wall.offsetHeight;
+            
+            // Get the measurement unit
+            const wallUnitEl = document.getElementById("wallUnit");
+            const displayUnit = wallUnitEl ? wallUnitEl.value : "in";
+            
+            // Calculate the length in pixels
+            let lengthPx;
+            if (type === 'horizontal') {
+                lengthPx = Math.abs(x2 - x1);
+            } else {
+                lengthPx = Math.abs(y2 - y1);
+            }
+            
+            // Convert to inches first
+            const lengthIn = type === 'horizontal' ? lengthPx * scaleX : lengthPx * scaleY;
+            
+            // Convert to display unit
+            const UNIT_FROM_IN = {
+                in: 1,
+                ft: 1/12,
+                cm: 2.54,
+                m: 0.0254
+            };
+            
+            const lengthDisplay = lengthIn * UNIT_FROM_IN[displayUnit];
+            
+            // Create label
+            const label = document.createElement('div');
+            label.className = 'snap-guide-label';
+            label.textContent = `${lengthDisplay.toFixed(1)}${displayUnit}`;
+            
+            // Position label at the center of the guide
+            if (type === 'horizontal') {
+                label.style.left = (Math.min(x1, x2) + lengthPx / 2) + 'px';
+                label.style.top = (y1 - 15) + 'px';
+            } else {
+                label.style.left = (x1 + 10) + 'px';
+                label.style.top = (Math.min(y1, y2) + Math.abs(y2 - y1) / 2) + 'px';
+            }
+            
+            document.body.appendChild(label);
         }
         
         document.body.appendChild(guide);
