@@ -87,23 +87,40 @@
         const scaleX = window.currentWallInches.width / wall.offsetWidth;
         const scaleY = window.currentWallInches.height / wall.offsetHeight;
 
-        // Current picture dimensions in inches
-        const currentWIn = (img.offsetWidth * scaleX).toFixed(2);
-        const currentHIn = (img.offsetHeight * scaleY).toFixed(2);
+        // Get the current measurement unit
+        const measurementUnitEl = document.getElementById("measurementUnit");
+        const displayUnit = measurementUnitEl ? measurementUnitEl.value : "in";
+
+        // Current picture dimensions in inches first
+        const picWIn = img.offsetWidth * scaleX;
+        const picHIn = img.offsetHeight * scaleY;
+
+        // Convert to display unit
+        let currentW, currentH, unitLabel;
+        if (displayUnit === "mm") {
+            currentW = (picWIn * 25.4).toFixed(1);
+            currentH = (picHIn * 25.4).toFixed(1);
+            unitLabel = "mm";
+        } else {
+            currentW = picWIn.toFixed(2);
+            currentH = picHIn.toFixed(2);
+            unitLabel = '"';
+        }
+
         const aspectRatio = img.offsetHeight / img.offsetWidth;
 
         // Create inline inputs
         pictureDimSpan.innerHTML = `
             <span style="display: inline-flex; align-items: center; gap: 4px;">
-                Photo 
-                <input type="number" class="dim-input dim-width" value="${currentWIn}" step="0.1" min="0.1" 
+                Photo
+                <input type="number" class="dim-input dim-width" value="${currentW}" step="${displayUnit === 'mm' ? '1' : '0.1'}" min="0.1" 
                     style="width: 60px; padding: 2px 4px; border: 1px solid #666; border-radius: 3px; 
                     background: #333; color: #fff; font-size: 12px; text-align: center;">
-                <span>" ×</span>
-                <input type="number" class="dim-input dim-height" value="${currentHIn}" step="0.1" min="0.1"
+                <span>${unitLabel} ×</span>
+                <input type="number" class="dim-input dim-height" value="${currentH}" step="${displayUnit === 'mm' ? '1' : '0.1'}" min="0.1"
                     style="width: 60px; padding: 2px 4px; border: 1px solid #666; border-radius: 3px; 
                     background: #333; color: #fff; font-size: 12px; text-align: center;">
-                <span>"</span>
+                <span>${unitLabel}</span>
             </span>
         `;
 
@@ -113,24 +130,38 @@
         // Auto-lock aspect ratio: changing width updates height
         widthInput.addEventListener('input', () => {
             const newWidth = parseFloat(widthInput.value) || 0;
-            heightInput.value = (newWidth * aspectRatio).toFixed(2);
+            heightInput.value = displayUnit === 'mm' 
+                ? (newWidth * aspectRatio).toFixed(1)
+                : (newWidth * aspectRatio).toFixed(2);
         });
 
         // Auto-lock aspect ratio: changing height updates width
         heightInput.addEventListener('input', () => {
             const newHeight = parseFloat(heightInput.value) || 0;
-            widthInput.value = (newHeight / aspectRatio).toFixed(2);
+            widthInput.value = displayUnit === 'mm'
+                ? (newHeight / aspectRatio).toFixed(1)
+                : (newHeight / aspectRatio).toFixed(2);
         });
 
         // Apply on Enter key
         function applyChanges() {
-            const newWidthIn = parseFloat(widthInput.value);
-            const newHeightIn = parseFloat(heightInput.value);
+            let newWidthIn, newHeightIn;
+            const inputW = parseFloat(widthInput.value);
+            const inputH = parseFloat(heightInput.value);
 
-            if (isNaN(newWidthIn) || isNaN(newHeightIn) || newWidthIn <= 0 || newHeightIn <= 0) {
+            if (isNaN(inputW) || isNaN(inputH) || inputW <= 0 || inputH <= 0) {
                 // Revert to original
                 window.updateCardDimensionsText?.(card);
                 return;
+            }
+
+            // Convert input values to inches
+            if (displayUnit === "mm") {
+                newWidthIn = inputW / 25.4;
+                newHeightIn = inputH / 25.4;
+            } else {
+                newWidthIn = inputW;
+                newHeightIn = inputH;
             }
 
             const pixelsPerInchX = wall.offsetWidth / window.currentWallInches.width;
