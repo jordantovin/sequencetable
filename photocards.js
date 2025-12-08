@@ -69,9 +69,9 @@
         };
     };
 
-    /* ============ EDITABLE DIMENSIONS ============ */
-    // Opens a modal/input to let user set custom picture dimensions
-    function openDimensionEditor(card) {
+    /* ============ INLINE EDITABLE DIMENSIONS ============ */
+    // Converts the dimension text to inline input fields
+    function makeInlineEditable(card, pictureDimSpan) {
         const wall = document.getElementById("wall");
         if (!window.currentWallInches || !wall) {
             alert("Please build a wall first to set dimensions.");
@@ -81,128 +81,60 @@
         const img = card.querySelector("img");
         if (!img) return;
 
+        // Already editing? Don't create new inputs
+        if (pictureDimSpan.querySelector('input')) return;
+
         const scaleX = window.currentWallInches.width / wall.offsetWidth;
         const scaleY = window.currentWallInches.height / wall.offsetHeight;
 
         // Current picture dimensions in inches
         const currentWIn = (img.offsetWidth * scaleX).toFixed(2);
         const currentHIn = (img.offsetHeight * scaleY).toFixed(2);
+        const aspectRatio = img.offsetHeight / img.offsetWidth;
 
-        // Create modal overlay
-        const overlay = document.createElement('div');
-        overlay.className = 'dimension-editor-overlay';
-        overlay.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 100000;
+        // Create inline inputs
+        pictureDimSpan.innerHTML = `
+            <span style="display: inline-flex; align-items: center; gap: 4px;">
+                📷 
+                <input type="number" class="dim-input dim-width" value="${currentWIn}" step="0.1" min="0.1" 
+                    style="width: 60px; padding: 2px 4px; border: 1px solid #666; border-radius: 3px; 
+                    background: #333; color: #fff; font-size: 12px; text-align: center;">
+                <span>" ×</span>
+                <input type="number" class="dim-input dim-height" value="${currentHIn}" step="0.1" min="0.1"
+                    style="width: 60px; padding: 2px 4px; border: 1px solid #666; border-radius: 3px; 
+                    background: #333; color: #fff; font-size: 12px; text-align: center;">
+                <span>"</span>
+            </span>
         `;
 
-        const modal = document.createElement('div');
-        modal.className = 'dimension-editor-modal';
-        modal.style.cssText = `
-            background: #2a2a2a;
-            padding: 24px;
-            border-radius: 12px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-            min-width: 300px;
-            color: #fff;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        `;
+        const widthInput = pictureDimSpan.querySelector('.dim-width');
+        const heightInput = pictureDimSpan.querySelector('.dim-height');
 
-        modal.innerHTML = `
-            <h3 style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600;">Set Picture Dimensions</h3>
-            <div style="display: flex; gap: 12px; margin-bottom: 16px;">
-                <div style="flex: 1;">
-                    <label style="display: block; font-size: 12px; color: #aaa; margin-bottom: 4px;">Width (inches)</label>
-                    <input type="number" id="dimEditorWidth" value="${currentWIn}" step="0.1" min="0.1" 
-                        style="width: 100%; padding: 8px 12px; border: 1px solid #444; border-radius: 6px; 
-                        background: #333; color: #fff; font-size: 14px; box-sizing: border-box;">
-                </div>
-                <div style="flex: 1;">
-                    <label style="display: block; font-size: 12px; color: #aaa; margin-bottom: 4px;">Height (inches)</label>
-                    <input type="number" id="dimEditorHeight" value="${currentHIn}" step="0.1" min="0.1"
-                        style="width: 100%; padding: 8px 12px; border: 1px solid #444; border-radius: 6px; 
-                        background: #333; color: #fff; font-size: 14px; box-sizing: border-box;">
-                </div>
-            </div>
-            <div style="margin-bottom: 16px;">
-                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px;">
-                    <input type="checkbox" id="dimEditorLockRatio" checked 
-                        style="width: 16px; height: 16px; cursor: pointer;">
-                    <span>Lock aspect ratio</span>
-                </label>
-            </div>
-            <div style="display: flex; gap: 8px; justify-content: flex-end;">
-                <button id="dimEditorCancel" style="padding: 8px 16px; border: 1px solid #444; border-radius: 6px; 
-                    background: transparent; color: #fff; cursor: pointer; font-size: 14px;">Cancel</button>
-                <button id="dimEditorApply" style="padding: 8px 16px; border: none; border-radius: 6px; 
-                    background: #007AFF; color: #fff; cursor: pointer; font-size: 14px; font-weight: 500;">Apply</button>
-            </div>
-        `;
-
-        overlay.appendChild(modal);
-        document.body.appendChild(overlay);
-
-        const widthInput = modal.querySelector('#dimEditorWidth');
-        const heightInput = modal.querySelector('#dimEditorHeight');
-        const lockRatioCheckbox = modal.querySelector('#dimEditorLockRatio');
-        const cancelBtn = modal.querySelector('#dimEditorCancel');
-        const applyBtn = modal.querySelector('#dimEditorApply');
-
-        const originalRatio = parseFloat(currentHIn) / parseFloat(currentWIn);
-        let lastChangedInput = null;
-
-        // Handle ratio locking
+        // Auto-lock aspect ratio: changing width updates height
         widthInput.addEventListener('input', () => {
-            lastChangedInput = 'width';
-            if (lockRatioCheckbox.checked) {
-                const newWidth = parseFloat(widthInput.value) || 0;
-                heightInput.value = (newWidth * originalRatio).toFixed(2);
-            }
+            const newWidth = parseFloat(widthInput.value) || 0;
+            heightInput.value = (newWidth * aspectRatio).toFixed(2);
         });
 
+        // Auto-lock aspect ratio: changing height updates width
         heightInput.addEventListener('input', () => {
-            lastChangedInput = 'height';
-            if (lockRatioCheckbox.checked) {
-                const newHeight = parseFloat(heightInput.value) || 0;
-                widthInput.value = (newHeight / originalRatio).toFixed(2);
-            }
+            const newHeight = parseFloat(heightInput.value) || 0;
+            widthInput.value = (newHeight / aspectRatio).toFixed(2);
         });
 
-        // Close on overlay click
-        overlay.addEventListener('click', (e) => {
-            if (e.target === overlay) {
-                overlay.remove();
-            }
-        });
-
-        // Cancel button
-        cancelBtn.addEventListener('click', () => {
-            overlay.remove();
-        });
-
-        // Apply button
-        applyBtn.addEventListener('click', () => {
+        // Apply on Enter key
+        function applyChanges() {
             const newWidthIn = parseFloat(widthInput.value);
             const newHeightIn = parseFloat(heightInput.value);
 
             if (isNaN(newWidthIn) || isNaN(newHeightIn) || newWidthIn <= 0 || newHeightIn <= 0) {
-                alert("Please enter valid positive numbers for dimensions.");
+                // Revert to original
+                window.updateCardDimensionsText?.(card);
                 return;
             }
 
-            // Convert inches to pixels using wall scale
             const pixelsPerInchX = wall.offsetWidth / window.currentWallInches.width;
             const pixelsPerInchY = wall.offsetHeight / window.currentWallInches.height;
-
-            // Use average scale for uniform sizing
             const pixelsPerInch = (pixelsPerInchX + pixelsPerInchY) / 2;
 
             const newWidthPx = newWidthIn * pixelsPerInch;
@@ -211,28 +143,49 @@
             img.style.width = newWidthPx + "px";
             img.style.height = newHeightPx + "px";
 
-            // Update the dimensions display
+            // Update display back to text
             window.updateCardDimensionsText?.(card);
+        }
 
-            overlay.remove();
-        });
+        // Handle keydown events
+        function handleKeyDown(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                applyChanges();
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                window.updateCardDimensionsText?.(card);
+            }
+        }
+
+        widthInput.addEventListener('keydown', handleKeyDown);
+        heightInput.addEventListener('keydown', handleKeyDown);
+
+        // Apply on blur (clicking away)
+        function handleBlur(e) {
+            // Small delay to check if focus moved to the other input
+            setTimeout(() => {
+                const activeEl = document.activeElement;
+                if (activeEl !== widthInput && activeEl !== heightInput) {
+                    applyChanges();
+                }
+            }, 100);
+        }
+
+        widthInput.addEventListener('blur', handleBlur);
+        heightInput.addEventListener('blur', handleBlur);
+
+        // Prevent drag when clicking inputs
+        widthInput.addEventListener('mousedown', e => e.stopPropagation());
+        heightInput.addEventListener('mousedown', e => e.stopPropagation());
 
         // Focus the width input
         widthInput.focus();
         widthInput.select();
-
-        // Handle Enter key
-        modal.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                applyBtn.click();
-            } else if (e.key === 'Escape') {
-                overlay.remove();
-            }
-        });
     }
 
-    // Expose for use by frame-system.js
-    window.openDimensionEditor = openDimensionEditor;
+    // Expose for use by dimensions.js
+    window.makeInlineEditable = makeInlineEditable;
 
     /* ============ CSV LOADING ============ */
     async function loadCSVData() {
@@ -280,7 +233,7 @@
         caption.style.display = areNamesVisible ? '' : 'none';
         card.appendChild(caption);
         /* DIMENSIONS LABEL - Shows TWO lines when visible:
-           Line 1: Picture dimensions (actual image) - CLICKABLE
+           Line 1: Picture dimensions (actual image) - CLICKABLE to edit inline
            Line 2: Frame dimensions (picture + matte + frame border) */
         const dim = document.createElement('div');
         dim.className = 'photo-dimensions';
@@ -300,16 +253,22 @@
         
         // Add hover effect
         pictureDimSpan.addEventListener('mouseenter', () => {
-            pictureDimSpan.style.background = 'rgba(255,255,255,0.2)';
+            if (!pictureDimSpan.querySelector('input')) {
+                pictureDimSpan.style.background = 'rgba(255,255,255,0.2)';
+            }
         });
         pictureDimSpan.addEventListener('mouseleave', () => {
-            pictureDimSpan.style.background = 'transparent';
+            if (!pictureDimSpan.querySelector('input')) {
+                pictureDimSpan.style.background = 'transparent';
+            }
         });
         
-        // Click handler to open dimension editor
+        // Click handler to make inline editable
         pictureDimSpan.addEventListener('click', (e) => {
             e.stopPropagation(); // Prevent card selection
-            openDimensionEditor(card);
+            if (!pictureDimSpan.querySelector('input')) {
+                makeInlineEditable(card, pictureDimSpan);
+            }
         });
         
         const frameDimSpan = document.createElement('span');
@@ -344,8 +303,9 @@
             
             // Allow drag only if the target isn't a caption (to allow text selection)
             if (e.target.classList.contains('photo-caption')) return;
-            // Prevent drag when clicking on editable dimension span
+            // Prevent drag when clicking on editable dimension span or inputs
             if (e.target.classList.contains('picture-dimensions')) return;
+            if (e.target.classList.contains('dim-input')) return;
             
             isDragging = true;
             activeCard = card;
