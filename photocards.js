@@ -345,13 +345,13 @@
             card.style.zIndex = getHighestZIndex() + 1;
             e.preventDefault();
         });
-        /* HANDLE CREATION (Resize & Rotate) - positioned OUTSIDE the frame */
+        /* HANDLE CREATION (Resize & Rotate) - positioned OUTSIDE the frame corners */
         const frame = card.querySelector('.photo-frame');
         
         const resizeHandle = document.createElement("div");
         resizeHandle.className = "resize-handle";
         resizeHandle.textContent = "⇲";
-        card.appendChild(resizeHandle); // Append to card, not frame
+        frame.appendChild(resizeHandle); // Append to frame for correct positioning
         
         resizeHandle.addEventListener('mousedown', function(e) {
             isResizing = true;
@@ -368,7 +368,7 @@
         const rotateHandle = document.createElement("div");
         rotateHandle.className = "rotate-handle";
         rotateHandle.textContent = "↻";
-        card.appendChild(rotateHandle); // Append to card, not frame
+        frame.appendChild(rotateHandle); // Append to frame for correct positioning
         
         rotateHandle.addEventListener('mousedown', function(e) {
             activeCard = card;
