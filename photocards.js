@@ -172,31 +172,47 @@
                 if (Math.abs(newLeft - other.left) < SNAP_THRESHOLD) {
                     snapX = other.left + frameOffset;
                     snappedX = true;
-                    guides.push({ type: 'vertical', x: other.left, y1: Math.min(newTop, other.top), y2: Math.max(newBottom, other.bottom) });
+                    // Guide only spans the overlapping vertical range
+                    const guideTop = Math.max(newTop, other.top);
+                    const guideBottom = Math.min(newBottom, other.bottom);
+                    guides.push({ type: 'vertical', x: other.left, y1: guideTop, y2: guideBottom });
                 }
                 // Right edges align
                 else if (Math.abs(newRight - other.right) < SNAP_THRESHOLD) {
                     snapX = other.right - width + frameOffset;
                     snappedX = true;
-                    guides.push({ type: 'vertical', x: other.right, y1: Math.min(newTop, other.top), y2: Math.max(newBottom, other.bottom) });
+                    const guideTop = Math.max(newTop, other.top);
+                    const guideBottom = Math.min(newBottom, other.bottom);
+                    guides.push({ type: 'vertical', x: other.right, y1: guideTop, y2: guideBottom });
                 }
                 // My left touches their right (side by side, no overlap)
                 else if (Math.abs(newLeft - other.right) < SNAP_THRESHOLD) {
                     snapX = other.right + frameOffset;
                     snappedX = true;
-                    guides.push({ type: 'vertical', x: other.right, y1: Math.min(newTop, other.top), y2: Math.max(newBottom, other.bottom) });
+                    // Guide spans both cards' vertical range
+                    const guideTop = Math.max(newTop, other.top);
+                    const guideBottom = Math.min(newBottom, other.bottom);
+                    if (guideBottom > guideTop) {
+                        guides.push({ type: 'vertical', x: other.right, y1: guideTop, y2: guideBottom });
+                    }
                 }
                 // My right touches their left (side by side, no overlap)
                 else if (Math.abs(newRight - other.left) < SNAP_THRESHOLD) {
                     snapX = other.left - width + frameOffset;
                     snappedX = true;
-                    guides.push({ type: 'vertical', x: other.left, y1: Math.min(newTop, other.top), y2: Math.max(newBottom, other.bottom) });
+                    const guideTop = Math.max(newTop, other.top);
+                    const guideBottom = Math.min(newBottom, other.bottom);
+                    if (guideBottom > guideTop) {
+                        guides.push({ type: 'vertical', x: other.left, y1: guideTop, y2: guideBottom });
+                    }
                 }
                 // Centers align horizontally
                 else if (Math.abs(newCenterX - other.centerX) < SNAP_THRESHOLD) {
                     snapX = other.centerX - width / 2 + frameOffset;
                     snappedX = true;
-                    guides.push({ type: 'vertical', x: other.centerX, y1: Math.min(newTop, other.top), y2: Math.max(newBottom, other.bottom) });
+                    const guideTop = Math.max(newTop, other.top);
+                    const guideBottom = Math.min(newBottom, other.bottom);
+                    guides.push({ type: 'vertical', x: other.centerX, y1: guideTop, y2: guideBottom });
                 }
             }
             
@@ -206,31 +222,45 @@
                 if (Math.abs(newTop - other.top) < SNAP_THRESHOLD) {
                     snapY = other.top + frameOffset;
                     snappedY = true;
-                    guides.push({ type: 'horizontal', y: other.top, x1: Math.min(newLeft, other.left), x2: Math.max(newRight, other.right) });
+                    const guideLeft = Math.max(newLeft, other.left);
+                    const guideRight = Math.min(newRight, other.right);
+                    guides.push({ type: 'horizontal', y: other.top, x1: guideLeft, x2: guideRight });
                 }
                 // Bottom edges align
                 else if (Math.abs(newBottom - other.bottom) < SNAP_THRESHOLD) {
                     snapY = other.bottom - height + frameOffset;
                     snappedY = true;
-                    guides.push({ type: 'horizontal', y: other.bottom, x1: Math.min(newLeft, other.left), x2: Math.max(newRight, other.right) });
+                    const guideLeft = Math.max(newLeft, other.left);
+                    const guideRight = Math.min(newRight, other.right);
+                    guides.push({ type: 'horizontal', y: other.bottom, x1: guideLeft, x2: guideRight });
                 }
                 // My top touches their bottom (stacked, no overlap)
                 else if (Math.abs(newTop - other.bottom) < SNAP_THRESHOLD) {
                     snapY = other.bottom + frameOffset;
                     snappedY = true;
-                    guides.push({ type: 'horizontal', y: other.bottom, x1: Math.min(newLeft, other.left), x2: Math.max(newRight, other.right) });
+                    const guideLeft = Math.max(newLeft, other.left);
+                    const guideRight = Math.min(newRight, other.right);
+                    if (guideRight > guideLeft) {
+                        guides.push({ type: 'horizontal', y: other.bottom, x1: guideLeft, x2: guideRight });
+                    }
                 }
                 // My bottom touches their top (stacked, no overlap)
                 else if (Math.abs(newBottom - other.top) < SNAP_THRESHOLD) {
                     snapY = other.top - height + frameOffset;
                     snappedY = true;
-                    guides.push({ type: 'horizontal', y: other.top, x1: Math.min(newLeft, other.left), x2: Math.max(newRight, other.right) });
+                    const guideLeft = Math.max(newLeft, other.left);
+                    const guideRight = Math.min(newRight, other.right);
+                    if (guideRight > guideLeft) {
+                        guides.push({ type: 'horizontal', y: other.top, x1: guideLeft, x2: guideRight });
+                    }
                 }
                 // Centers align vertically
                 else if (Math.abs(newCenterY - other.centerY) < SNAP_THRESHOLD) {
                     snapY = other.centerY - height / 2 + frameOffset;
                     snappedY = true;
-                    guides.push({ type: 'horizontal', y: other.centerY, x1: Math.min(newLeft, other.left), x2: Math.max(newRight, other.right) });
+                    const guideLeft = Math.max(newLeft, other.left);
+                    const guideRight = Math.min(newRight, other.right);
+                    guides.push({ type: 'horizontal', y: other.centerY, x1: guideLeft, x2: guideRight });
                 }
             }
         });
