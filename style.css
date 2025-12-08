@@ -87,8 +87,14 @@ body {
     background: #c2d7f7;
 }
 
-.toolbar-icon.active svg {
-    fill: #1a73e8;
+/* Style for Material Symbols in toolbar */
+.toolbar-icon .material-symbols-outlined {
+    font-size: 20px;
+    color: #444746;
+}
+
+.toolbar-icon.active .material-symbols-outlined {
+    color: #1a73e8;
 }
 
 .divider {
@@ -124,6 +130,29 @@ body {
 .snap-guide[data-type="vertical"] {
     width: 1px;
     box-shadow: 0 0 4px rgba(66, 133, 244, 0.6);
+}
+
+.snap-guide-label {
+    position: fixed;
+    background: #4285f4;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: 'Google Sans', Arial, sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    pointer-events: none;
+    z-index: 100000;
+    white-space: nowrap;
+    transform: translate(-50%, -50%);
+    opacity: 0;
+    animation: labelFadeIn 0.15s forwards;
+}
+
+@keyframes labelFadeIn {
+    to {
+        opacity: 0.95;
+    }
 }
 
 /* =============================== */
