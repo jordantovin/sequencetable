@@ -12,6 +12,9 @@
     let resizeStartHeight = 0;
     let areNamesVisible = false;
     
+    // 💡 NEW: Magnetic snapping toggle
+    let isMagneticSnappingEnabled = true;
+    
     // 💡 NEW: Selection Tracking Set
     const selectedCards = new Set();
     /* ============ SELECTION FUNCTIONS ============ */
@@ -47,6 +50,33 @@
     
     // 💡 NEW: Global function to expose selected cards
     window.getSelectedCards = () => Array.from(selectedCards);
+    
+    /* ============ ALIGNMENT GUIDE FUNCTIONS ============ */
+    function createGuideLines() {
+        // Remove existing guides
+        document.querySelectorAll('.snap-guide').forEach(g => g.remove());
+    }
+    
+    function showGuide(x1, y1, x2, y2, type) {
+        const guide = document.createElement('div');
+        guide.className = 'snap-guide';
+        guide.dataset.type = type; // 'horizontal' or 'vertical'
+        
+        if (type === 'horizontal') {
+            guide.style.left = Math.min(x1, x2) + 'px';
+            guide.style.top = y1 + 'px';
+            guide.style.width = Math.abs(x2 - x1) + 'px';
+            guide.style.height = '1px';
+        } else {
+            guide.style.left = x1 + 'px';
+            guide.style.top = Math.min(y1, y2) + 'px';
+            guide.style.width = '1px';
+            guide.style.height = Math.abs(y2 - y1) + 'px';
+        }
+        
+        document.body.appendChild(guide);
+    }
+    
     /* ============ GET TOTAL FRAME SIZE (including box-shadow frame border) ============ */
     function getTotalFrameSize(card) {
         const frame = card.querySelector('.photo-frame');
@@ -124,6 +154,12 @@
         let snappedX = false;
         let snappedY = false;
         
+        // Clear existing guides
+        createGuideLines();
+        
+        // Track which guides to show
+        const guides = [];
+        
         // Check against all other cards
         document.querySelectorAll('.photo-card').forEach(otherCard => {
             if (otherCard === activeCard) return;
@@ -136,26 +172,31 @@
                 if (Math.abs(newLeft - other.left) < SNAP_THRESHOLD) {
                     snapX = other.left + frameOffset;
                     snappedX = true;
+                    guides.push({ type: 'vertical', x: other.left, y1: Math.min(newTop, other.top), y2: Math.max(newBottom, other.bottom) });
                 }
                 // Right edges align
                 else if (Math.abs(newRight - other.right) < SNAP_THRESHOLD) {
                     snapX = other.right - width + frameOffset;
                     snappedX = true;
+                    guides.push({ type: 'vertical', x: other.right, y1: Math.min(newTop, other.top), y2: Math.max(newBottom, other.bottom) });
                 }
                 // My left touches their right (side by side, no overlap)
                 else if (Math.abs(newLeft - other.right) < SNAP_THRESHOLD) {
                     snapX = other.right + frameOffset;
                     snappedX = true;
+                    guides.push({ type: 'vertical', x: other.right, y1: Math.min(newTop, other.top), y2: Math.max(newBottom, other.bottom) });
                 }
                 // My right touches their left (side by side, no overlap)
                 else if (Math.abs(newRight - other.left) < SNAP_THRESHOLD) {
                     snapX = other.left - width + frameOffset;
                     snappedX = true;
+                    guides.push({ type: 'vertical', x: other.left, y1: Math.min(newTop, other.top), y2: Math.max(newBottom, other.bottom) });
                 }
                 // Centers align horizontally
                 else if (Math.abs(newCenterX - other.centerX) < SNAP_THRESHOLD) {
                     snapX = other.centerX - width / 2 + frameOffset;
                     snappedX = true;
+                    guides.push({ type: 'vertical', x: other.centerX, y1: Math.min(newTop, other.top), y2: Math.max(newBottom, other.bottom) });
                 }
             }
             
@@ -165,27 +206,41 @@
                 if (Math.abs(newTop - other.top) < SNAP_THRESHOLD) {
                     snapY = other.top + frameOffset;
                     snappedY = true;
+                    guides.push({ type: 'horizontal', y: other.top, x1: Math.min(newLeft, other.left), x2: Math.max(newRight, other.right) });
                 }
                 // Bottom edges align
                 else if (Math.abs(newBottom - other.bottom) < SNAP_THRESHOLD) {
                     snapY = other.bottom - height + frameOffset;
                     snappedY = true;
+                    guides.push({ type: 'horizontal', y: other.bottom, x1: Math.min(newLeft, other.left), x2: Math.max(newRight, other.right) });
                 }
                 // My top touches their bottom (stacked, no overlap)
                 else if (Math.abs(newTop - other.bottom) < SNAP_THRESHOLD) {
                     snapY = other.bottom + frameOffset;
                     snappedY = true;
+                    guides.push({ type: 'horizontal', y: other.bottom, x1: Math.min(newLeft, other.left), x2: Math.max(newRight, other.right) });
                 }
                 // My bottom touches their top (stacked, no overlap)
                 else if (Math.abs(newBottom - other.top) < SNAP_THRESHOLD) {
                     snapY = other.top - height + frameOffset;
                     snappedY = true;
+                    guides.push({ type: 'horizontal', y: other.top, x1: Math.min(newLeft, other.left), x2: Math.max(newRight, other.right) });
                 }
                 // Centers align vertically
                 else if (Math.abs(newCenterY - other.centerY) < SNAP_THRESHOLD) {
                     snapY = other.centerY - height / 2 + frameOffset;
                     snappedY = true;
+                    guides.push({ type: 'horizontal', y: other.centerY, x1: Math.min(newLeft, other.left), x2: Math.max(newRight, other.right) });
                 }
+            }
+        });
+        
+        // Show guides
+        guides.forEach(guide => {
+            if (guide.type === 'horizontal') {
+                showGuide(guide.x1, guide.y, guide.x2, guide.y, 'horizontal');
+            } else {
+                showGuide(guide.x, guide.y1, guide.x, guide.y2, 'vertical');
             }
         });
         
@@ -566,11 +621,14 @@
             let newX = e.clientX - dragOffset.x;
             let newY = e.clientY - dragOffset.y;
             
-            // Snap to other cards (unless holding Alt key to disable snapping)
-            if (!e.altKey) {
+            // Snap to other cards (unless holding Alt key OR magnetic snapping is disabled)
+            if (!e.altKey && isMagneticSnappingEnabled) {
                 const snapped = findSnapPosition(activeCard, newX, newY);
                 newX = snapped.x;
                 newY = snapped.y;
+            } else {
+                // Clear guides if not snapping
+                createGuideLines();
             }
             
             activeCard.dataset.x = newX;
@@ -593,6 +651,9 @@
         isDragging = false;
         isResizing = false;
         activeCard = null;
+        
+        // Clear guides when done dragging
+        createGuideLines();
     });
     /* NAME TOGGLE */
     function setNamesVisibility(v) {
@@ -603,6 +664,22 @@
     function toggleNamesVisibility() {
         setNamesVisibility(!areNamesVisible);
     }
+    
+    /* ============ MAGNETIC SNAPPING TOGGLE ============ */
+    function toggleMagneticSnapping() {
+        isMagneticSnappingEnabled = !isMagneticSnappingEnabled;
+        const magnetBtn = document.getElementById('magnetToggleBtn');
+        if (magnetBtn) {
+            if (isMagneticSnappingEnabled) {
+                magnetBtn.classList.add('active');
+                magnetBtn.title = 'Magnetic snapping enabled';
+            } else {
+                magnetBtn.classList.remove('active');
+                magnetBtn.title = 'Magnetic snapping disabled';
+            }
+        }
+    }
+    
     /* FILE UPLOAD */
     function handleFileUpload(e) {
         const files = e.target.files;
@@ -648,5 +725,13 @@
         document.getElementById('add1PhotoBtn').onclick = () => addPhotosFromCSV(1);
         const namesBtn = document.querySelector('[title="Names"]');
         if (namesBtn) namesBtn.onclick = toggleNamesVisibility;
+        
+        // Set up magnet toggle button
+        const magnetBtn = document.getElementById('magnetToggleBtn');
+        if (magnetBtn) {
+            magnetBtn.onclick = toggleMagneticSnapping;
+            // Start with magnetic snapping enabled
+            magnetBtn.classList.add('active');
+        }
     };
 })();
