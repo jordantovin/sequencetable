@@ -222,38 +222,43 @@ body {
 }
 
 /* =============================== */
-/* ROTATE + RESIZE HANDLES - OUTSIDE CORNERS */
+/* ROTATE + RESIZE HANDLES - PHOTOSHOP STYLE */
 /* =============================== */
+
+.photo-frame {
+    position: relative;
+    display: inline-block;
+    outline: none;
+    margin: 0;
+    line-height: 0;
+}
 
 .resize-handle,
 .rotate-handle {
     position: absolute;
-    width: 28px;
-    height: 28px;
-    background: rgba(255,255,255,0.95);
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    color: #5f6368;
+    width: 18px;
+    height: 18px;
+    background: transparent;
+    border: none;
+    color: #333;
     display: flex;
     justify-content: center;
     align-items: center;
     font-size: 14px;
     opacity: 0;
     z-index: 20;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
-    transition: opacity 0.15s, background 0.15s, transform 0.15s;
+    transition: opacity 0.15s;
 }
 
 .resize-handle:hover,
 .rotate-handle:hover {
-    background: #f0f0f0;
-    transform: scale(1.1);
+    color: #000;
 }
 
-/* Rotate handle - OUTSIDE top-left corner */
-.rotate-handle {
-    top: -36px;
-    left: -36px;
+/* Rotate handle - OUTSIDE top-left of the FRAME */
+.photo-frame .rotate-handle {
+    top: -24px;
+    left: -24px;
     cursor: grab;
 }
 
@@ -261,10 +266,10 @@ body {
     cursor: grabbing;
 }
 
-/* Resize handle - OUTSIDE bottom-right corner */
-.resize-handle {
-    bottom: -36px;
-    right: -36px;
+/* Resize handle - OUTSIDE bottom-right of the FRAME */
+.photo-frame .resize-handle {
+    bottom: -24px;
+    right: -24px;
     cursor: nwse-resize;
 }
 
@@ -273,6 +278,13 @@ body {
 .photo-card:hover .rotate-handle,
 .photo-card.selected .resize-handle,
 .photo-card.selected .rotate-handle {
+    opacity: 0.7;
+}
+
+.photo-card:hover .resize-handle:hover,
+.photo-card:hover .rotate-handle:hover,
+.photo-card.selected .resize-handle:hover,
+.photo-card.selected .rotate-handle:hover {
     opacity: 1;
 }
 
