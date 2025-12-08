@@ -50,11 +50,12 @@
     /* ============ GET TOTAL FRAME SIZE (including box-shadow frame border) ============ */
     function getTotalFrameSize(card) {
         const frame = card.querySelector('.photo-frame');
-        if (!frame) return { width: 0, height: 0 };
+        if (!frame) return { width: 0, height: 0, frameOffset: 0 };
         
         // Get the frame element size (includes padding/matte)
         let width = frame.offsetWidth;
         let height = frame.offsetHeight;
+        let frameOffset = 0;
         
         // Add the box-shadow frame border (stored in CSS variable)
         const frameThicknessVar = frame.style.getPropertyValue('--frame-thickness');
@@ -71,73 +72,52 @@
                     frameBorderPx = frameBorderPx * 96 / 25.4;
                 }
                 
+                frameOffset = frameBorderPx;
                 // Add border on both sides
                 width += frameBorderPx * 2;
                 height += frameBorderPx * 2;
             }
         }
         
-        return { width, height };
+        return { width, height, frameOffset };
     }
 
     /* ============ SNAP ALIGNMENT HELPERS ============ */
-    const SNAP_THRESHOLD = 10; // pixels - how close before snapping
+    const SNAP_THRESHOLD = 15; // pixels - how close before snapping
     
     function getCardEdges(card) {
         const x = parseFloat(card.dataset.x) || 0;
         const y = parseFloat(card.dataset.y) || 0;
-        const size = getTotalFrameSize(card);
-        const frame = card.querySelector('.photo-frame');
+        const { width, height, frameOffset } = getTotalFrameSize(card);
         
-        // Calculate offset from card position to frame outer edge
-        // The frame border (box-shadow) extends beyond the frame element
-        let frameOffset = 0;
-        const frameThicknessVar = frame?.style.getPropertyValue('--frame-thickness');
-        if (frameThicknessVar) {
-            const match = frameThicknessVar.match(/^(\d+(?:\.\d+)?)(px|in|mm)$/);
-            if (match) {
-                frameOffset = parseFloat(match[1]);
-                if (match[2] === 'in') frameOffset *= 96;
-                else if (match[2] === 'mm') frameOffset *= 96 / 25.4;
-            }
-        }
+        // The card position is the top-left of the frame element
+        // The actual framed area starts at (x - frameOffset, y - frameOffset)
+        const left = x - frameOffset;
+        const top = y - frameOffset;
         
         return {
-            left: x - frameOffset,
-            right: x - frameOffset + size.width,
-            top: y - frameOffset,
-            bottom: y - frameOffset + size.height,
-            centerX: x - frameOffset + size.width / 2,
-            centerY: y - frameOffset + size.height / 2,
-            width: size.width,
-            height: size.height
+            left: left,
+            right: left + width,
+            top: top,
+            bottom: top + height,
+            centerX: left + width / 2,
+            centerY: top + height / 2,
+            width: width,
+            height: height,
+            frameOffset: frameOffset
         };
     }
     
     function findSnapPosition(activeCard, newX, newY) {
-        const activeEdges = getCardEdges(activeCard);
-        const activeSize = getTotalFrameSize(activeCard);
-        
-        // Get frame offset for active card
-        const frame = activeCard.querySelector('.photo-frame');
-        let frameOffset = 0;
-        const frameThicknessVar = frame?.style.getPropertyValue('--frame-thickness');
-        if (frameThicknessVar) {
-            const match = frameThicknessVar.match(/^(\d+(?:\.\d+)?)(px|in|mm)$/);
-            if (match) {
-                frameOffset = parseFloat(match[1]);
-                if (match[2] === 'in') frameOffset *= 96;
-                else if (match[2] === 'mm') frameOffset *= 96 / 25.4;
-            }
-        }
+        const { width, height, frameOffset } = getTotalFrameSize(activeCard);
         
         // Calculate where the frame edges would be at the new position
         const newLeft = newX - frameOffset;
-        const newRight = newX - frameOffset + activeSize.width;
+        const newRight = newLeft + width;
         const newTop = newY - frameOffset;
-        const newBottom = newY - frameOffset + activeSize.height;
-        const newCenterX = newX - frameOffset + activeSize.width / 2;
-        const newCenterY = newY - frameOffset + activeSize.height / 2;
+        const newBottom = newTop + height;
+        const newCenterX = newLeft + width / 2;
+        const newCenterY = newTop + height / 2;
         
         let snapX = newX;
         let snapY = newY;
@@ -150,60 +130,60 @@
             
             const other = getCardEdges(otherCard);
             
-            // Horizontal snapping (left, right, center)
+            // Horizontal snapping
             if (!snappedX) {
-                // Left edge to left edge
+                // Left edges align
                 if (Math.abs(newLeft - other.left) < SNAP_THRESHOLD) {
                     snapX = other.left + frameOffset;
                     snappedX = true;
                 }
-                // Right edge to right edge
+                // Right edges align
                 else if (Math.abs(newRight - other.right) < SNAP_THRESHOLD) {
-                    snapX = other.right - activeSize.width + frameOffset;
+                    snapX = other.right - width + frameOffset;
                     snappedX = true;
                 }
-                // Left edge to right edge (align side by side)
+                // My left touches their right (side by side, no overlap)
                 else if (Math.abs(newLeft - other.right) < SNAP_THRESHOLD) {
                     snapX = other.right + frameOffset;
                     snappedX = true;
                 }
-                // Right edge to left edge (align side by side)
+                // My right touches their left (side by side, no overlap)
                 else if (Math.abs(newRight - other.left) < SNAP_THRESHOLD) {
-                    snapX = other.left - activeSize.width + frameOffset;
+                    snapX = other.left - width + frameOffset;
                     snappedX = true;
                 }
-                // Center to center
+                // Centers align horizontally
                 else if (Math.abs(newCenterX - other.centerX) < SNAP_THRESHOLD) {
-                    snapX = other.centerX - activeSize.width / 2 + frameOffset;
+                    snapX = other.centerX - width / 2 + frameOffset;
                     snappedX = true;
                 }
             }
             
-            // Vertical snapping (top, bottom, center)
+            // Vertical snapping
             if (!snappedY) {
-                // Top edge to top edge
+                // Top edges align
                 if (Math.abs(newTop - other.top) < SNAP_THRESHOLD) {
                     snapY = other.top + frameOffset;
                     snappedY = true;
                 }
-                // Bottom edge to bottom edge
+                // Bottom edges align
                 else if (Math.abs(newBottom - other.bottom) < SNAP_THRESHOLD) {
-                    snapY = other.bottom - activeSize.height + frameOffset;
+                    snapY = other.bottom - height + frameOffset;
                     snappedY = true;
                 }
-                // Top edge to bottom edge (stack vertically)
+                // My top touches their bottom (stacked, no overlap)
                 else if (Math.abs(newTop - other.bottom) < SNAP_THRESHOLD) {
                     snapY = other.bottom + frameOffset;
                     snappedY = true;
                 }
-                // Bottom edge to top edge (stack vertically)
+                // My bottom touches their top (stacked, no overlap)
                 else if (Math.abs(newBottom - other.top) < SNAP_THRESHOLD) {
-                    snapY = other.top - activeSize.height + frameOffset;
+                    snapY = other.top - height + frameOffset;
                     snappedY = true;
                 }
-                // Center to center
+                // Centers align vertically
                 else if (Math.abs(newCenterY - other.centerY) < SNAP_THRESHOLD) {
-                    snapY = other.centerY - activeSize.height / 2 + frameOffset;
+                    snapY = other.centerY - height / 2 + frameOffset;
                     snappedY = true;
                 }
             }
