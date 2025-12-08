@@ -345,12 +345,14 @@
             card.style.zIndex = getHighestZIndex() + 1;
             e.preventDefault();
         });
-        /* HANDLE CREATION (Resize & Rotate) */
+        /* HANDLE CREATION (Resize & Rotate) - positioned OUTSIDE the frame */
         const frame = card.querySelector('.photo-frame');
+        
         const resizeHandle = document.createElement("div");
         resizeHandle.className = "resize-handle";
         resizeHandle.textContent = "⇲";
-        frame.appendChild(resizeHandle);
+        card.appendChild(resizeHandle); // Append to card, not frame
+        
         resizeHandle.addEventListener('mousedown', function(e) {
             isResizing = true;
             activeCard = card;
@@ -362,10 +364,12 @@
             e.stopPropagation();
             e.preventDefault();
         });
+        
         const rotateHandle = document.createElement("div");
         rotateHandle.className = "rotate-handle";
         rotateHandle.textContent = "↻";
-        frame.appendChild(rotateHandle);
+        card.appendChild(rotateHandle); // Append to card, not frame
+        
         rotateHandle.addEventListener('mousedown', function(e) {
             activeCard = card;
             const rect = card.getBoundingClientRect();
@@ -373,16 +377,26 @@
             const cy = rect.top + rect.height / 2;
             const startAngle = Math.atan2(e.clientY - cy, e.clientX - cx) * 180 / Math.PI;
             const offset = startAngle - parseFloat(card.dataset.rotation);
+            
             function rotateMove(ev) {
-                const angle = Math.atan2(ev.clientY - cy, ev.clientX - cx) * 180 / Math.PI;
-                card.dataset.rotation = angle - offset;
+                let angle = Math.atan2(ev.clientY - cy, ev.clientX - cx) * 180 / Math.PI;
+                let newRotation = angle - offset;
+                
+                // Snap to 45° increments when holding Shift
+                if (ev.shiftKey) {
+                    newRotation = Math.round(newRotation / 45) * 45;
+                }
+                
+                card.dataset.rotation = newRotation;
                 updateCardTransform(card);
                 window.updateCardDimensionsText?.(card);
             }
+            
             function rotateEnd() {
                 document.removeEventListener('mousemove', rotateMove);
                 document.removeEventListener('mouseup', rotateEnd);
             }
+            
             document.addEventListener('mousemove', rotateMove);
             document.addEventListener('mouseup', rotateEnd);
             e.stopPropagation();
