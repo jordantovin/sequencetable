@@ -117,14 +117,15 @@
     const SNAP_THRESHOLD = 15; // pixels - how close before snapping
     
     function getCardEdges(card) {
-        const x = parseFloat(card.dataset.x) || 0;
-        const y = parseFloat(card.dataset.y) || 0;
         const { width, height, frameOffset } = getTotalFrameSize(card);
         
-        // The card position is the top-left of the frame element
-        // The actual framed area starts at (x - frameOffset, y - frameOffset)
-        const left = x - frameOffset;
-        const top = y - frameOffset;
+        // Get the actual rendered position on screen
+        const rect = card.getBoundingClientRect();
+        
+        // The card's bounding rect gives us the frame element position
+        // The visual frame edges start at frameOffset before this
+        const left = rect.left - frameOffset;
+        const top = rect.top - frameOffset;
         
         return {
             left: left,
