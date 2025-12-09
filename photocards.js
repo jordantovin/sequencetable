@@ -64,63 +64,15 @@
         guide.dataset.type = type; // 'horizontal' or 'vertical'
         
         if (type === 'horizontal') {
-            guide.style.left = Math.min(x1, x2) + 'px';
+            guide.style.left = '0';
             guide.style.top = y1 + 'px';
-            guide.style.width = Math.abs(x2 - x1) + 'px';
+            guide.style.width = '100%';
             guide.style.height = '1px';
         } else {
             guide.style.left = x1 + 'px';
-            guide.style.top = Math.min(y1, y2) + 'px';
+            guide.style.top = '0';
             guide.style.width = '1px';
-            guide.style.height = Math.abs(y2 - y1) + 'px';
-        }
-        
-        // Add measurement label if we have a wall scale
-        if (window.currentWallInches && document.getElementById("wall")) {
-            const wall = document.getElementById("wall");
-            const scaleX = window.currentWallInches.width / wall.offsetWidth;
-            const scaleY = window.currentWallInches.height / wall.offsetHeight;
-            
-            // Get the measurement unit
-            const wallUnitEl = document.getElementById("wallUnit");
-            const displayUnit = wallUnitEl ? wallUnitEl.value : "in";
-            
-            // Calculate the length in pixels
-            let lengthPx;
-            if (type === 'horizontal') {
-                lengthPx = Math.abs(x2 - x1);
-            } else {
-                lengthPx = Math.abs(y2 - y1);
-            }
-            
-            // Convert to inches first
-            const lengthIn = type === 'horizontal' ? lengthPx * scaleX : lengthPx * scaleY;
-            
-            // Convert to display unit
-            const UNIT_FROM_IN = {
-                in: 1,
-                ft: 1/12,
-                cm: 2.54,
-                m: 0.0254
-            };
-            
-            const lengthDisplay = lengthIn * UNIT_FROM_IN[displayUnit];
-            
-            // Create label
-            const label = document.createElement('div');
-            label.className = 'snap-guide-label';
-            label.textContent = `${lengthDisplay.toFixed(1)}${displayUnit}`;
-            
-            // Position label at the center of the guide
-            if (type === 'horizontal') {
-                label.style.left = (Math.min(x1, x2) + lengthPx / 2) + 'px';
-                label.style.top = (y1 - 15) + 'px';
-            } else {
-                label.style.left = (x1 + 10) + 'px';
-                label.style.top = (Math.min(y1, y2) + Math.abs(y2 - y1) / 2) + 'px';
-            }
-            
-            document.body.appendChild(label);
+            guide.style.height = '100%';
         }
         
         document.body.appendChild(guide);
@@ -206,7 +158,7 @@
         // Clear existing guides
         createGuideLines();
         
-        // Track which guides to show
+        // Track which guides to show (full viewport lines)
         const guides = [];
         
         // Check against all other cards
@@ -215,111 +167,83 @@
             
             const other = getCardEdges(otherCard);
             
-            // Horizontal snapping
+            // Horizontal snapping (vertical lines)
             if (!snappedX) {
                 // Left edges align
                 if (Math.abs(newLeft - other.left) < SNAP_THRESHOLD) {
                     snapX = other.left + frameOffset;
                     snappedX = true;
-                    // Guide only spans the overlapping vertical range
-                    const guideTop = Math.max(newTop, other.top);
-                    const guideBottom = Math.min(newBottom, other.bottom);
-                    guides.push({ type: 'vertical', x: other.left, y1: guideTop, y2: guideBottom });
+                    guides.push({ type: 'vertical', x: other.left });
                 }
                 // Right edges align
                 else if (Math.abs(newRight - other.right) < SNAP_THRESHOLD) {
                     snapX = other.right - width + frameOffset;
                     snappedX = true;
-                    const guideTop = Math.max(newTop, other.top);
-                    const guideBottom = Math.min(newBottom, other.bottom);
-                    guides.push({ type: 'vertical', x: other.right, y1: guideTop, y2: guideBottom });
+                    guides.push({ type: 'vertical', x: other.right });
                 }
-                // My left touches their right (side by side, no overlap)
+                // My left touches their right (side by side)
                 else if (Math.abs(newLeft - other.right) < SNAP_THRESHOLD) {
                     snapX = other.right + frameOffset;
                     snappedX = true;
-                    // Guide spans both cards' vertical range
-                    const guideTop = Math.max(newTop, other.top);
-                    const guideBottom = Math.min(newBottom, other.bottom);
-                    if (guideBottom > guideTop) {
-                        guides.push({ type: 'vertical', x: other.right, y1: guideTop, y2: guideBottom });
-                    }
+                    guides.push({ type: 'vertical', x: other.right });
                 }
-                // My right touches their left (side by side, no overlap)
+                // My right touches their left (side by side)
                 else if (Math.abs(newRight - other.left) < SNAP_THRESHOLD) {
                     snapX = other.left - width + frameOffset;
                     snappedX = true;
-                    const guideTop = Math.max(newTop, other.top);
-                    const guideBottom = Math.min(newBottom, other.bottom);
-                    if (guideBottom > guideTop) {
-                        guides.push({ type: 'vertical', x: other.left, y1: guideTop, y2: guideBottom });
-                    }
+                    guides.push({ type: 'vertical', x: other.left });
                 }
                 // Centers align horizontally
                 else if (Math.abs(newCenterX - other.centerX) < SNAP_THRESHOLD) {
                     snapX = other.centerX - width / 2 + frameOffset;
                     snappedX = true;
-                    const guideTop = Math.max(newTop, other.top);
-                    const guideBottom = Math.min(newBottom, other.bottom);
-                    guides.push({ type: 'vertical', x: other.centerX, y1: guideTop, y2: guideBottom });
+                    guides.push({ type: 'vertical', x: other.centerX });
                 }
             }
             
-            // Vertical snapping
+            // Vertical snapping (horizontal lines)
             if (!snappedY) {
                 // Top edges align
                 if (Math.abs(newTop - other.top) < SNAP_THRESHOLD) {
                     snapY = other.top + frameOffset;
                     snappedY = true;
-                    const guideLeft = Math.max(newLeft, other.left);
-                    const guideRight = Math.min(newRight, other.right);
-                    guides.push({ type: 'horizontal', y: other.top, x1: guideLeft, x2: guideRight });
+                    guides.push({ type: 'horizontal', y: other.top });
                 }
                 // Bottom edges align
                 else if (Math.abs(newBottom - other.bottom) < SNAP_THRESHOLD) {
                     snapY = other.bottom - height + frameOffset;
                     snappedY = true;
-                    const guideLeft = Math.max(newLeft, other.left);
-                    const guideRight = Math.min(newRight, other.right);
-                    guides.push({ type: 'horizontal', y: other.bottom, x1: guideLeft, x2: guideRight });
+                    guides.push({ type: 'horizontal', y: other.bottom });
                 }
-                // My top touches their bottom (stacked, no overlap)
+                // My top touches their bottom (stacked)
                 else if (Math.abs(newTop - other.bottom) < SNAP_THRESHOLD) {
                     snapY = other.bottom + frameOffset;
                     snappedY = true;
-                    const guideLeft = Math.max(newLeft, other.left);
-                    const guideRight = Math.min(newRight, other.right);
-                    if (guideRight > guideLeft) {
-                        guides.push({ type: 'horizontal', y: other.bottom, x1: guideLeft, x2: guideRight });
-                    }
+                    guides.push({ type: 'horizontal', y: other.bottom });
                 }
-                // My bottom touches their top (stacked, no overlap)
+                // My bottom touches their top (stacked)
                 else if (Math.abs(newBottom - other.top) < SNAP_THRESHOLD) {
                     snapY = other.top - height + frameOffset;
                     snappedY = true;
-                    const guideLeft = Math.max(newLeft, other.left);
-                    const guideRight = Math.min(newRight, other.right);
-                    if (guideRight > guideLeft) {
-                        guides.push({ type: 'horizontal', y: other.top, x1: guideLeft, x2: guideRight });
-                    }
+                    guides.push({ type: 'horizontal', y: other.top });
                 }
                 // Centers align vertically
                 else if (Math.abs(newCenterY - other.centerY) < SNAP_THRESHOLD) {
                     snapY = other.centerY - height / 2 + frameOffset;
                     snappedY = true;
-                    const guideLeft = Math.max(newLeft, other.left);
-                    const guideRight = Math.min(newRight, other.right);
-                    guides.push({ type: 'horizontal', y: other.centerY, x1: guideLeft, x2: guideRight });
+                    guides.push({ type: 'horizontal', y: other.centerY });
                 }
             }
         });
         
-        // Show guides
+        // Show guides - full viewport lines
         guides.forEach(guide => {
             if (guide.type === 'horizontal') {
-                showGuide(guide.x1, guide.y, guide.x2, guide.y, 'horizontal');
+                // Horizontal line spans full viewport width
+                showGuide(0, guide.y, window.innerWidth, guide.y, 'horizontal');
             } else {
-                showGuide(guide.x, guide.y1, guide.x, guide.y2, 'vertical');
+                // Vertical line spans full viewport height
+                showGuide(guide.x, 0, guide.x, window.innerHeight, 'vertical');
             }
         });
         
