@@ -121,6 +121,22 @@
         };
     }
     
+    // Get wall boundaries
+    function getWallBounds() {
+        const wall = document.getElementById('wall');
+        if (!wall || wall.style.display === 'none') return null;
+        
+        const rect = wall.getBoundingClientRect();
+        return {
+            left: rect.left,
+            top: rect.top,
+            right: rect.right,
+            bottom: rect.bottom,
+            centerX: rect.left + rect.width / 2,
+            centerY: rect.top + rect.height / 2
+        };
+    }
+    
     // Calculate where the dragged card would be positioned
     function getProposedBounds(activeCard, proposedX, proposedY) {
         const frame = activeCard.querySelector('.photo-frame');
@@ -164,9 +180,10 @@
     
     function clearGuides() {
         document.querySelectorAll('.snap-guide').forEach(g => g.remove());
+        document.querySelectorAll('.snap-guide-label').forEach(l => l.remove());
     }
     
-    function showGuide(position, type) {
+    function showGuide(position, type, distance) {
         const guide = document.createElement('div');
         guide.className = 'snap-guide';
         
@@ -185,6 +202,50 @@
         }
         
         document.body.appendChild(guide);
+        
+        // Add distance label if provided
+        if (distance !== null && distance !== undefined && window.currentWallInches) {
+            const wall = document.getElementById("wall");
+            if (!wall) return;
+            
+            const scaleX = window.currentWallInches.width / wall.offsetWidth;
+            const scaleY = window.currentWallInches.height / wall.offsetHeight;
+            
+            // Get the measurement unit
+            const wallUnitEl = document.getElementById("wallUnit");
+            const displayUnit = wallUnitEl ? wallUnitEl.value : "in";
+            
+            // Convert pixels to inches first
+            const distanceIn = type === 'horizontal' ? distance * scaleY : distance * scaleX;
+            
+            // Convert to display unit
+            const UNIT_FROM_IN = {
+                in: 1,
+                ft: 1/12,
+                cm: 2.54,
+                m: 0.0254
+            };
+            
+            const distanceDisplay = distanceIn * UNIT_FROM_IN[displayUnit];
+            
+            // Create label
+            const label = document.createElement('div');
+            label.className = 'snap-guide-label';
+            label.textContent = `${distanceDisplay.toFixed(1)}${displayUnit}`;
+            
+            // Position label near the guide
+            if (type === 'horizontal') {
+                label.style.left = '50%';
+                label.style.top = (position - 20) + 'px';
+                label.style.transform = 'translateX(-50%)';
+            } else {
+                label.style.left = (position + 10) + 'px';
+                label.style.top = '50%';
+                label.style.transform = 'translateY(-50%)';
+            }
+            
+            document.body.appendChild(label);
+        }
     }
     
     function findSnapPosition(activeCard, proposedX, proposedY) {
@@ -199,6 +260,66 @@
         let snappedY = false;
         let guideX = null;
         let guideY = null;
+        let distanceX = null;
+        let distanceY = null;
+        
+        // Check wall boundaries first
+        const wall = getWallBounds();
+        if (wall) {
+            // Vertical guides (horizontal alignment with wall)
+            if (!snappedX) {
+                // Left edge to wall left
+                if (Math.abs(proposed.left - wall.left) < SNAP_THRESHOLD) {
+                    const offset = proposed.left - wall.left;
+                    snapX = proposedX - offset;
+                    snappedX = true;
+                    guideX = wall.left;
+                    distanceX = 0;
+                }
+                // Right edge to wall right
+                else if (Math.abs(proposed.right - wall.right) < SNAP_THRESHOLD) {
+                    const offset = proposed.right - wall.right;
+                    snapX = proposedX - offset;
+                    snappedX = true;
+                    guideX = wall.right;
+                    distanceX = 0;
+                }
+                // Center to wall center
+                else if (Math.abs(proposed.centerX - wall.centerX) < SNAP_THRESHOLD) {
+                    const offset = proposed.centerX - wall.centerX;
+                    snapX = proposedX - offset;
+                    snappedX = true;
+                    guideX = wall.centerX;
+                }
+            }
+            
+            // Horizontal guides (vertical alignment with wall)
+            if (!snappedY) {
+                // Top edge to wall top
+                if (Math.abs(proposed.top - wall.top) < SNAP_THRESHOLD) {
+                    const offset = proposed.top - wall.top;
+                    snapY = proposedY - offset;
+                    snappedY = true;
+                    guideY = wall.top;
+                    distanceY = 0;
+                }
+                // Bottom edge to wall bottom
+                else if (Math.abs(proposed.bottom - wall.bottom) < SNAP_THRESHOLD) {
+                    const offset = proposed.bottom - wall.bottom;
+                    snapY = proposedY - offset;
+                    snappedY = true;
+                    guideY = wall.bottom;
+                    distanceY = 0;
+                }
+                // Center to wall center
+                else if (Math.abs(proposed.centerY - wall.centerY) < SNAP_THRESHOLD) {
+                    const offset = proposed.centerY - wall.centerY;
+                    snapY = proposedY - offset;
+                    snappedY = true;
+                    guideY = wall.centerY;
+                }
+            }
+        }
         
         // Check against all other cards
         document.querySelectorAll('.photo-card').forEach(otherCard => {
@@ -223,19 +344,21 @@
                     snappedX = true;
                     guideX = other.right;
                 }
-                // Left touches right (side by side)
+                // Left touches right (side by side) - show gap distance
                 else if (Math.abs(proposed.left - other.right) < SNAP_THRESHOLD) {
                     const offset = proposed.left - other.right;
                     snapX = proposedX - offset;
                     snappedX = true;
                     guideX = other.right;
+                    distanceX = Math.abs(offset);
                 }
-                // Right touches left (side by side)
+                // Right touches left (side by side) - show gap distance
                 else if (Math.abs(proposed.right - other.left) < SNAP_THRESHOLD) {
                     const offset = proposed.right - other.left;
                     snapX = proposedX - offset;
                     snappedX = true;
                     guideX = other.left;
+                    distanceX = Math.abs(offset);
                 }
                 // Centers align
                 else if (Math.abs(proposed.centerX - other.centerX) < SNAP_THRESHOLD) {
@@ -262,19 +385,21 @@
                     snappedY = true;
                     guideY = other.bottom;
                 }
-                // Top touches bottom (stacked)
+                // Top touches bottom (stacked) - show gap distance
                 else if (Math.abs(proposed.top - other.bottom) < SNAP_THRESHOLD) {
                     const offset = proposed.top - other.bottom;
                     snapY = proposedY - offset;
                     snappedY = true;
                     guideY = other.bottom;
+                    distanceY = Math.abs(offset);
                 }
-                // Bottom touches top (stacked)
+                // Bottom touches top (stacked) - show gap distance
                 else if (Math.abs(proposed.bottom - other.top) < SNAP_THRESHOLD) {
                     const offset = proposed.bottom - other.top;
                     snapY = proposedY - offset;
                     snappedY = true;
                     guideY = other.top;
+                    distanceY = Math.abs(offset);
                 }
                 // Centers align
                 else if (Math.abs(proposed.centerY - other.centerY) < SNAP_THRESHOLD) {
@@ -286,9 +411,9 @@
             }
         });
         
-        // Show guides
-        if (guideX !== null) showGuide(guideX, 'vertical');
-        if (guideY !== null) showGuide(guideY, 'horizontal');
+        // Show guides with distance labels
+        if (guideX !== null) showGuide(guideX, 'vertical', distanceX);
+        if (guideY !== null) showGuide(guideY, 'horizontal', distanceY);
         
         return { x: snapX, y: snapY };
     }
