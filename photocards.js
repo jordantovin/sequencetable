@@ -203,8 +203,8 @@
         
         document.body.appendChild(guide);
         
-        // Add distance label if provided
-        if (distance !== null && distance !== undefined && window.currentWallInches) {
+        // Add distance label if there's a gap and wall scale exists
+        if (distance !== null && distance !== undefined && distance > 0 && window.currentWallInches) {
             const wall = document.getElementById("wall");
             if (!wall) return;
             
@@ -235,10 +235,12 @@
             
             // Position label near the guide
             if (type === 'horizontal') {
+                label.style.position = 'fixed';
                 label.style.left = '50%';
                 label.style.top = (position - 20) + 'px';
                 label.style.transform = 'translateX(-50%)';
             } else {
+                label.style.position = 'fixed';
                 label.style.left = (position + 10) + 'px';
                 label.style.top = '50%';
                 label.style.transform = 'translateY(-50%)';
@@ -268,21 +270,21 @@
         if (wall) {
             // Vertical guides (horizontal alignment with wall)
             if (!snappedX) {
-                // Left edge to wall left
+                // Left edge to wall left - show distance
                 if (Math.abs(proposed.left - wall.left) < SNAP_THRESHOLD) {
                     const offset = proposed.left - wall.left;
                     snapX = proposedX - offset;
                     snappedX = true;
-                    guideX = wall.left;
-                    distanceX = 0;
+                    guideX = proposed.left;
+                    distanceX = Math.abs(offset);
                 }
-                // Right edge to wall right
+                // Right edge to wall right - show distance
                 else if (Math.abs(proposed.right - wall.right) < SNAP_THRESHOLD) {
                     const offset = proposed.right - wall.right;
                     snapX = proposedX - offset;
                     snappedX = true;
-                    guideX = wall.right;
-                    distanceX = 0;
+                    guideX = proposed.right;
+                    distanceX = Math.abs(offset);
                 }
                 // Center to wall center
                 else if (Math.abs(proposed.centerX - wall.centerX) < SNAP_THRESHOLD) {
@@ -295,21 +297,21 @@
             
             // Horizontal guides (vertical alignment with wall)
             if (!snappedY) {
-                // Top edge to wall top
+                // Top edge to wall top - show distance
                 if (Math.abs(proposed.top - wall.top) < SNAP_THRESHOLD) {
                     const offset = proposed.top - wall.top;
                     snapY = proposedY - offset;
                     snappedY = true;
-                    guideY = wall.top;
-                    distanceY = 0;
+                    guideY = proposed.top;
+                    distanceY = Math.abs(offset);
                 }
-                // Bottom edge to wall bottom
+                // Bottom edge to wall bottom - show distance
                 else if (Math.abs(proposed.bottom - wall.bottom) < SNAP_THRESHOLD) {
                     const offset = proposed.bottom - wall.bottom;
                     snapY = proposedY - offset;
                     snappedY = true;
-                    guideY = wall.bottom;
-                    distanceY = 0;
+                    guideY = proposed.bottom;
+                    distanceY = Math.abs(offset);
                 }
                 // Center to wall center
                 else if (Math.abs(proposed.centerY - wall.centerY) < SNAP_THRESHOLD) {
@@ -349,7 +351,7 @@
                     const offset = proposed.left - other.right;
                     snapX = proposedX - offset;
                     snappedX = true;
-                    guideX = other.right;
+                    guideX = other.right; // Guide at the edge between them
                     distanceX = Math.abs(offset);
                 }
                 // Right touches left (side by side) - show gap distance
@@ -357,7 +359,7 @@
                     const offset = proposed.right - other.left;
                     snapX = proposedX - offset;
                     snappedX = true;
-                    guideX = other.left;
+                    guideX = other.left; // Guide at the edge between them
                     distanceX = Math.abs(offset);
                 }
                 // Centers align
@@ -390,7 +392,7 @@
                     const offset = proposed.top - other.bottom;
                     snapY = proposedY - offset;
                     snappedY = true;
-                    guideY = other.bottom;
+                    guideY = other.bottom; // Guide at the edge between them
                     distanceY = Math.abs(offset);
                 }
                 // Bottom touches top (stacked) - show gap distance
@@ -398,7 +400,7 @@
                     const offset = proposed.bottom - other.top;
                     snapY = proposedY - offset;
                     snappedY = true;
-                    guideY = other.top;
+                    guideY = other.top; // Guide at the edge between them
                     distanceY = Math.abs(offset);
                 }
                 // Centers align
