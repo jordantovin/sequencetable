@@ -252,6 +252,7 @@
             color: white;
             padding: 4px 8px;
             border-radius: 4px;
+            font-family: 'Courier New', Courier, monospace;
             font-size: 12px;
             font-weight: bold;
             z-index: 100000;
@@ -887,8 +888,8 @@
                 newX = snapped.x;
                 newY = snapped.y;
             } else {
-                // 💡 CHANGED: Still show gap labels even when snapping is off
-                showGapsOnly(activeCard, newX, newY);
+                // Clear guides when snapping is off (no gap labels)
+                clearGuides();
             }
             
             activeCard.dataset.x = newX;
