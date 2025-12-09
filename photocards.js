@@ -264,8 +264,7 @@
         let guideY = null;
         let distanceX = null;
         let distanceY = null;
-        let spacingCardX = null; // Track which card we're spacing from
-        let spacingCardY = null;
+        let alignedCardForSpacing = null;
         
         // Check wall boundaries first
         const wall = getWallBounds();
@@ -340,7 +339,7 @@
                     snapX = proposedX - offset;
                     snappedX = true;
                     guideX = other.left;
-                    spacingCardX = other;
+                    alignedCardForSpacing = other;
                 }
                 // Right edges align
                 else if (Math.abs(proposed.right - other.right) < SNAP_THRESHOLD) {
@@ -348,14 +347,14 @@
                     snapX = proposedX - offset;
                     snappedX = true;
                     guideX = other.right;
-                    spacingCardX = other;
+                    alignedCardForSpacing = other;
                 }
                 // Left touches right (side by side) - show gap distance
                 else if (Math.abs(proposed.left - other.right) < SNAP_THRESHOLD) {
                     const offset = proposed.left - other.right;
                     snapX = proposedX - offset;
                     snappedX = true;
-                    guideX = other.right; // Guide at the edge between them
+                    guideX = other.right;
                     distanceX = Math.abs(offset);
                 }
                 // Right touches left (side by side) - show gap distance
@@ -363,7 +362,7 @@
                     const offset = proposed.right - other.left;
                     snapX = proposedX - offset;
                     snappedX = true;
-                    guideX = other.left; // Guide at the edge between them
+                    guideX = other.left;
                     distanceX = Math.abs(offset);
                 }
                 // Centers align
@@ -372,7 +371,7 @@
                     snapX = proposedX - offset;
                     snappedX = true;
                     guideX = other.centerX;
-                    spacingCardX = other;
+                    alignedCardForSpacing = other;
                 }
             }
             
@@ -384,7 +383,7 @@
                     snapY = proposedY - offset;
                     snappedY = true;
                     guideY = other.top;
-                    spacingCardY = other;
+                    alignedCardForSpacing = other;
                 }
                 // Bottom edges align
                 else if (Math.abs(proposed.bottom - other.bottom) < SNAP_THRESHOLD) {
@@ -392,14 +391,14 @@
                     snapY = proposedY - offset;
                     snappedY = true;
                     guideY = other.bottom;
-                    spacingCardY = other;
+                    alignedCardForSpacing = other;
                 }
                 // Top touches bottom (stacked) - show gap distance
                 else if (Math.abs(proposed.top - other.bottom) < SNAP_THRESHOLD) {
                     const offset = proposed.top - other.bottom;
                     snapY = proposedY - offset;
                     snappedY = true;
-                    guideY = other.bottom; // Guide at the edge between them
+                    guideY = other.bottom;
                     distanceY = Math.abs(offset);
                 }
                 // Bottom touches top (stacked) - show gap distance
@@ -407,7 +406,7 @@
                     const offset = proposed.bottom - other.top;
                     snapY = proposedY - offset;
                     snappedY = true;
-                    guideY = other.top; // Guide at the edge between them
+                    guideY = other.top;
                     distanceY = Math.abs(offset);
                 }
                 // Centers align
@@ -416,34 +415,36 @@
                     snapY = proposedY - offset;
                     snappedY = true;
                     guideY = other.centerY;
-                    spacingCardY = other;
+                    alignedCardForSpacing = other;
                 }
             }
         });
         
         // Calculate spacing between cards when edges are aligned
-        // If bottoms align, show horizontal spacing
-        if (spacingCardY && guideY && distanceY === null) {
+        if (alignedCardForSpacing) {
+            // Recalculate with snapped position
             const snappedProposed = getProposedBounds(activeCard, snapX, snapY);
             if (snappedProposed) {
-                // Calculate horizontal gap between cards
-                if (snappedProposed.right < spacingCardY.left) {
-                    distanceX = spacingCardY.left - snappedProposed.right;
-                } else if (snappedProposed.left > spacingCardY.right) {
-                    distanceX = snappedProposed.left - spacingCardY.right;
+                // If horizontal edge aligned (top, bottom, centerY) - show horizontal spacing
+                if (guideY !== null && distanceY === null) {
+                    if (snappedProposed.right < alignedCardForSpacing.left) {
+                        // Card is to the left
+                        distanceX = alignedCardForSpacing.left - snappedProposed.right;
+                    } else if (snappedProposed.left > alignedCardForSpacing.right) {
+                        // Card is to the right
+                        distanceX = snappedProposed.left - alignedCardForSpacing.right;
+                    }
                 }
-            }
-        }
-        
-        // If lefts/rights align, show vertical spacing
-        if (spacingCardX && guideX && distanceX === null) {
-            const snappedProposed = getProposedBounds(activeCard, snapX, snapY);
-            if (snappedProposed) {
-                // Calculate vertical gap between cards
-                if (snappedProposed.bottom < spacingCardX.top) {
-                    distanceY = spacingCardX.top - snappedProposed.bottom;
-                } else if (snappedProposed.top > spacingCardX.bottom) {
-                    distanceY = snappedProposed.top - spacingCardX.bottom;
+                
+                // If vertical edge aligned (left, right, centerX) - show vertical spacing
+                if (guideX !== null && distanceX === null) {
+                    if (snappedProposed.bottom < alignedCardForSpacing.top) {
+                        // Card is above
+                        distanceY = alignedCardForSpacing.top - snappedProposed.bottom;
+                    } else if (snappedProposed.top > alignedCardForSpacing.bottom) {
+                        // Card is below
+                        distanceY = snappedProposed.top - alignedCardForSpacing.bottom;
+                    }
                 }
             }
         }
