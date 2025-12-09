@@ -51,33 +51,6 @@
     // 💡 NEW: Global function to expose selected cards
     window.getSelectedCards = () => Array.from(selectedCards);
     
-    /* ============ ALIGNMENT GUIDE FUNCTIONS ============ */
-    function createGuideLines() {
-        // Remove existing guides and labels
-        document.querySelectorAll('.snap-guide').forEach(g => g.remove());
-        document.querySelectorAll('.snap-guide-label').forEach(l => l.remove());
-    }
-    
-    function showGuide(position, type) {
-        const guide = document.createElement('div');
-        guide.className = 'snap-guide';
-        guide.dataset.type = type;
-        
-        if (type === 'horizontal') {
-            guide.style.left = '0';
-            guide.style.top = position + 'px';
-            guide.style.width = '100%';
-            guide.style.height = '1px';
-        } else {
-            guide.style.left = position + 'px';
-            guide.style.top = '0';
-            guide.style.width = '1px';
-            guide.style.height = '100%';
-        }
-        
-        document.body.appendChild(guide);
-    }
-    
     /* ============ GET TOTAL FRAME SIZE (including box-shadow frame border) ============ */
     function getTotalFrameSize(card) {
         const frame = card.querySelector('.photo-frame');
@@ -113,139 +86,209 @@
         return { width, height, frameOffset };
     }
 
-    /* ============ SNAP ALIGNMENT HELPERS ============ */
+    /* ============ PHOTOSHOP-STYLE SNAP GUIDES ============ */
     const SNAP_THRESHOLD = 15; // pixels - how close before snapping
     
-    function getCardEdges(card) {
-        const { width, height, frameOffset } = getTotalFrameSize(card);
+    // Get the actual visual boundaries of a card on screen
+    function getVisualBounds(card) {
+        const frame = card.querySelector('.photo-frame');
+        if (!frame) return null;
         
-        // Get the actual rendered position on screen
-        const rect = card.getBoundingClientRect();
+        // Get frame position
+        const frameRect = frame.getBoundingClientRect();
         
-        // The card's bounding rect gives us the frame element position
-        // The visual frame edges start at frameOffset before this
-        const left = rect.left - frameOffset;
-        const top = rect.top - frameOffset;
+        // Get frame border thickness
+        let frameBorder = 0;
+        const frameThicknessVar = frame.style.getPropertyValue('--frame-thickness');
+        if (frameThicknessVar) {
+            const match = frameThicknessVar.match(/^(\d+(?:\.\d+)?)(px|in|mm)$/);
+            if (match) {
+                frameBorder = parseFloat(match[1]);
+                const unit = match[2];
+                if (unit === 'in') frameBorder = frameBorder * 96;
+                else if (unit === 'mm') frameBorder = frameBorder * 96 / 25.4;
+            }
+        }
         
+        // Visual bounds include the box-shadow border
         return {
-            left: left,
-            right: left + width,
-            top: top,
-            bottom: top + height,
-            centerX: left + width / 2,
-            centerY: top + height / 2,
-            width: width,
-            height: height,
-            frameOffset: frameOffset
+            left: frameRect.left - frameBorder,
+            top: frameRect.top - frameBorder,
+            right: frameRect.right + frameBorder,
+            bottom: frameRect.bottom + frameBorder,
+            centerX: frameRect.left + frameRect.width / 2,
+            centerY: frameRect.top + frameRect.height / 2
         };
     }
     
-    function findSnapPosition(activeCard, newX, newY) {
-        const { width, height, frameOffset } = getTotalFrameSize(activeCard);
+    // Calculate where the dragged card would be positioned
+    function getProposedBounds(activeCard, proposedX, proposedY) {
+        const frame = activeCard.querySelector('.photo-frame');
+        if (!frame) return null;
         
-        // Calculate where the frame edges would be at the new position
-        // The visual frame starts BEFORE the card position by frameOffset
-        const newLeft = newX - frameOffset;
-        const newRight = newLeft + width;
-        const newTop = newY - frameOffset;
-        const newBottom = newTop + height;
-        const newCenterX = newLeft + width / 2;
-        const newCenterY = newTop + height / 2;
+        // Current frame rect
+        const currentRect = frame.getBoundingClientRect();
+        const currentCardX = parseFloat(activeCard.dataset.x) || 0;
+        const currentCardY = parseFloat(activeCard.dataset.y) || 0;
         
-        let snapX = newX;
-        let snapY = newY;
+        // Calculate offset between card position and frame position
+        const frameOffsetX = currentRect.left - currentCardX;
+        const frameOffsetY = currentRect.top - currentCardY;
+        
+        // Where the frame would be at the proposed position
+        const frameLeft = proposedX + frameOffsetX;
+        const frameTop = proposedY + frameOffsetY;
+        
+        // Get frame border
+        let frameBorder = 0;
+        const frameThicknessVar = frame.style.getPropertyValue('--frame-thickness');
+        if (frameThicknessVar) {
+            const match = frameThicknessVar.match(/^(\d+(?:\.\d+)?)(px|in|mm)$/);
+            if (match) {
+                frameBorder = parseFloat(match[1]);
+                const unit = match[2];
+                if (unit === 'in') frameBorder = frameBorder * 96;
+                else if (unit === 'mm') frameBorder = frameBorder * 96 / 25.4;
+            }
+        }
+        
+        return {
+            left: frameLeft - frameBorder,
+            top: frameTop - frameBorder,
+            right: frameLeft + currentRect.width + frameBorder,
+            bottom: frameTop + currentRect.height + frameBorder,
+            centerX: frameLeft + currentRect.width / 2,
+            centerY: frameTop + currentRect.height / 2
+        };
+    }
+    
+    function clearGuides() {
+        document.querySelectorAll('.snap-guide').forEach(g => g.remove());
+    }
+    
+    function showGuide(position, type) {
+        const guide = document.createElement('div');
+        guide.className = 'snap-guide';
+        
+        if (type === 'horizontal') {
+            guide.style.position = 'fixed';
+            guide.style.left = '0';
+            guide.style.top = position + 'px';
+            guide.style.width = '100vw';
+            guide.style.height = '1px';
+        } else { // vertical
+            guide.style.position = 'fixed';
+            guide.style.left = position + 'px';
+            guide.style.top = '0';
+            guide.style.width = '1px';
+            guide.style.height = '100vh';
+        }
+        
+        document.body.appendChild(guide);
+    }
+    
+    function findSnapPosition(activeCard, proposedX, proposedY) {
+        clearGuides();
+        
+        const proposed = getProposedBounds(activeCard, proposedX, proposedY);
+        if (!proposed) return { x: proposedX, y: proposedY };
+        
+        let snapX = proposedX;
+        let snapY = proposedY;
         let snappedX = false;
         let snappedY = false;
-        
-        // Clear existing guides
-        createGuideLines();
-        
-        // Track which guides to show (store the VISUAL position for the guide line)
-        const guides = [];
+        let guideX = null;
+        let guideY = null;
         
         // Check against all other cards
         document.querySelectorAll('.photo-card').forEach(otherCard => {
             if (otherCard === activeCard) return;
             
-            const other = getCardEdges(otherCard);
+            const other = getVisualBounds(otherCard);
+            if (!other) return;
             
-            // Horizontal snapping (vertical lines) - check X positions
+            // Vertical guides (check horizontal alignment)
             if (!snappedX) {
                 // Left edges align
-                if (Math.abs(newLeft - other.left) < SNAP_THRESHOLD) {
-                    snapX = other.left + frameOffset;
+                if (Math.abs(proposed.left - other.left) < SNAP_THRESHOLD) {
+                    const offset = proposed.left - other.left;
+                    snapX = proposedX - offset;
                     snappedX = true;
-                    guides.push({ type: 'vertical', position: other.left });
+                    guideX = other.left;
                 }
                 // Right edges align
-                else if (Math.abs(newRight - other.right) < SNAP_THRESHOLD) {
-                    snapX = other.right - width + frameOffset;
+                else if (Math.abs(proposed.right - other.right) < SNAP_THRESHOLD) {
+                    const offset = proposed.right - other.right;
+                    snapX = proposedX - offset;
                     snappedX = true;
-                    guides.push({ type: 'vertical', position: other.right });
+                    guideX = other.right;
                 }
-                // My left touches their right (side by side)
-                else if (Math.abs(newLeft - other.right) < SNAP_THRESHOLD) {
-                    snapX = other.right + frameOffset;
+                // Left touches right (side by side)
+                else if (Math.abs(proposed.left - other.right) < SNAP_THRESHOLD) {
+                    const offset = proposed.left - other.right;
+                    snapX = proposedX - offset;
                     snappedX = true;
-                    guides.push({ type: 'vertical', position: other.right });
+                    guideX = other.right;
                 }
-                // My right touches their left (side by side)
-                else if (Math.abs(newRight - other.left) < SNAP_THRESHOLD) {
-                    snapX = other.left - width + frameOffset;
+                // Right touches left (side by side)
+                else if (Math.abs(proposed.right - other.left) < SNAP_THRESHOLD) {
+                    const offset = proposed.right - other.left;
+                    snapX = proposedX - offset;
                     snappedX = true;
-                    guides.push({ type: 'vertical', position: other.left });
+                    guideX = other.left;
                 }
-                // Centers align horizontally
-                else if (Math.abs(newCenterX - other.centerX) < SNAP_THRESHOLD) {
-                    snapX = other.centerX - width / 2 + frameOffset;
+                // Centers align
+                else if (Math.abs(proposed.centerX - other.centerX) < SNAP_THRESHOLD) {
+                    const offset = proposed.centerX - other.centerX;
+                    snapX = proposedX - offset;
                     snappedX = true;
-                    guides.push({ type: 'vertical', position: other.centerX });
+                    guideX = other.centerX;
                 }
             }
             
-            // Vertical snapping (horizontal lines) - check Y positions
+            // Horizontal guides (check vertical alignment)
             if (!snappedY) {
                 // Top edges align
-                if (Math.abs(newTop - other.top) < SNAP_THRESHOLD) {
-                    snapY = other.top + frameOffset;
+                if (Math.abs(proposed.top - other.top) < SNAP_THRESHOLD) {
+                    const offset = proposed.top - other.top;
+                    snapY = proposedY - offset;
                     snappedY = true;
-                    guides.push({ type: 'horizontal', position: other.top });
+                    guideY = other.top;
                 }
                 // Bottom edges align
-                else if (Math.abs(newBottom - other.bottom) < SNAP_THRESHOLD) {
-                    snapY = other.bottom - height + frameOffset;
+                else if (Math.abs(proposed.bottom - other.bottom) < SNAP_THRESHOLD) {
+                    const offset = proposed.bottom - other.bottom;
+                    snapY = proposedY - offset;
                     snappedY = true;
-                    guides.push({ type: 'horizontal', position: other.bottom });
+                    guideY = other.bottom;
                 }
-                // My top touches their bottom (stacked)
-                else if (Math.abs(newTop - other.bottom) < SNAP_THRESHOLD) {
-                    snapY = other.bottom + frameOffset;
+                // Top touches bottom (stacked)
+                else if (Math.abs(proposed.top - other.bottom) < SNAP_THRESHOLD) {
+                    const offset = proposed.top - other.bottom;
+                    snapY = proposedY - offset;
                     snappedY = true;
-                    guides.push({ type: 'horizontal', position: other.bottom });
+                    guideY = other.bottom;
                 }
-                // My bottom touches their top (stacked)
-                else if (Math.abs(newBottom - other.top) < SNAP_THRESHOLD) {
-                    snapY = other.top - height + frameOffset;
+                // Bottom touches top (stacked)
+                else if (Math.abs(proposed.bottom - other.top) < SNAP_THRESHOLD) {
+                    const offset = proposed.bottom - other.top;
+                    snapY = proposedY - offset;
                     snappedY = true;
-                    guides.push({ type: 'horizontal', position: other.top });
+                    guideY = other.top;
                 }
-                // Centers align vertically
-                else if (Math.abs(newCenterY - other.centerY) < SNAP_THRESHOLD) {
-                    snapY = other.centerY - height / 2 + frameOffset;
+                // Centers align
+                else if (Math.abs(proposed.centerY - other.centerY) < SNAP_THRESHOLD) {
+                    const offset = proposed.centerY - other.centerY;
+                    snapY = proposedY - offset;
                     snappedY = true;
-                    guides.push({ type: 'horizontal', position: other.centerY });
+                    guideY = other.centerY;
                 }
             }
         });
         
-        // Show guides at the VISUAL edge positions
-        guides.forEach(guide => {
-            if (guide.type === 'horizontal') {
-                showGuide(guide.position, 'horizontal');
-            } else {
-                showGuide(guide.position, 'vertical');
-            }
-        });
+        // Show guides
+        if (guideX !== null) showGuide(guideX, 'vertical');
+        if (guideY !== null) showGuide(guideY, 'horizontal');
         
         return { x: snapX, y: snapY };
     }
@@ -631,7 +674,7 @@
                 newY = snapped.y;
             } else {
                 // Clear guides if not snapping
-                createGuideLines();
+                clearGuides();
             }
             
             activeCard.dataset.x = newX;
@@ -656,7 +699,7 @@
         activeCard = null;
         
         // Clear guides when done dragging
-        createGuideLines();
+        clearGuides();
     });
     /* NAME TOGGLE */
     function setNamesVisibility(v) {
