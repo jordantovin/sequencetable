@@ -58,18 +58,18 @@
         document.querySelectorAll('.snap-guide-label').forEach(l => l.remove());
     }
     
-    function showGuide(x1, y1, x2, y2, type) {
+    function showGuide(position, type) {
         const guide = document.createElement('div');
         guide.className = 'snap-guide';
-        guide.dataset.type = type; // 'horizontal' or 'vertical'
+        guide.dataset.type = type;
         
         if (type === 'horizontal') {
             guide.style.left = '0';
-            guide.style.top = y1 + 'px';
+            guide.style.top = position + 'px';
             guide.style.width = '100%';
             guide.style.height = '1px';
         } else {
-            guide.style.left = x1 + 'px';
+            guide.style.left = position + 'px';
             guide.style.top = '0';
             guide.style.width = '1px';
             guide.style.height = '100%';
@@ -143,6 +143,7 @@
         const { width, height, frameOffset } = getTotalFrameSize(activeCard);
         
         // Calculate where the frame edges would be at the new position
+        // The visual frame starts BEFORE the card position by frameOffset
         const newLeft = newX - frameOffset;
         const newRight = newLeft + width;
         const newTop = newY - frameOffset;
@@ -158,7 +159,7 @@
         // Clear existing guides
         createGuideLines();
         
-        // Track which guides to show (full viewport lines)
+        // Track which guides to show (store the VISUAL position for the guide line)
         const guides = [];
         
         // Check against all other cards
@@ -167,83 +168,81 @@
             
             const other = getCardEdges(otherCard);
             
-            // Horizontal snapping (vertical lines)
+            // Horizontal snapping (vertical lines) - check X positions
             if (!snappedX) {
                 // Left edges align
                 if (Math.abs(newLeft - other.left) < SNAP_THRESHOLD) {
                     snapX = other.left + frameOffset;
                     snappedX = true;
-                    guides.push({ type: 'vertical', x: other.left });
+                    guides.push({ type: 'vertical', position: other.left });
                 }
                 // Right edges align
                 else if (Math.abs(newRight - other.right) < SNAP_THRESHOLD) {
                     snapX = other.right - width + frameOffset;
                     snappedX = true;
-                    guides.push({ type: 'vertical', x: other.right });
+                    guides.push({ type: 'vertical', position: other.right });
                 }
                 // My left touches their right (side by side)
                 else if (Math.abs(newLeft - other.right) < SNAP_THRESHOLD) {
                     snapX = other.right + frameOffset;
                     snappedX = true;
-                    guides.push({ type: 'vertical', x: other.right });
+                    guides.push({ type: 'vertical', position: other.right });
                 }
                 // My right touches their left (side by side)
                 else if (Math.abs(newRight - other.left) < SNAP_THRESHOLD) {
                     snapX = other.left - width + frameOffset;
                     snappedX = true;
-                    guides.push({ type: 'vertical', x: other.left });
+                    guides.push({ type: 'vertical', position: other.left });
                 }
                 // Centers align horizontally
                 else if (Math.abs(newCenterX - other.centerX) < SNAP_THRESHOLD) {
                     snapX = other.centerX - width / 2 + frameOffset;
                     snappedX = true;
-                    guides.push({ type: 'vertical', x: other.centerX });
+                    guides.push({ type: 'vertical', position: other.centerX });
                 }
             }
             
-            // Vertical snapping (horizontal lines)
+            // Vertical snapping (horizontal lines) - check Y positions
             if (!snappedY) {
                 // Top edges align
                 if (Math.abs(newTop - other.top) < SNAP_THRESHOLD) {
                     snapY = other.top + frameOffset;
                     snappedY = true;
-                    guides.push({ type: 'horizontal', y: other.top });
+                    guides.push({ type: 'horizontal', position: other.top });
                 }
                 // Bottom edges align
                 else if (Math.abs(newBottom - other.bottom) < SNAP_THRESHOLD) {
                     snapY = other.bottom - height + frameOffset;
                     snappedY = true;
-                    guides.push({ type: 'horizontal', y: other.bottom });
+                    guides.push({ type: 'horizontal', position: other.bottom });
                 }
                 // My top touches their bottom (stacked)
                 else if (Math.abs(newTop - other.bottom) < SNAP_THRESHOLD) {
                     snapY = other.bottom + frameOffset;
                     snappedY = true;
-                    guides.push({ type: 'horizontal', y: other.bottom });
+                    guides.push({ type: 'horizontal', position: other.bottom });
                 }
                 // My bottom touches their top (stacked)
                 else if (Math.abs(newBottom - other.top) < SNAP_THRESHOLD) {
                     snapY = other.top - height + frameOffset;
                     snappedY = true;
-                    guides.push({ type: 'horizontal', y: other.top });
+                    guides.push({ type: 'horizontal', position: other.top });
                 }
                 // Centers align vertically
                 else if (Math.abs(newCenterY - other.centerY) < SNAP_THRESHOLD) {
                     snapY = other.centerY - height / 2 + frameOffset;
                     snappedY = true;
-                    guides.push({ type: 'horizontal', y: other.centerY });
+                    guides.push({ type: 'horizontal', position: other.centerY });
                 }
             }
         });
         
-        // Show guides - full viewport lines
+        // Show guides at the VISUAL edge positions
         guides.forEach(guide => {
             if (guide.type === 'horizontal') {
-                // Horizontal line spans full viewport width
-                showGuide(0, guide.y, window.innerWidth, guide.y, 'horizontal');
+                showGuide(guide.position, 'horizontal');
             } else {
-                // Vertical line spans full viewport height
-                showGuide(guide.x, 0, guide.x, window.innerHeight, 'vertical');
+                showGuide(guide.position, 'vertical');
             }
         });
         
