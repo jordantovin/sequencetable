@@ -205,86 +205,59 @@
         document.body.appendChild(guide);
     }
     
-    // 💡 NEW: Show gap label between two cards
-    function showGapLabel(gapPixels, position, type, bounds1, bounds2) {
-        const wall = document.getElementById("wall");
-        if (!wall) return;
-        
-        // Convert pixels to display units
-        let displayText;
-        if (window.currentWallInches) {
-            const scaleX = window.currentWallInches.width / wall.offsetWidth;
-            const scaleY = window.currentWallInches.height / wall.offsetHeight;
-            
-            // Get the measurement unit
-            const wallUnitEl = document.getElementById("wallUnit");
-            const displayUnit = wallUnitEl ? wallUnitEl.value : "in";
-            
-            // Convert pixels to inches first
-            const gapIn = type === 'horizontal' ? gapPixels * scaleY : gapPixels * scaleX;
-            
-            // Convert to display unit
-            const UNIT_FROM_IN = {
-                in: 1,
-                ft: 1/12,
-                cm: 2.54,
-                m: 0.0254
-            };
-            
-            const gapDisplay = gapIn * UNIT_FROM_IN[displayUnit];
-            
-            if (gapPixels === 0) {
-                displayText = `0${displayUnit}`;
-            } else {
-                displayText = `${gapDisplay.toFixed(1)}${displayUnit}`;
-            }
-        } else {
-            displayText = gapPixels === 0 ? '0px' : `${Math.round(gapPixels)}px`;
-        }
-        
-        // Create the gap label
-        const label = document.createElement('div');
-        label.className = 'gap-label';
-        label.textContent = displayText;
-        label.style.cssText = `
-            position: fixed;
-            background: rgba(255, 100, 100, 0.9);
-            color: white;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 12px;
-            font-weight: bold;
-            z-index: 100000;
-            pointer-events: none;
-            white-space: nowrap;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-        `;
-        
-        // Position the label in the middle of the gap
-        if (type === 'horizontal') {
-            // Gap is vertical (cards stacked)
-            const centerX = (Math.max(bounds1.left, bounds2.left) + Math.min(bounds1.right, bounds2.right)) / 2;
-            const gapCenterY = position;
-            label.style.left = centerX + 'px';
-            label.style.top = gapCenterY + 'px';
-            label.style.transform = 'translate(-50%, -50%)';
-        } else {
-            // Gap is horizontal (cards side by side)
-            const centerY = (Math.max(bounds1.top, bounds2.top) + Math.min(bounds1.bottom, bounds2.bottom)) / 2;
-            const gapCenterX = position;
-            label.style.left = gapCenterX + 'px';
-            label.style.top = centerY + 'px';
-            label.style.transform = 'translate(-50%, -50%)';
-        }
-        
-        // Style differently if touching (0 gap)
-        if (gapPixels === 0) {
-            label.style.background = 'rgba(100, 200, 100, 0.9)';
-        }
-        
-        document.body.appendChild(label);
+   function showGapLabel(gapPixels, position, type, bounds1, bounds2) {
+    const wall = document.getElementById("wall");
+    if (!wall) return;
+
+    let displayText;
+    if (window.currentWallInches) {
+        const scaleX = window.currentWallInches.width / wall.offsetWidth;
+        const scaleY = window.currentWallInches.height / wall.offsetHeight;
+        const wallUnitEl = document.getElementById("wallUnit");
+        const displayUnit = wallUnitEl ? wallUnitEl.value : "in";
+        const gapIn = type === 'horizontal' ? gapPixels * scaleY : gapPixels * scaleX;
+        const UNIT_FROM_IN = { in: 1, ft: 1/12, cm: 2.54, m: 0.0254 };
+        const gapDisplay = gapIn * UNIT_FROM_IN[displayUnit];
+        displayText = gapPixels === 0 ? `0${displayUnit}` : `${gapDisplay.toFixed(1)}${displayUnit}`;
+    } else {
+        displayText = gapPixels === 0 ? '0px' : `${Math.round(gapPixels)}px`;
     }
+
+    const label = document.createElement('div');
+    label.className = 'gap-label';
+    label.textContent = displayText;
+    label.style.cssText = `
+        position: fixed;
+        background: none;
+        color: #ff6464;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 12px;
+        font-weight: bold;
+        z-index: 100000;
+        pointer-events: none;
+        white-space: nowrap;
+        box-shadow: none;
+    `;
+
+    if (type === 'horizontal') {
+        const centerX = (Math.max(bounds1.left, bounds2.left) + Math.min(bounds1.right, bounds2.right)) / 2;
+        const gapCenterY = position;
+        label.style.left = centerX + 'px';
+        label.style.top = gapCenterY + 'px';
+        label.style.transform = 'translate(-50%, -50%)';
+    } else {
+        const centerY = (Math.max(bounds1.top, bounds2.top) + Math.min(bounds1.bottom, bounds2.bottom)) / 2;
+        const gapCenterX = position;
+        label.style.left = gapCenterX + 'px';
+        label.style.top = centerY + 'px';
+        label.style.transform = 'translate(-50%, -50%)';
+    }
+
+    document.body.appendChild(label);
+}
+
     
     // 💡 NEW: Calculate and show gap between dragged card and nearby cards
     function showNearbyGaps(activeCard, proposed) {
