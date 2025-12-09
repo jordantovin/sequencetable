@@ -181,6 +181,7 @@
     function clearGuides() {
         document.querySelectorAll('.snap-guide').forEach(g => g.remove());
         document.querySelectorAll('.snap-guide-label').forEach(l => l.remove());
+        document.querySelectorAll('.gap-label').forEach(l => l.remove());
     }
     
     function showGuide(position, type, distance) {
@@ -202,12 +203,16 @@
         }
         
         document.body.appendChild(guide);
+    }
+    
+    // 💡 NEW: Show gap label between two cards
+    function showGapLabel(gapPixels, position, type, bounds1, bounds2) {
+        const wall = document.getElementById("wall");
+        if (!wall) return;
         
-        // Add distance label if there's a gap and wall scale exists
-        if (distance !== null && distance !== undefined && distance > 0 && window.currentWallInches) {
-            const wall = document.getElementById("wall");
-            if (!wall) return;
-            
+        // Convert pixels to display units
+        let displayText;
+        if (window.currentWallInches) {
             const scaleX = window.currentWallInches.width / wall.offsetWidth;
             const scaleY = window.currentWallInches.height / wall.offsetHeight;
             
@@ -216,7 +221,7 @@
             const displayUnit = wallUnitEl ? wallUnitEl.value : "in";
             
             // Convert pixels to inches first
-            const distanceIn = type === 'horizontal' ? distance * scaleY : distance * scaleX;
+            const gapIn = type === 'horizontal' ? gapPixels * scaleY : gapPixels * scaleX;
             
             // Convert to display unit
             const UNIT_FROM_IN = {
@@ -226,28 +231,104 @@
                 m: 0.0254
             };
             
-            const distanceDisplay = distanceIn * UNIT_FROM_IN[displayUnit];
+            const gapDisplay = gapIn * UNIT_FROM_IN[displayUnit];
             
-            // Create label
-            const label = document.createElement('div');
-            label.className = 'snap-guide-label';
-            label.textContent = `${distanceDisplay.toFixed(1)}${displayUnit}`;
-            
-            // Position label near the guide
-            if (type === 'horizontal') {
-                label.style.position = 'fixed';
-                label.style.left = '50%';
-                label.style.top = (position - 20) + 'px';
-                label.style.transform = 'translateX(-50%)';
+            if (gapPixels === 0) {
+                displayText = `0${displayUnit}`;
             } else {
-                label.style.position = 'fixed';
-                label.style.left = (position + 10) + 'px';
-                label.style.top = '50%';
-                label.style.transform = 'translateY(-50%)';
+                displayText = `${gapDisplay.toFixed(1)}${displayUnit}`;
+            }
+        } else {
+            displayText = gapPixels === 0 ? '0px' : `${Math.round(gapPixels)}px`;
+        }
+        
+        // Create the gap label
+        const label = document.createElement('div');
+        label.className = 'gap-label';
+        label.textContent = displayText;
+        label.style.cssText = `
+            position: fixed;
+            background: rgba(255, 100, 100, 0.9);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            z-index: 100000;
+            pointer-events: none;
+            white-space: nowrap;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        `;
+        
+        // Position the label in the middle of the gap
+        if (type === 'horizontal') {
+            // Gap is vertical (cards stacked)
+            const centerX = (Math.max(bounds1.left, bounds2.left) + Math.min(bounds1.right, bounds2.right)) / 2;
+            const gapCenterY = position;
+            label.style.left = centerX + 'px';
+            label.style.top = gapCenterY + 'px';
+            label.style.transform = 'translate(-50%, -50%)';
+        } else {
+            // Gap is horizontal (cards side by side)
+            const centerY = (Math.max(bounds1.top, bounds2.top) + Math.min(bounds1.bottom, bounds2.bottom)) / 2;
+            const gapCenterX = position;
+            label.style.left = gapCenterX + 'px';
+            label.style.top = centerY + 'px';
+            label.style.transform = 'translate(-50%, -50%)';
+        }
+        
+        // Style differently if touching (0 gap)
+        if (gapPixels === 0) {
+            label.style.background = 'rgba(100, 200, 100, 0.9)';
+        }
+        
+        document.body.appendChild(label);
+    }
+    
+    // 💡 NEW: Calculate and show gap between dragged card and nearby cards
+    function showNearbyGaps(activeCard, proposed) {
+        const GAP_DETECTION_RANGE = 200; // pixels - how far to look for nearby cards
+        
+        document.querySelectorAll('.photo-card').forEach(otherCard => {
+            if (otherCard === activeCard) return;
+            
+            const other = getVisualBounds(otherCard);
+            if (!other) return;
+            
+            // Check horizontal gap (cards side by side)
+            const verticalOverlap = !(proposed.bottom < other.top || proposed.top > other.bottom);
+            if (verticalOverlap) {
+                // Card is to the right of other
+                if (proposed.left > other.right && proposed.left - other.right < GAP_DETECTION_RANGE) {
+                    const gap = proposed.left - other.right;
+                    const gapCenterX = other.right + gap / 2;
+                    showGapLabel(gap, gapCenterX, 'vertical', proposed, other);
+                }
+                // Card is to the left of other
+                else if (other.left > proposed.right && other.left - proposed.right < GAP_DETECTION_RANGE) {
+                    const gap = other.left - proposed.right;
+                    const gapCenterX = proposed.right + gap / 2;
+                    showGapLabel(gap, gapCenterX, 'vertical', proposed, other);
+                }
             }
             
-            document.body.appendChild(label);
-        }
+            // Check vertical gap (cards stacked)
+            const horizontalOverlap = !(proposed.right < other.left || proposed.left > other.right);
+            if (horizontalOverlap) {
+                // Card is below other
+                if (proposed.top > other.bottom && proposed.top - other.bottom < GAP_DETECTION_RANGE) {
+                    const gap = proposed.top - other.bottom;
+                    const gapCenterY = other.bottom + gap / 2;
+                    showGapLabel(gap, gapCenterY, 'horizontal', proposed, other);
+                }
+                // Card is above other
+                else if (other.top > proposed.bottom && other.top - proposed.bottom < GAP_DETECTION_RANGE) {
+                    const gap = other.top - proposed.bottom;
+                    const gapCenterY = proposed.bottom + gap / 2;
+                    showGapLabel(gap, gapCenterY, 'horizontal', proposed, other);
+                }
+            }
+        });
     }
     
     function findSnapPosition(activeCard, proposedX, proposedY) {
@@ -262,30 +343,25 @@
         let snappedY = false;
         let guideX = null;
         let guideY = null;
-        let distanceX = null;
-        let distanceY = null;
-        let alignedCardForSpacing = null;
         
         // Check wall boundaries first
         const wall = getWallBounds();
         if (wall) {
             // Vertical guides (horizontal alignment with wall)
             if (!snappedX) {
-                // Left edge to wall left - show distance
+                // Left edge to wall left
                 if (Math.abs(proposed.left - wall.left) < SNAP_THRESHOLD) {
                     const offset = proposed.left - wall.left;
                     snapX = proposedX - offset;
                     snappedX = true;
-                    guideX = proposed.left;
-                    distanceX = Math.abs(offset);
+                    guideX = wall.left;
                 }
-                // Right edge to wall right - show distance
+                // Right edge to wall right
                 else if (Math.abs(proposed.right - wall.right) < SNAP_THRESHOLD) {
                     const offset = proposed.right - wall.right;
                     snapX = proposedX - offset;
                     snappedX = true;
-                    guideX = proposed.right;
-                    distanceX = Math.abs(offset);
+                    guideX = wall.right;
                 }
                 // Center to wall center
                 else if (Math.abs(proposed.centerX - wall.centerX) < SNAP_THRESHOLD) {
@@ -298,21 +374,19 @@
             
             // Horizontal guides (vertical alignment with wall)
             if (!snappedY) {
-                // Top edge to wall top - show distance
+                // Top edge to wall top
                 if (Math.abs(proposed.top - wall.top) < SNAP_THRESHOLD) {
                     const offset = proposed.top - wall.top;
                     snapY = proposedY - offset;
                     snappedY = true;
-                    guideY = proposed.top;
-                    distanceY = Math.abs(offset);
+                    guideY = wall.top;
                 }
-                // Bottom edge to wall bottom - show distance
+                // Bottom edge to wall bottom
                 else if (Math.abs(proposed.bottom - wall.bottom) < SNAP_THRESHOLD) {
                     const offset = proposed.bottom - wall.bottom;
                     snapY = proposedY - offset;
                     snappedY = true;
-                    guideY = proposed.bottom;
-                    distanceY = Math.abs(offset);
+                    guideY = wall.bottom;
                 }
                 // Center to wall center
                 else if (Math.abs(proposed.centerY - wall.centerY) < SNAP_THRESHOLD) {
@@ -339,7 +413,6 @@
                     snapX = proposedX - offset;
                     snappedX = true;
                     guideX = other.left;
-                    alignedCardForSpacing = other;
                 }
                 // Right edges align
                 else if (Math.abs(proposed.right - other.right) < SNAP_THRESHOLD) {
@@ -347,23 +420,20 @@
                     snapX = proposedX - offset;
                     snappedX = true;
                     guideX = other.right;
-                    alignedCardForSpacing = other;
                 }
-                // Left touches right (side by side) - show gap distance
+                // Left touches right (side by side - SNAP TO 0 GAP)
                 else if (Math.abs(proposed.left - other.right) < SNAP_THRESHOLD) {
                     const offset = proposed.left - other.right;
                     snapX = proposedX - offset;
                     snappedX = true;
                     guideX = other.right;
-                    distanceX = Math.abs(offset);
                 }
-                // Right touches left (side by side) - show gap distance
+                // Right touches left (side by side - SNAP TO 0 GAP)
                 else if (Math.abs(proposed.right - other.left) < SNAP_THRESHOLD) {
                     const offset = proposed.right - other.left;
                     snapX = proposedX - offset;
                     snappedX = true;
                     guideX = other.left;
-                    distanceX = Math.abs(offset);
                 }
                 // Centers align
                 else if (Math.abs(proposed.centerX - other.centerX) < SNAP_THRESHOLD) {
@@ -371,7 +441,6 @@
                     snapX = proposedX - offset;
                     snappedX = true;
                     guideX = other.centerX;
-                    alignedCardForSpacing = other;
                 }
             }
             
@@ -383,7 +452,6 @@
                     snapY = proposedY - offset;
                     snappedY = true;
                     guideY = other.top;
-                    alignedCardForSpacing = other;
                 }
                 // Bottom edges align
                 else if (Math.abs(proposed.bottom - other.bottom) < SNAP_THRESHOLD) {
@@ -391,23 +459,20 @@
                     snapY = proposedY - offset;
                     snappedY = true;
                     guideY = other.bottom;
-                    alignedCardForSpacing = other;
                 }
-                // Top touches bottom (stacked) - show gap distance
+                // Top touches bottom (stacked - SNAP TO 0 GAP)
                 else if (Math.abs(proposed.top - other.bottom) < SNAP_THRESHOLD) {
                     const offset = proposed.top - other.bottom;
                     snapY = proposedY - offset;
                     snappedY = true;
                     guideY = other.bottom;
-                    distanceY = Math.abs(offset);
                 }
-                // Bottom touches top (stacked) - show gap distance
+                // Bottom touches top (stacked - SNAP TO 0 GAP)
                 else if (Math.abs(proposed.bottom - other.top) < SNAP_THRESHOLD) {
                     const offset = proposed.bottom - other.top;
                     snapY = proposedY - offset;
                     snappedY = true;
                     guideY = other.top;
-                    distanceY = Math.abs(offset);
                 }
                 // Centers align
                 else if (Math.abs(proposed.centerY - other.centerY) < SNAP_THRESHOLD) {
@@ -415,45 +480,31 @@
                     snapY = proposedY - offset;
                     snappedY = true;
                     guideY = other.centerY;
-                    alignedCardForSpacing = other;
                 }
             }
         });
         
-        // Calculate spacing between cards when edges are aligned
-        if (alignedCardForSpacing) {
-            // Recalculate with snapped position
-            const snappedProposed = getProposedBounds(activeCard, snapX, snapY);
-            if (snappedProposed) {
-                // If horizontal edge aligned (top, bottom, centerY) - show horizontal spacing
-                if (guideY !== null && distanceY === null) {
-                    if (snappedProposed.right < alignedCardForSpacing.left) {
-                        // Card is to the left
-                        distanceX = alignedCardForSpacing.left - snappedProposed.right;
-                    } else if (snappedProposed.left > alignedCardForSpacing.right) {
-                        // Card is to the right
-                        distanceX = snappedProposed.left - alignedCardForSpacing.right;
-                    }
-                }
-                
-                // If vertical edge aligned (left, right, centerX) - show vertical spacing
-                if (guideX !== null && distanceX === null) {
-                    if (snappedProposed.bottom < alignedCardForSpacing.top) {
-                        // Card is above
-                        distanceY = alignedCardForSpacing.top - snappedProposed.bottom;
-                    } else if (snappedProposed.top > alignedCardForSpacing.bottom) {
-                        // Card is below
-                        distanceY = snappedProposed.top - alignedCardForSpacing.bottom;
-                    }
-                }
-            }
+        // Show guides
+        if (guideX !== null) showGuide(guideX, 'vertical', null);
+        if (guideY !== null) showGuide(guideY, 'horizontal', null);
+        
+        // 💡 NEW: Show gap labels between cards with the SNAPPED position
+        const snappedProposed = getProposedBounds(activeCard, snapX, snapY);
+        if (snappedProposed) {
+            showNearbyGaps(activeCard, snappedProposed);
         }
         
-        // Show guides with distance labels
-        if (guideX !== null) showGuide(guideX, 'vertical', distanceX);
-        if (guideY !== null) showGuide(guideY, 'horizontal', distanceY);
-        
         return { x: snapX, y: snapY };
+    }
+    
+    // 💡 NEW: Show gaps even when magnetic snapping is OFF
+    function showGapsOnly(activeCard, proposedX, proposedY) {
+        clearGuides();
+        
+        const proposed = getProposedBounds(activeCard, proposedX, proposedY);
+        if (!proposed) return;
+        
+        showNearbyGaps(activeCard, proposed);
     }
 
     /* ============ DIMENSION HELPER ============ */
@@ -836,8 +887,8 @@
                 newX = snapped.x;
                 newY = snapped.y;
             } else {
-                // Clear guides if not snapping
-                clearGuides();
+                // 💡 CHANGED: Still show gap labels even when snapping is off
+                showGapsOnly(activeCard, newX, newY);
             }
             
             activeCard.dataset.x = newX;
