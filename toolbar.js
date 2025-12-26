@@ -602,21 +602,24 @@
         const container = document.getElementById('photo-container');
         const wall = document.getElementById('wall');
         
-        let wasDraggingOrResizing = false;
+        // Track if we're currently dragging/resizing
+        let isCurrentlyInteracting = false;
         
-        // Save state after drag/resize/rotate completes
-        document.addEventListener('mouseup', () => {
-            if (!state.isRestoring && wasDraggingOrResizing) {
-                wasDraggingOrResizing = false;
-                saveState();
+        // Listen for when dragging starts
+        container.addEventListener('mousedown', (e) => {
+            if (e.target.closest('.photo-card')) {
+                isCurrentlyInteracting = true;
             }
         });
         
-        // Track when dragging/resizing starts
-        document.addEventListener('mousedown', (e) => {
-            const isPhotoCard = e.target.closest('.photo-card');
-            if (isPhotoCard) {
-                wasDraggingOrResizing = true;
+        // Save state when dragging/resizing ends
+        document.addEventListener('mouseup', () => {
+            if (isCurrentlyInteracting && !state.isRestoring) {
+                isCurrentlyInteracting = false;
+                // Small delay to ensure position is fully updated
+                setTimeout(() => {
+                    saveState();
+                }, 50);
             }
         });
 
