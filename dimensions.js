@@ -48,7 +48,15 @@
        ========================================================== */
     function applyFrame(card, settings) {
         const frame = card.querySelector(".photo-frame");
-        if (!frame) return;
+        if (!frame) return null;
+
+        // CAPTURE OLD STATE FOR UNDO
+        const oldFrame = {
+            padding: frame.style.padding || '0',
+            background: frame.style.background || 'transparent',
+            boxShadow: frame.style.boxShadow || 'none',
+            frameThickness: frame.style.getPropertyValue('--frame-thickness') || '0px'
+        };
 
         const u = settings.unit;
         
@@ -82,18 +90,43 @@
         }
 
         updateDimensions(card);
+        
+        // RETURN OLD STATE FOR UNDO
+        return oldFrame;
     }
 
     function handleApplyFrame() {
         const cards = window.getSelectedCards ? window.getSelectedCards() : [];
-        if (cards.length === 0) {
-            // If no cards selected, apply to all cards
-            document.querySelectorAll(".photo-card").forEach(card => {
-                applyFrame(card, getFrameSettings());
+        const cardsToFrame = cards.length === 0 
+            ? Array.from(document.querySelectorAll(".photo-card"))
+            : cards;
+        
+        const settings = getFrameSettings();
+        const frameData = [];
+        
+        cardsToFrame.forEach(card => {
+            const oldFrame = applyFrame(card, settings);
+            if (oldFrame) {
+                const frame = card.querySelector('.photo-frame');
+                frameData.push({
+                    card: card,
+                    oldFrame: oldFrame,
+                    newFrame: {
+                        padding: frame.style.padding,
+                        background: frame.style.background,
+                        boxShadow: frame.style.boxShadow,
+                        frameThickness: frame.style.getPropertyValue('--frame-thickness')
+                    }
+                });
+            }
+        });
+        
+        // SAVE TO UNDO
+        if (frameData.length > 0) {
+            window.saveUndoAction?.({
+                type: 'applyFrame',
+                cards: frameData
             });
-        } else {
-            const settings = getFrameSettings();
-            cards.forEach(c => applyFrame(c, settings));
         }
     }
 
@@ -317,6 +350,11 @@
             wall.style.display = "block";
             updateWall();
             
+            // SAVE TO UNDO
+            window.saveUndoAction?.({
+                type: 'buildWall'
+            });
+            
             // Show the erase button, hide the build button
             buildWallBtn.style.display = "none";
             eraseWallBtn.style.display = "flex";
@@ -327,6 +365,11 @@
         eraseWallBtn.addEventListener("click", () => {
             // Hide the wall
             wall.style.display = "none";
+            
+            // SAVE TO UNDO
+            window.saveUndoAction?.({
+                type: 'eraseWall'
+            });
             
             // Show the build button, hide the erase button
             buildWallBtn.style.display = "flex";
