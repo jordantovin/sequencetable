@@ -338,6 +338,7 @@
         
         // Search input
         searchInput.addEventListener('input', (e) => {
+            e.stopPropagation(); // Prevent interference with keyboard-shortcuts.js
             currentResults = searchCommands(e.target.value);
             selectedIndex = 0;
             renderResults(currentResults, resultsContainer, selectedIndex);
@@ -345,6 +346,9 @@
         
         // Keyboard navigation
         searchInput.addEventListener('keydown', (e) => {
+            // CRITICAL: Stop all keyboard events from propagating to keyboard-shortcuts.js
+            e.stopPropagation();
+            
             if (e.key === 'ArrowDown') {
                 e.preventDefault();
                 selectedIndex = Math.min(selectedIndex + 1, currentResults.length - 1);
@@ -371,6 +375,18 @@
                 e.preventDefault();
                 closeSearchModal();
             }
+            // All other keys (including Backspace, Delete, letters, numbers) 
+            // are now allowed to work normally in the input
+        });
+        
+        // Also stop propagation on keyup to prevent any interference
+        searchInput.addEventListener('keyup', (e) => {
+            e.stopPropagation();
+        });
+        
+        // And keypress for older browsers
+        searchInput.addEventListener('keypress', (e) => {
+            e.stopPropagation();
         });
         
         // Global keyboard shortcut: Cmd+/ or Option+/
