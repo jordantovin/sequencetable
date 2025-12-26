@@ -180,9 +180,9 @@
                 photographer: photo.querySelector('.photo-caption')?.textContent || '',
                 
                 // Transform-based positioning - THIS IS KEY
-                x: photo.dataset.x || '0',
-                y: photo.dataset.y || '0',
-                rotation: photo.dataset.rotation || '0',
+                x: parseFloat(photo.dataset.x) || 0,
+                y: parseFloat(photo.dataset.y) || 0,
+                rotation: parseFloat(photo.dataset.rotation) || 0,
                 
                 // Actual image dimensions
                 imgWidth: img?.style.width || '',
@@ -225,19 +225,18 @@
         const lastState = state.history[state.historyIndex];
         if (lastState && JSON.stringify(newState.photos) === JSON.stringify(lastState.photos) &&
             JSON.stringify(newState.wall) === JSON.stringify(lastState.wall)) {
-            // No meaningful change, don't save
-            return;
+            return; // Skip saving if nothing changed
         }
 
-        // Clear future history if we're not at the end
+        // If we're not at the end of history, remove everything after current index
         if (state.historyIndex < state.history.length - 1) {
             state.history = state.history.slice(0, state.historyIndex + 1);
         }
-        
+
         // Add new state
         state.history.push(newState);
-        
-        // Limit history size
+
+        // Maintain max history size
         if (state.history.length > state.maxHistorySize) {
             state.history.shift();
         } else {
@@ -248,35 +247,57 @@
     }
 
     function handleUndo() {
-        if (state.historyIndex > 0) {
-            state.historyIndex--;
-            restoreState(state.history[state.historyIndex]);
-            updateUndoRedoButtons();
-        }
+        if (state.historyIndex <= 0) return;
+
+        state.historyIndex--;
+        restoreState(state.history[state.historyIndex]);
+        updateUndoRedoButtons();
     }
 
     function handleRedo() {
-        if (state.historyIndex < state.history.length - 1) {
-            state.historyIndex++;
-            restoreState(state.history[state.historyIndex]);
-            updateUndoRedoButtons();
-        }
+        if (state.historyIndex >= state.history.length - 1) return;
+
+        state.historyIndex++;
+        restoreState(state.history[state.historyIndex]);
+        updateUndoRedoButtons();
     }
 
     function restoreState(savedState) {
         state.isRestoring = true;
-        
+
         const container = document.getElementById('photo-container');
-        
-        // Clear current photos
         container.innerHTML = '';
-        
-        // Restore photos
-        if (savedState.photos && savedState.photos.length > 0) {
-            savedState.photos.forEach(photoData => {
-                const photo = createPhotoCard(photoData);
-                container.appendChild(photo);
-            });
+
+        savedState.photos.forEach(photoData => {
+            const photo = createPhotoCard(photoData);
+            container.appendChild(photo);
+        });
+
+        // Restore wall state
+        if (savedState.wall) {
+            document.getElementById('wallWidth').value = savedState.wall.width;
+            document.getElementById('wallHeight').value = savedState.wall.height;
+            document.getElementById('wallUnit').value = savedState.wall.unit;
+            document.getElementById('wallColor').value = savedState.wall.color;
+
+            const wall = document.getElementById('wall');
+            const buildBtn = document.getElementById('buildWallBtn');
+            const eraseBtn = document.getElementById('eraseWallBtn');
+
+            if (savedState.wall.visible) {
+                wall.style.display = 'block';
+                buildBtn.style.display = 'none';
+                eraseBtn.style.display = 'flex';
+                
+                // Trigger wall update to recalculate dimensions
+                if (window.updateWall) {
+                    window.updateWall();
+                }
+            } else {
+                wall.style.display = 'none';
+                buildBtn.style.display = 'flex';
+                eraseBtn.style.display = 'none';
+            }
         }
 
         // Restore document title
@@ -284,116 +305,59 @@
             document.querySelector('.doc-title').textContent = savedState.documentTitle;
         }
 
-        // Restore wall state
-        const wall = document.getElementById('wall');
-        const buildWallBtn = document.getElementById('buildWallBtn');
-        const eraseWallBtn = document.getElementById('eraseWallBtn');
-        
-        document.getElementById('wallWidth').value = savedState.wall.width || '144';
-        document.getElementById('wallHeight').value = savedState.wall.height || '96';
-        document.getElementById('wallUnit').value = savedState.wall.unit || 'in';
-        document.getElementById('wallColor').value = savedState.wall.color || '#f1f1f1';
-        
-        if (savedState.wall.visible) {
-            // Show wall - use the same method as buildWallBtn click
-            wall.style.display = 'block';
-            wall.style.backgroundColor = savedState.wall.color || '#f1f1f1';
-            
-            // Calculate and set wall dimensions
-            const W = parseFloat(savedState.wall.width);
-            const H = parseFloat(savedState.wall.height);
-            const U = savedState.wall.unit;
-            
-            const UNIT_TO_IN = { in: 1, ft: 12, cm: 0.393701, m: 39.3701 };
-            const W_in = W * UNIT_TO_IN[U];
-            const H_in = H * UNIT_TO_IN[U];
-            
-            window.currentWallInches = { width: W_in, height: H_in };
-            
-            const wallRatio = W_in / H_in;
-            const screenW = window.innerWidth - 80;
-            const screenH = window.innerHeight - 160;
-            const screenRatio = screenW / screenH;
-            
-            let renderW, renderH;
-            if (wallRatio > screenRatio) {
-                renderW = screenW;
-                renderH = renderW / wallRatio;
-            } else {
-                renderH = screenH;
-                renderW = renderH * wallRatio;
-            }
-            
-            wall.style.width = `${renderW}px`;
-            wall.style.height = `${renderH}px`;
-            
-            buildWallBtn.style.display = 'none';
-            eraseWallBtn.style.display = 'flex';
-        } else {
-            // Hide wall
-            wall.style.display = 'none';
-            buildWallBtn.style.display = 'flex';
-            eraseWallBtn.style.display = 'none';
-        }
-
-        // Clear the restoring flag after mutations settle
         setTimeout(() => {
             state.isRestoring = false;
-        }, 150);
+        }, 100);
     }
 
-    function createPhotoCard(data) {
+    function createPhotoCard(photoData) {
         const card = document.createElement('div');
         card.className = 'photo-card';
-        if (data.isSelected) card.classList.add('selected');
         
-        // Set dataset values FIRST before any interaction setup
-        card.dataset.id = data.id || 'photo-' + Date.now();
-        card.dataset.x = data.x || '0';
-        card.dataset.y = data.y || '0';
-        card.dataset.rotation = data.rotation || '0';
+        if (photoData.isSelected) {
+            card.classList.add('selected');
+        }
+
+        card.dataset.id = photoData.id;
         
-        // Set z-index
-        card.style.zIndex = data.zIndex || '1000';
-        
-        // Apply transform immediately
-        card.style.transform = `translate(${data.x}px, ${data.y}px) rotate(${data.rotation}deg)`;
-        
-        // Create photo-frame wrapper
+        // CRITICAL: Set transform data attributes first
+        card.dataset.x = photoData.x;
+        card.dataset.y = photoData.y;
+        card.dataset.rotation = photoData.rotation;
+
         const frame = document.createElement('div');
         frame.className = 'photo-frame';
-        
-        // Create and configure image
+
         const img = document.createElement('img');
-        img.src = data.src || '';
-        img.alt = data.photographer || '';
+        img.src = photoData.src;
+        img.alt = photoData.photographer;
         
-        // Restore image dimensions IMMEDIATELY
-        if (data.imgWidth) {
-            img.style.width = data.imgWidth;
-        }
-        if (data.imgHeight) {
-            img.style.height = data.imgHeight;
-        }
-        
+        if (photoData.imgWidth) img.style.width = photoData.imgWidth;
+        if (photoData.imgHeight) img.style.height = photoData.imgHeight;
+
         frame.appendChild(img);
+
+        // Restore frame styling
+        if (photoData.frameStyle) {
+            if (photoData.frameStyle.padding) frame.style.padding = photoData.frameStyle.padding;
+            if (photoData.frameStyle.background) frame.style.background = photoData.frameStyle.background;
+            if (photoData.frameStyle.boxShadow) frame.style.boxShadow = photoData.frameStyle.boxShadow;
+            if (photoData.frameStyle.frameThickness) {
+                frame.style.setProperty('--frame-thickness', photoData.frameStyle.frameThickness);
+            }
+        }
+
         card.appendChild(frame);
-        
-        // Create caption
+
+        // Caption
         const caption = document.createElement('div');
         caption.className = 'photo-caption';
-        caption.textContent = data.photographer || 'Unknown';
-        // Check if names are currently visible
-        const existingCaption = document.querySelector('.photo-caption');
-        caption.style.display = existingCaption ? existingCaption.style.display : 'none';
+        caption.textContent = photoData.photographer;
         card.appendChild(caption);
-        
-        // Create dimensions display
+
+        // Dimensions label with two spans
         const dim = document.createElement('div');
         dim.className = 'photo-dimensions';
-        // Check if dimensions are currently visible
-        const existingDim = document.querySelector('.photo-dimensions');
-        dim.style.display = existingDim ? existingDim.style.display : 'none';
         
         const pictureDimSpan = document.createElement('span');
         pictureDimSpan.className = 'picture-dimensions';
@@ -406,26 +370,6 @@
         `;
         pictureDimSpan.title = 'Click to edit picture dimensions';
         
-        pictureDimSpan.addEventListener('mouseenter', () => {
-            if (!pictureDimSpan.querySelector('input')) {
-                pictureDimSpan.style.background = 'rgba(255,255,255,0.2)';
-            }
-        });
-        pictureDimSpan.addEventListener('mouseleave', () => {
-            if (!pictureDimSpan.querySelector('input')) {
-                pictureDimSpan.style.background = 'transparent';
-            }
-        });
-        
-        pictureDimSpan.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (!pictureDimSpan.querySelector('input')) {
-                if (window.makeInlineEditable) {
-                    window.makeInlineEditable(card, pictureDimSpan);
-                }
-            }
-        });
-        
         const frameDimSpan = document.createElement('span');
         frameDimSpan.className = 'frame-dimensions';
         frameDimSpan.style.cssText = `
@@ -437,127 +381,75 @@
         dim.appendChild(pictureDimSpan);
         dim.appendChild(frameDimSpan);
         card.appendChild(dim);
-        
-        // Restore frame styling if present
-        if (data.frameStyle && data.frameStyle.boxShadow) {
-            frame.style.padding = data.frameStyle.padding || '';
-            frame.style.background = data.frameStyle.background || '';
-            frame.style.boxShadow = data.frameStyle.boxShadow || '';
-            if (data.frameStyle.frameThickness) {
-                frame.style.setProperty('--frame-thickness', data.frameStyle.frameThickness);
-            }
+
+        // Restore z-index
+        if (photoData.zIndex) {
+            card.style.zIndex = photoData.zIndex;
         }
-        
-        // Create resize handle
+
+        // CRITICAL: Apply the transform immediately after creating the card
+        card.style.transform = `translate(${photoData.x}px, ${photoData.y}px) rotate(${photoData.rotation}deg)`;
+
+        // Create resize and rotate handles
         const resizeHandle = document.createElement('div');
         resizeHandle.className = 'resize-handle';
         resizeHandle.textContent = '⇲';
         frame.appendChild(resizeHandle);
-        
-        // Create rotate handle
+
         const rotateHandle = document.createElement('div');
         rotateHandle.className = 'rotate-handle';
         rotateHandle.textContent = '↻';
         frame.appendChild(rotateHandle);
-        
-        // NOW attach interactivity - but we need to preserve position
-        // The issue is makeCardInteractive sets random position
-        // We need to call it but then restore our position
-        const savedX = data.x;
-        const savedY = data.y;
-        const savedRotation = data.rotation;
-        
+
+        // Make card interactive (attach drag/resize/rotate handlers)
         if (window.makeCardInteractive) {
             window.makeCardInteractive(card);
         }
-        
-        // RESTORE position after makeCardInteractive (which sets random position)
-        card.dataset.x = savedX;
-        card.dataset.y = savedY;
-        card.dataset.rotation = savedRotation;
-        card.style.transform = `translate(${savedX}px, ${savedY}px) rotate(${savedRotation}deg)`;
-        
+
         return card;
     }
 
     function updateUndoRedoButtons() {
         const undoBtn = document.querySelector('.toolbar-icon[title="Undo"]');
         const redoBtn = document.querySelector('.toolbar-icon[title="Redo"]');
-        
-        if (undoBtn) {
-            if (state.historyIndex > 0) {
-                undoBtn.classList.remove('disabled');
-            } else {
-                undoBtn.classList.add('disabled');
-            }
+
+        if (state.historyIndex <= 0) {
+            undoBtn.classList.add('disabled');
+        } else {
+            undoBtn.classList.remove('disabled');
         }
-        
-        if (redoBtn) {
-            if (state.historyIndex < state.history.length - 1) {
-                redoBtn.classList.remove('disabled');
-            } else {
-                redoBtn.classList.add('disabled');
-            }
+
+        if (state.historyIndex >= state.history.length - 1) {
+            redoBtn.classList.add('disabled');
+        } else {
+            redoBtn.classList.remove('disabled');
         }
     }
 
-    // ===== UPLOAD/DOWNLOAD FUNCTIONALITY =====
+    // ===== DOWNLOAD/UPLOAD FUNCTIONALITY =====
     function handleDownload() {
-        const container = document.getElementById('photo-container');
-        const photos = Array.from(container.querySelectorAll('.photo-card')).map(photo => {
-            const img = photo.querySelector('img');
-            const frame = photo.querySelector('.photo-frame');
-            
-            return {
-                id: photo.dataset.id,
-                src: img?.src || '',
-                photographer: photo.querySelector('.photo-caption')?.textContent || '',
-                x: photo.dataset.x || '0',
-                y: photo.dataset.y || '0',
-                rotation: photo.dataset.rotation || '0',
-                imgWidth: img?.style.width || '',
-                imgHeight: img?.style.height || '',
-                frameStyle: frame ? {
-                    padding: frame.style.padding || '',
-                    background: frame.style.background || '',
-                    boxShadow: frame.style.boxShadow || '',
-                    frameThickness: frame.style.getPropertyValue('--frame-thickness') || ''
-                } : null,
-                zIndex: photo.style.zIndex || '1000'
-            };
-        });
-
-        const wall = document.getElementById('wall');
-        const wallState = {
-            visible: wall.style.display !== 'none' && wall.style.display !== '',
-            width: document.getElementById('wallWidth').value,
-            height: document.getElementById('wallHeight').value,
-            unit: document.getElementById('wallUnit').value,
-            color: document.getElementById('wallColor').value
-        };
-
-        const documentTitle = document.querySelector('.doc-title').textContent.trim();
-
-        const sequenceData = {
-            version: '1.1',
-            created: new Date().toISOString(),
-            documentTitle: documentTitle,
-            photos: photos,
-            wall: wallState,
+        const data = {
+            version: '1.0',
+            documentTitle: document.querySelector('.doc-title').textContent,
+            photos: state.history[state.historyIndex]?.photos || [],
+            wall: state.history[state.historyIndex]?.wall || {},
             settings: {
                 frameColor: document.getElementById('frameColor').value,
                 frameThickness: document.getElementById('frameThickness').value,
                 matteThickness: document.getElementById('matteThickness').value,
                 measurementUnit: document.getElementById('measurementUnit').value
-            }
+            },
+            timestamp: Date.now()
         };
 
-        const blob = new Blob([JSON.stringify(sequenceData, null, 2)], { type: 'application/json' });
+        const json = JSON.stringify(data, null, 2);
+        const blob = new Blob([json], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
+        
         const a = document.createElement('a');
         a.href = url;
         
-        let filename = documentTitle || 'Untitled document';
+        let filename = document.querySelector('.doc-title').textContent;
         filename = filename.replace(/[<>:"/\\|?*]/g, '');
         filename = filename.replace(/\s+/g, '_');
         
