@@ -87,6 +87,30 @@
             case 'add':
                 action.cards.forEach(c => c.parentNode?.removeChild(c));
                 break;
+            case 'buildWall':
+                const wall = document.getElementById('wall');
+                if (wall) wall.style.display = 'none';
+                document.getElementById('buildWallBtn').style.display = 'flex';
+                document.getElementById('eraseWallBtn').style.display = 'none';
+                break;
+            case 'eraseWall':
+                const wallErase = document.getElementById('wall');
+                if (wallErase) wallErase.style.display = 'block';
+                document.getElementById('buildWallBtn').style.display = 'none';
+                document.getElementById('eraseWallBtn').style.display = 'flex';
+                break;
+            case 'applyFrame':
+                action.cards.forEach(({card, oldFrame}) => {
+                    const frame = card.querySelector('.photo-frame');
+                    if (frame && oldFrame) {
+                        frame.style.padding = oldFrame.padding || '0';
+                        frame.style.background = oldFrame.background || 'transparent';
+                        frame.style.boxShadow = oldFrame.boxShadow || 'none';
+                        frame.style.setProperty('--frame-thickness', oldFrame.frameThickness || '0px');
+                    }
+                    window.updateCardDimensionsText?.(card);
+                });
+                break;
         }
         updateUndoRedoButtons();
     }
@@ -114,12 +138,43 @@
                 const container = document.getElementById('photo-container');
                 action.cards.forEach(c => container.appendChild(c));
                 break;
+            case 'buildWall':
+                const wall = document.getElementById('wall');
+                if (wall) wall.style.display = 'block';
+                document.getElementById('buildWallBtn').style.display = 'none';
+                document.getElementById('eraseWallBtn').style.display = 'flex';
+                break;
+            case 'eraseWall':
+                const wallErase = document.getElementById('wall');
+                if (wallErase) wallErase.style.display = 'none';
+                document.getElementById('buildWallBtn').style.display = 'flex';
+                document.getElementById('eraseWallBtn').style.display = 'none';
+                break;
+            case 'applyFrame':
+                action.cards.forEach(({card, newFrame}) => {
+                    const frame = card.querySelector('.photo-frame');
+                    if (frame && newFrame) {
+                        frame.style.padding = newFrame.padding;
+                        frame.style.background = newFrame.background;
+                        frame.style.boxShadow = newFrame.boxShadow;
+                        frame.style.setProperty('--frame-thickness', newFrame.frameThickness);
+                    }
+                    window.updateCardDimensionsText?.(card);
+                });
+                break;
         }
         updateUndoRedoButtons();
     }
     
     window.sequenceUndo = undo;
     window.sequenceRedo = redo;
+    
+    // EXPOSE FUNCTION FOR OTHER FILES TO SAVE UNDO ACTIONS
+    window.saveUndoAction = function(action) {
+        undoStack.push(action);
+        redoStack.length = 0;  // Clear redo on new action
+        updateUndoRedoButtons();
+    };
     
     /* ============ GET TOTAL FRAME SIZE (including box-shadow frame border) ============ */
     function getTotalFrameSize(card) {
@@ -1196,29 +1251,5 @@
         if (undoBtn) undoBtn.onclick = undo;
         if (redoBtn) redoBtn.onclick = redo;
         updateUndoRedoButtons();
-        
-        // KEYBOARD SHORTCUTS
-        document.addEventListener('keydown', (e) => {
-            // Cmd/Ctrl + Z = Undo
-            if ((e.metaKey || e.ctrlKey) && e.key === 'z' && !e.shiftKey) {
-                e.preventDefault();
-                undo();
-                return;
-            }
-            
-            // Cmd/Ctrl + Shift + Z = Redo
-            if ((e.metaKey || e.ctrlKey) && e.key === 'z' && e.shiftKey) {
-                e.preventDefault();
-                redo();
-                return;
-            }
-            
-            // Cmd/Ctrl + Y = Redo (alternative)
-            if ((e.metaKey || e.ctrlKey) && e.key === 'y') {
-                e.preventDefault();
-                redo();
-                return;
-            }
-        });
     };
 })();
