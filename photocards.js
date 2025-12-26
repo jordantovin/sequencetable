@@ -837,6 +837,10 @@
             e.preventDefault();
         });
     }
+    
+    // 💡 EXPOSE makeCardInteractive globally for toolbar.js to use
+    window.makeCardInteractive = makeCardInteractive;
+    
     function updateCardTransform(card) {
         card.style.transform = 
             `translate(${card.dataset.x}px, ${card.dataset.y}px) rotate(${card.dataset.rotation}deg)`;
