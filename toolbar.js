@@ -401,9 +401,9 @@
         rotateHandle.textContent = '↻';
         frame.appendChild(rotateHandle);
 
-        // Make card interactive (attach drag/resize/rotate handlers)
+        // Attach event handlers WITHOUT resetting position
         if (window.makeCardInteractive) {
-            window.makeCardInteractive(card);
+            window.makeCardInteractive(card, true); // true = skip position reset
         }
 
         return card;
