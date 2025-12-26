@@ -751,14 +751,18 @@
         makeCardInteractive(card);
         return card;
     }
+    
     /* ============ CARD INTERACTIVITY ============ */
-    function makeCardInteractive(card) {
-        card.dataset.rotation = "0";
-        const randX = Math.random() * (window.innerWidth - 400) + 50;
-        const randY = Math.random() * (window.innerHeight - 400) + 150;
-        card.dataset.x = randX;
-        card.dataset.y = randY;
-        updateCardTransform(card);
+    function makeCardInteractive(card, skipPositionReset = false) {
+        // Only set random position if not skipping (for new cards)
+        if (!skipPositionReset) {
+            card.dataset.rotation = "0";
+            const randX = Math.random() * (window.innerWidth - 400) + 50;
+            const randY = Math.random() * (window.innerHeight - 400) + 150;
+            card.dataset.x = randX;
+            card.dataset.y = randY;
+            updateCardTransform(card);
+        }
         
         // 💡 NEW: Attach selection handler to the card
         card.addEventListener('click', (e) => handleCardSelection(card, e));
@@ -948,6 +952,64 @@
             currentPhotoIndex = 0;
         }
     }
+    
+    // ============================================
+    // EXPOSE FUNCTIONS FOR TOOLBAR.JS (UNDO/REDO)
+    // ============================================
+    window.handleCardSelection = handleCardSelection;
+    window.areNamesVisible = () => areNamesVisible;
+    
+    // Expose drag/resize/rotate start functions for toolbar.js
+    window.startCardDrag = function(card, e) {
+        isDragging = true;
+        activeCard = card;
+        dragOffset.x = e.clientX - parseFloat(card.dataset.x);
+        dragOffset.y = e.clientY - parseFloat(card.dataset.y);
+        card.style.zIndex = getHighestZIndex() + 1;
+        e.preventDefault();
+    };
+    
+    window.startCardResize = function(card, e) {
+        isResizing = true;
+        activeCard = card;
+        resizeStartX = e.clientX;
+        resizeStartY = e.clientY;
+        const img = card.querySelector('img');
+        resizeStartWidth = img.offsetWidth;
+        resizeStartHeight = img.offsetHeight;
+    };
+    
+    window.startCardRotate = function(card, e) {
+        activeCard = card;
+        const rect = card.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+        const startAngle = Math.atan2(e.clientY - cy, e.clientX - cx) * 180 / Math.PI;
+        const offset = startAngle - parseFloat(card.dataset.rotation);
+        
+        function rotateMove(ev) {
+            let angle = Math.atan2(ev.clientY - cy, ev.clientX - cx) * 180 / Math.PI;
+            let newRotation = angle - offset;
+            
+            // Snap to 45° increments when holding Shift
+            if (ev.shiftKey) {
+                newRotation = Math.round(newRotation / 45) * 45;
+            }
+            
+            card.dataset.rotation = newRotation;
+            updateCardTransform(card);
+            window.updateCardDimensionsText?.(card);
+        }
+        
+        function rotateEnd() {
+            document.removeEventListener('mousemove', rotateMove);
+            document.removeEventListener('mouseup', rotateEnd);
+        }
+        
+        document.addEventListener('mousemove', rotateMove);
+        document.addEventListener('mouseup', rotateEnd);
+    };
+    
     window.onload = function() {
         loadCSVData();
         const uploadBtn = document.getElementById("uploadPhotoBtn");
