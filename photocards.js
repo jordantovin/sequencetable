@@ -12,6 +12,14 @@
     let resizeStartHeight = 0;
     let areNamesVisible = false;
     
+    // 💡 UNDO/REDO STACKS
+    const undoStack = [];
+    const redoStack = [];
+    
+    // 💡 TRACK ORIGINAL STATE FOR UNDO
+    let dragStartState = null;
+    let resizeStartState = null;
+    
     // 💡 NEW: Magnetic snapping toggle
     let isMagneticSnappingEnabled = false; // Start DISABLED
     
@@ -50,6 +58,92 @@
     
     // 💡 NEW: Global function to expose selected cards
     window.getSelectedCards = () => Array.from(selectedCards);
+    
+    /* ============ UNDO/REDO FUNCTIONS ============ */
+    function pushUndo(action) {
+        undoStack.push(action);
+        redoStack.length = 0; // Clear redo stack
+        updateUndoRedoButtons();
+    }
+    
+    function undo() {
+        if (undoStack.length === 0) return;
+        
+        const action = undoStack.pop();
+        redoStack.push(action);
+        
+        switch (action.type) {
+            case 'move':
+                action.card.dataset.x = action.oldX;
+                action.card.dataset.y = action.oldY;
+                updateCardTransform(action.card);
+                break;
+                
+            case 'resize':
+                const img = action.card.querySelector('img');
+                if (img) {
+                    img.style.width = action.oldWidth;
+                    img.style.height = action.oldHeight;
+                }
+                window.updateCardDimensionsText?.(action.card);
+                break;
+                
+            case 'add':
+                action.cards.forEach(card => {
+                    if (card.parentNode) card.remove();
+                });
+                break;
+        }
+        
+        updateUndoRedoButtons();
+    }
+    
+    function redo() {
+        if (redoStack.length === 0) return;
+        
+        const action = redoStack.pop();
+        undoStack.push(action);
+        
+        switch (action.type) {
+            case 'move':
+                action.card.dataset.x = action.newX;
+                action.card.dataset.y = action.newY;
+                updateCardTransform(action.card);
+                break;
+                
+            case 'resize':
+                const img = action.card.querySelector('img');
+                if (img) {
+                    img.style.width = action.newWidth;
+                    img.style.height = action.newHeight;
+                }
+                window.updateCardDimensionsText?.(action.card);
+                break;
+                
+            case 'add':
+                const container = document.getElementById('photo-container');
+                action.cards.forEach(card => container.appendChild(card));
+                break;
+        }
+        
+        updateUndoRedoButtons();
+    }
+    
+    function updateUndoRedoButtons() {
+        const undoBtn = document.querySelector('.toolbar-icon[title="Undo"]');
+        const redoBtn = document.querySelector('.toolbar-icon[title="Redo"]');
+        
+        if (undoBtn) {
+            undoBtn.classList.toggle('disabled', undoStack.length === 0);
+        }
+        if (redoBtn) {
+            redoBtn.classList.toggle('disabled', redoStack.length === 0);
+        }
+    }
+    
+    // Expose undo/redo globally
+    window.sequenceUndo = undo;
+    window.sequenceRedo = redo;
     
     /* ============ GET TOTAL FRAME SIZE (including box-shadow frame border) ============ */
     function getTotalFrameSize(card) {
@@ -688,6 +782,11 @@
             
             // Update dimensions if they're visible
             window.updateCardDimensionsText?.(card);
+            
+            // Save state after image loads and dimensions are set
+            if (window.sequenceTable && window.sequenceTable.saveState) {
+                window.sequenceTable.saveState();
+            }
         };
         frame.appendChild(img);
         card.appendChild(frame);
@@ -778,6 +877,14 @@
             
             isDragging = true;
             activeCard = card;
+            
+            // 💡 CAPTURE STATE FOR UNDO
+            dragStartState = {
+                card: card,
+                oldX: parseFloat(card.dataset.x) || 0,
+                oldY: parseFloat(card.dataset.y) || 0
+            };
+            
             dragOffset.x = e.clientX - parseFloat(card.dataset.x);
             dragOffset.y = e.clientY - parseFloat(card.dataset.y);
             card.style.zIndex = getHighestZIndex() + 1;
@@ -799,6 +906,14 @@
             const img = card.querySelector('img');
             resizeStartWidth = img.offsetWidth;
             resizeStartHeight = img.offsetHeight;
+            
+            // 💡 CAPTURE STATE FOR UNDO
+            resizeStartState = {
+                card: card,
+                oldWidth: img.style.width,
+                oldHeight: img.style.height
+            };
+            
             e.stopPropagation();
             e.preventDefault();
         });
@@ -890,6 +1005,45 @@
         }
     });
     document.addEventListener('mouseup', () => {
+        // 💡 SAVE DRAG TO UNDO IF CHANGED
+        if (isDragging && dragStartState && activeCard) {
+            const newX = parseFloat(activeCard.dataset.x) || 0;
+            const newY = parseFloat(activeCard.dataset.y) || 0;
+            
+            if (dragStartState.oldX !== newX || dragStartState.oldY !== newY) {
+                pushUndo({
+                    type: 'move',
+                    card: activeCard,
+                    oldX: dragStartState.oldX,
+                    oldY: dragStartState.oldY,
+                    newX: newX,
+                    newY: newY
+                });
+            }
+            dragStartState = null;
+        }
+        
+        // 💡 SAVE RESIZE TO UNDO IF CHANGED
+        if (isResizing && resizeStartState && activeCard) {
+            const img = activeCard.querySelector('img');
+            if (img) {
+                const newWidth = img.style.width;
+                const newHeight = img.style.height;
+                
+                if (resizeStartState.oldWidth !== newWidth || resizeStartState.oldHeight !== newHeight) {
+                    pushUndo({
+                        type: 'resize',
+                        card: activeCard,
+                        oldWidth: resizeStartState.oldWidth,
+                        oldHeight: resizeStartState.oldHeight,
+                        newWidth: newWidth,
+                        newHeight: newHeight
+                    });
+                }
+            }
+            resizeStartState = null;
+        }
+        
         isDragging = false;
         isResizing = false;
         activeCard = null;
@@ -926,12 +1080,23 @@
     function handleFileUpload(e) {
         const files = e.target.files;
         const container = document.getElementById('photo-container');
+        const addedCards = [];
+        
         for (let f of files) {
             if (f.type.startsWith("image/")) {
                 const reader = new FileReader();
                 reader.onload = ev => {
                     const card = createPhotoCard(ev.target.result, 'Custom Upload', true);
                     container.appendChild(card);
+                    addedCards.push(card);
+                    
+                    // 💡 SAVE TO UNDO STACK after all files loaded
+                    if (addedCards.length === files.length) {
+                        pushUndo({
+                            type: 'add',
+                            cards: addedCards
+                        });
+                    }
                 };
                 reader.readAsDataURL(f);
             }
@@ -941,15 +1106,26 @@
     function addPhotosFromCSV(count) {
         const container = document.getElementById('photo-container');
         let added = 0;
+        const addedCards = [];
+        
         while (added < count && currentPhotoIndex < csvData.length) {
             const row = csvData[currentPhotoIndex];
             const card = createPhotoCard(row.link, row.photographer, false);
             container.appendChild(card);
+            addedCards.push(card);
             added++;
             currentPhotoIndex++;
         }
         if (currentPhotoIndex >= csvData.length) {
             currentPhotoIndex = 0;
+        }
+        
+        // 💡 SAVE TO UNDO STACK
+        if (addedCards.length > 0) {
+            pushUndo({
+                type: 'add',
+                cards: addedCards
+            });
         }
     }
     
@@ -1032,5 +1208,38 @@
             magnetBtn.onclick = toggleMagneticSnapping;
             // Start with magnetic snapping disabled (no active class)
         }
+        
+        // 💡 SET UP UNDO/REDO BUTTONS
+        const undoBtn = document.querySelector('.toolbar-icon[title="Undo"]');
+        const redoBtn = document.querySelector('.toolbar-icon[title="Redo"]');
+        
+        if (undoBtn) undoBtn.onclick = undo;
+        if (redoBtn) redoBtn.onclick = redo;
+        
+        updateUndoRedoButtons();
+        
+        // 💡 KEYBOARD SHORTCUTS FOR UNDO/REDO
+        document.addEventListener('keydown', (e) => {
+            // Cmd/Ctrl + Z = Undo
+            if ((e.metaKey || e.ctrlKey) && e.key === 'z' && !e.shiftKey) {
+                e.preventDefault();
+                undo();
+                return;
+            }
+            
+            // Cmd/Ctrl + Shift + Z = Redo
+            if ((e.metaKey || e.ctrlKey) && e.key === 'z' && e.shiftKey) {
+                e.preventDefault();
+                redo();
+                return;
+            }
+            
+            // Cmd/Ctrl + Y = Redo (alternative)
+            if ((e.metaKey || e.ctrlKey) && e.key === 'y') {
+                e.preventDefault();
+                redo();
+                return;
+            }
+        });
     };
 })();
