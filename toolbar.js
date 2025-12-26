@@ -456,8 +456,11 @@
             applyFrameToCard(card, frame, data);
         }
         
-        // Re-attach all interactivity from photocards.js
-        makeRestoredCardInteractive(card);
+        // CRITICAL: Attach all interactivity using photocards.js's function
+        // This ensures drag, resize, rotate, selection all work
+        if (window.makeCardInteractive) {
+            window.makeCardInteractive(card);
+        }
         
         return card;
     }
@@ -476,38 +479,6 @@
             frame.style.padding = `${matteThickness}in`;
             frame.style.backgroundColor = 'white';
         }
-    }
-    
-    function makeRestoredCardInteractive(card) {
-        // This re-creates the interactivity from photocards.js
-        // The actual photocards.js will handle most of this, but we need basic setup
-        
-        let isDragging = false;
-        let dragOffset = { x: 0, y: 0 };
-        
-        // Click handler for selection (if keyboard-shortcuts.js is loaded)
-        card.addEventListener('click', (e) => {
-            if (window.sequenceTable && window.sequenceTable.keyboard) {
-                // Let keyboard-shortcuts.js handle selection
-            }
-        });
-        
-        // Mousedown for dragging
-        card.addEventListener('mousedown', function(e) {
-            if (e.target.classList.contains('resize-handle')) return;
-            if (e.target.classList.contains('rotate-handle')) return;
-            if (e.target.classList.contains('photo-caption')) return;
-            if (e.target.classList.contains('picture-dimensions')) return;
-            if (e.target.classList.contains('dim-input')) return;
-            
-            const x = parseFloat(card.dataset.x) || 0;
-            const y = parseFloat(card.dataset.y) || 0;
-            
-            // Bring to front
-            const maxZ = Array.from(document.querySelectorAll('.photo-card'))
-                .reduce((max, c) => Math.max(max, parseInt(c.style.zIndex) || 1000), 1000);
-            card.style.zIndex = maxZ + 1;
-        });
     }
 
     function updateUndoRedoButtons() {
