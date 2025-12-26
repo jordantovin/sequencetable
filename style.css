@@ -382,3 +382,62 @@ body {
 .context-item:hover {
     background: #f1f3f4;
 }
+
+/* toolbar-styles.css - Additional styles for toolbar functionality */
+
+/* Disabled state for undo/redo buttons */
+.toolbar-icon.disabled {
+    opacity: 0.3;
+    pointer-events: none;
+    cursor: not-allowed;
+}
+
+/* Print media styles */
+@media print {
+    .header,
+    .toolbar,
+    .menu-bar,
+    .context-menu {
+        display: none !important;
+    }
+    
+    .content-area {
+        margin: 0;
+        padding: 0;
+    }
+    
+    #photo-container {
+        position: relative;
+        background: white;
+    }
+    
+    .photo-card {
+        page-break-inside: avoid;
+    }
+    
+    /* Hide filename labels in print */
+    .photo-filename {
+        display: none;
+    }
+    
+    /* Ensure wall is visible if present */
+    #wall.visible {
+        background: white;
+        border: 1px solid #ddd;
+    }
+}
+
+/* Search highlight animation */
+@keyframes searchHighlight {
+    0%, 100% {
+        box-shadow: 0 0 0 4px #4285f4;
+    }
+    50% {
+        box-shadow: 0 0 0 6px #4285f4;
+    }
+}
+
+/* File input styling (hidden) */
+input[type="file"] {
+    display: none;
+}
