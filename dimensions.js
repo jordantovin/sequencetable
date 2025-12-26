@@ -27,6 +27,9 @@
     };
 
     const CAPTION_GAP_PX = 10;
+    
+    // Track dimensions visibility state
+    let areDimensionsVisible = false;
 
     /* ==========================================================
        FRAME SETTINGS
@@ -82,9 +85,16 @@
     }
 
     function handleApplyFrame() {
-        const cards = window.getSelectedCards();
-        const settings = getFrameSettings();
-        cards.forEach(c => applyFrame(c, settings));
+        const cards = window.getSelectedCards ? window.getSelectedCards() : [];
+        if (cards.length === 0) {
+            // If no cards selected, apply to all cards
+            document.querySelectorAll(".photo-card").forEach(card => {
+                applyFrame(card, getFrameSettings());
+            });
+        } else {
+            const settings = getFrameSettings();
+            cards.forEach(c => applyFrame(c, settings));
+        }
     }
 
     /* ==========================================================
@@ -93,7 +103,8 @@
     function updateWall() {
         if (!wall) return;
 
-        wall.style.display = "block";
+        // Only update if wall is visible
+        if (wall.style.display === 'none') return;
 
         let W = parseFloat(wallWidthInput.value);
         let H = parseFloat(wallHeightInput.value);
@@ -133,7 +144,9 @@
        UPDATE WALL COLOR
        ========================================================== */
     function updateWallColor() {
-        wall.style.background = wallColorInput.value;
+        if (wall) {
+            wall.style.backgroundColor = wallColorInput.value;
+        }
     }
 
     /* ==========================================================
@@ -167,10 +180,10 @@
         const frameThicknessVar = frame.style.getPropertyValue('--frame-thickness');
         if (frameThicknessVar) {
             // Parse the frame thickness (could be "20px" or "20in", etc.)
-            const match = frameThicknessVar.match(/^(\d+(?:\.\d+)?)(px|in|mm)$/);
+            const match = frameThicknessVar.match(/^(\d+(?:\.\d+)?)(px|in|mm)?$/);
             if (match) {
                 const value = parseFloat(match[1]);
-                const unit = match[2];
+                const unit = match[2] || 'px';
                 
                 // Convert to pixels if needed
                 if (unit === 'px') {
@@ -232,25 +245,62 @@
     window.updateCardDimensionsText = updateDimensions;
 
     /* ==========================================================
-       TOGGLE DIMENSION LABELS
+       TOGGLE DIMENSION LABELS - FIXED VERSION
        ========================================================== */
     function toggleDimensions() {
+        areDimensionsVisible = !areDimensionsVisible;
+        
+        const newDisplay = areDimensionsVisible ? "block" : "none";
+        
         document.querySelectorAll(".photo-dimensions").forEach(el => {
-            el.style.display = el.style.display === "none" ? "block" : "none";
+            el.style.display = newDisplay;
         });
+        
+        // Update button visual state
+        if (dimToggleBtn) {
+            if (areDimensionsVisible) {
+                dimToggleBtn.classList.add('active');
+            } else {
+                dimToggleBtn.classList.remove('active');
+            }
+        }
+        
+        // If turning on, update all dimension values
+        if (areDimensionsVisible) {
+            document.querySelectorAll(".photo-card").forEach(updateDimensions);
+        }
     }
+    
+    // Expose for other modules
+    window.toggleDimensions = toggleDimensions;
+    window.areDimensionsVisible = () => areDimensionsVisible;
 
     /* ==========================================================
        EVENT LISTENERS
        ========================================================== */
-    applyFrameBtn.addEventListener("click", handleApplyFrame);
-    dimToggleBtn.addEventListener("click", toggleDimensions);
+    if (applyFrameBtn) {
+        applyFrameBtn.addEventListener("click", handleApplyFrame);
+    }
+    
+    if (dimToggleBtn) {
+        dimToggleBtn.addEventListener("click", toggleDimensions);
+    }
 
-    wallColorInput.addEventListener("input", updateWallColor);
+    if (wallColorInput) {
+        wallColorInput.addEventListener("input", updateWallColor);
+    }
 
-    wallWidthInput.addEventListener("input", updateWall);
-    wallHeightInput.addEventListener("input", updateWall);
-    wallUnitInput.addEventListener("change", updateWall);
+    if (wallWidthInput) {
+        wallWidthInput.addEventListener("input", updateWall);
+    }
+    
+    if (wallHeightInput) {
+        wallHeightInput.addEventListener("input", updateWall);
+    }
+    
+    if (wallUnitInput) {
+        wallUnitInput.addEventListener("change", updateWall);
+    }
 
     // Update all dimension labels when measurement unit changes
     const measurementUnitEl = document.getElementById("measurementUnit");
@@ -260,24 +310,28 @@
         });
     }
 
-    buildWallBtn.addEventListener("click", () => {
-        // Show the wall
-        wall.style.display = "block";
-        updateWall();
-        
-        // Show the erase button, hide the build button
-        buildWallBtn.style.display = "none";
-        eraseWallBtn.style.display = "flex";
-    });
+    if (buildWallBtn) {
+        buildWallBtn.addEventListener("click", () => {
+            // Show the wall
+            wall.style.display = "block";
+            updateWall();
+            
+            // Show the erase button, hide the build button
+            buildWallBtn.style.display = "none";
+            eraseWallBtn.style.display = "flex";
+        });
+    }
 
-    eraseWallBtn.addEventListener("click", () => {
-        // Hide the wall
-        wall.style.display = "none";
-        
-        // Show the build button, hide the erase button
-        buildWallBtn.style.display = "flex";
-        eraseWallBtn.style.display = "none";
-    });
+    if (eraseWallBtn) {
+        eraseWallBtn.addEventListener("click", () => {
+            // Hide the wall
+            wall.style.display = "none";
+            
+            // Show the build button, hide the erase button
+            buildWallBtn.style.display = "flex";
+            eraseWallBtn.style.display = "none";
+        });
+    }
 
     window.addEventListener("resize", updateWall);
     // Wall is hidden by default - only shown when hammer button is clicked
