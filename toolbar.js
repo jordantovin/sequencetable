@@ -7,12 +7,14 @@
     const state = {
         history: [],
         historyIndex: -1,
-        maxHistorySize: 50
+        maxHistorySize: 50,
+        isRestoring: false // Flag to prevent saving during undo/redo
     };
 
     // ===== INITIALIZATION =====
     function init() {
         setupEventListeners();
+        setupEditableTitle();
         saveState(); // Save initial state
         updateUndoRedoButtons();
     }
@@ -38,6 +40,107 @@
 
         // Keyboard shortcuts
         document.addEventListener('keydown', handleKeyboardShortcuts);
+    }
+
+    // ===== EDITABLE TITLE FUNCTIONALITY =====
+    function setupEditableTitle() {
+        const titleElement = document.querySelector('.doc-title');
+        
+        // Make title editable on click
+        titleElement.addEventListener('click', function() {
+            enableTitleEditing(this);
+        });
+        
+        // Style improvements
+        titleElement.style.cursor = 'text';
+        titleElement.style.padding = '4px 8px';
+        titleElement.style.borderRadius = '3px';
+        titleElement.style.transition = 'background-color 0.2s';
+        
+        // Hover effect
+        titleElement.addEventListener('mouseenter', function() {
+            if (!this.isContentEditable) {
+                this.style.backgroundColor = 'rgba(0,0,0,0.05)';
+            }
+        });
+        
+        titleElement.addEventListener('mouseleave', function() {
+            if (!this.isContentEditable) {
+                this.style.backgroundColor = 'transparent';
+            }
+        });
+    }
+
+    function enableTitleEditing(element) {
+        // If already editing, do nothing
+        if (element.isContentEditable) return;
+        
+        // Store original text
+        const originalText = element.textContent;
+        
+        // Make editable
+        element.contentEditable = true;
+        element.style.backgroundColor = 'white';
+        element.style.outline = '2px solid #4285f4';
+        element.style.outlineOffset = '2px';
+        
+        // Select all text
+        const range = document.createRange();
+        range.selectNodeContents(element);
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+        
+        // Focus
+        element.focus();
+        
+        // Function to finish editing
+        const finishEditing = () => {
+            element.contentEditable = false;
+            element.style.backgroundColor = 'transparent';
+            element.style.outline = 'none';
+            
+            // Trim and validate
+            let newText = element.textContent.trim();
+            
+            // If empty, restore original
+            if (!newText) {
+                element.textContent = originalText;
+                return;
+            }
+            
+            // Remove any invalid filename characters
+            newText = newText.replace(/[<>:"/\\|?*]/g, '');
+            
+            // Limit length
+            if (newText.length > 100) {
+                newText = newText.substring(0, 100);
+            }
+            
+            element.textContent = newText;
+            
+            // Save state if changed
+            if (newText !== originalText) {
+                // The mutation observer will automatically save this change
+            }
+        };
+        
+        // Finish on blur
+        element.addEventListener('blur', finishEditing, { once: true });
+        
+        // Finish on Enter key
+        const enterHandler = (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                element.blur(); // This will trigger finishEditing
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                element.textContent = originalText;
+                element.blur();
+            }
+        };
+        
+        element.addEventListener('keydown', enterHandler, { once: true });
     }
 
     // ===== SEARCH FUNCTIONALITY =====
@@ -102,8 +205,13 @@
             timestamp: Date.now()
         };
 
-        // Remove any states after current index (for redo)
-        state.history = state.history.slice(0, state.historyIndex + 1);
+        // Only clear future history if we're not at the end (i.e., user made a NEW change after undoing)
+        // This preserves redo history when just navigating
+        // But clears it when user makes a real change after undo
+        if (state.historyIndex < state.history.length - 1) {
+            // User made a new change after undoing - clear redo history
+            state.history = state.history.slice(0, state.historyIndex + 1);
+        }
         
         // Add new state
         state.history.push(newState);
@@ -135,6 +243,9 @@
     }
 
     function restoreState(savedState) {
+        // Set a flag to prevent the mutation observer from saving state during restoration
+        state.isRestoring = true;
+        
         const container = document.getElementById('photo-container');
         
         // Clear current photos
@@ -142,8 +253,6 @@
         
         // Restore photos
         savedState.photos.forEach(photoData => {
-            // This assumes you have a function to create photo cards
-            // You'll need to adapt this to match your photocards.js implementation
             const photo = createPhotoCard(photoData);
             container.appendChild(photo);
         });
@@ -164,6 +273,11 @@
             document.getElementById('buildWallBtn').style.display = 'flex';
             document.getElementById('eraseWallBtn').style.display = 'none';
         }
+
+        // Clear the restoring flag after a brief delay to let mutations settle
+        setTimeout(() => {
+            state.isRestoring = false;
+        }, 100);
     }
 
     function createPhotoCard(data) {
@@ -240,10 +354,12 @@
             color: document.getElementById('wallColor').value
         };
 
+        const documentTitle = document.querySelector('.doc-title').textContent.trim();
+
         const sequenceData = {
             version: '1.0',
             created: new Date().toISOString(),
-            documentTitle: document.querySelector('.doc-title').textContent,
+            documentTitle: documentTitle,
             photos: photos,
             wall: wallState,
             settings: {
@@ -258,7 +374,18 @@
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `${sequenceData.documentTitle || 'layout'}.sequence`;
+        
+        // Sanitize filename - remove invalid characters and add .sequence extension
+        let filename = documentTitle || 'Untitled document';
+        filename = filename.replace(/[<>:"/\\|?*]/g, ''); // Remove invalid filename chars
+        filename = filename.replace(/\s+/g, '_'); // Replace spaces with underscores
+        
+        // Ensure it doesn't already end with .sequence
+        if (!filename.toLowerCase().endsWith('.sequence')) {
+            filename += '.sequence';
+        }
+        
+        a.download = filename;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -422,7 +549,10 @@
         const debouncedSave = () => {
             clearTimeout(saveTimeout);
             saveTimeout = setTimeout(() => {
-                saveState();
+                // Don't save if we're restoring from undo/redo
+                if (!state.isRestoring) {
+                    saveState();
+                }
             }, 300); // Save 300ms after last change
         };
 
@@ -445,7 +575,11 @@
         // Listen to input changes in toolbar
         const inputs = document.querySelectorAll('#wallWidth, #wallHeight, #wallUnit, #wallColor, #frameColor, #frameThickness, #matteThickness, #measurementUnit');
         inputs.forEach(input => {
-            input.addEventListener('change', debouncedSave);
+            input.addEventListener('change', () => {
+                if (!state.isRestoring) {
+                    debouncedSave();
+                }
+            });
         });
 
         // Listen to document title changes
