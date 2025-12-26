@@ -15,8 +15,11 @@
     function init() {
         setupEventListeners();
         setupEditableTitle();
-        saveState(); // Save initial state
-        updateUndoRedoButtons();
+        // Delay initial save to let photos load
+        setTimeout(() => {
+            saveState();
+            updateUndoRedoButtons();
+        }, 500);
     }
 
     // ===== EVENT LISTENERS =====
@@ -38,7 +41,8 @@
         // Print
         document.querySelector('.toolbar-icon[title="Print"]').addEventListener('click', handlePrint);
 
-        // Keyboard shortcuts
+        // Keyboard shortcuts are handled by keyboard-shortcuts.js
+        // But we keep these as backup
         document.addEventListener('keydown', handleKeyboardShortcuts);
     }
 
@@ -46,18 +50,15 @@
     function setupEditableTitle() {
         const titleElement = document.querySelector('.doc-title');
         
-        // Make title editable on click
         titleElement.addEventListener('click', function() {
             enableTitleEditing(this);
         });
         
-        // Style improvements
         titleElement.style.cursor = 'text';
         titleElement.style.padding = '4px 8px';
         titleElement.style.borderRadius = '3px';
         titleElement.style.transition = 'background-color 0.2s';
         
-        // Hover effect
         titleElement.addEventListener('mouseenter', function() {
             if (!this.isContentEditable) {
                 this.style.backgroundColor = 'rgba(0,0,0,0.05)';
@@ -72,69 +73,51 @@
     }
 
     function enableTitleEditing(element) {
-        // If already editing, do nothing
         if (element.isContentEditable) return;
         
-        // Store original text
         const originalText = element.textContent;
         
-        // Make editable
         element.contentEditable = true;
         element.style.backgroundColor = 'white';
         element.style.outline = '2px solid #4285f4';
         element.style.outlineOffset = '2px';
-        element.style.whiteSpace = 'nowrap'; // Force single line
-        element.style.overflow = 'hidden'; // Hide overflow
+        element.style.whiteSpace = 'nowrap';
+        element.style.overflow = 'hidden';
         
-        // Select all text
         const range = document.createRange();
         range.selectNodeContents(element);
         const selection = window.getSelection();
         selection.removeAllRanges();
         selection.addRange(range);
         
-        // Focus
         element.focus();
         
-        // Function to finish editing
         const finishEditing = () => {
             element.contentEditable = false;
             element.style.backgroundColor = 'transparent';
             element.style.outline = 'none';
             
-            // Trim and validate
             let newText = element.textContent.trim();
-            
-            // Remove any line breaks
             newText = newText.replace(/[\r\n]+/g, ' ');
             
-            // If empty, restore original
             if (!newText) {
                 element.textContent = originalText;
                 return;
             }
             
-            // Remove any invalid filename characters
             newText = newText.replace(/[<>:"/\\|?*]/g, '');
             
-            // Limit length
             if (newText.length > 100) {
                 newText = newText.substring(0, 100);
             }
             
             element.textContent = newText;
-            
-            // Save state if changed
-            if (newText !== originalText) {
-                // The mutation observer will automatically save this change
-            }
         };
         
-        // Prevent line breaks and finish on Enter
         const keydownHandler = (e) => {
             if (e.key === 'Enter') {
-                e.preventDefault(); // Prevent line break
-                element.blur(); // This will trigger finishEditing via blur event
+                e.preventDefault();
+                element.blur();
             } else if (e.key === 'Escape') {
                 e.preventDefault();
                 element.textContent = originalText;
@@ -142,10 +125,8 @@
             }
         };
         
-        // Add keydown listener (not once, because we need it for every key press)
         element.addEventListener('keydown', keydownHandler);
         
-        // Finish on blur
         const blurHandler = () => {
             finishEditing();
             element.removeEventListener('keydown', keydownHandler);
@@ -164,14 +145,14 @@
 
         photos.forEach(photo => {
             const filename = photo.querySelector('.photo-filename')?.textContent || '';
+            const caption = photo.querySelector('.photo-caption')?.textContent || '';
             
-            if (filename.toLowerCase().includes(query.toLowerCase())) {
-                // Highlight and scroll to found photo
+            if (filename.toLowerCase().includes(query.toLowerCase()) ||
+                caption.toLowerCase().includes(query.toLowerCase())) {
                 photo.style.boxShadow = '0 0 0 4px #4285f4';
                 photo.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 found = true;
                 
-                // Remove highlight after 2 seconds
                 setTimeout(() => {
                     photo.style.boxShadow = '';
                 }, 2000);
@@ -185,18 +166,20 @@
 
     // ===== UNDO/REDO FUNCTIONALITY =====
     function saveState() {
+        // Don't save while restoring
+        if (state.isRestoring) return;
+        
         const container = document.getElementById('photo-container');
         const photos = Array.from(container.querySelectorAll('.photo-card')).map(photo => {
             const img = photo.querySelector('img');
+            const frame = photo.querySelector('.photo-frame');
             
             return {
                 id: photo.dataset.id || 'photo-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9),
                 src: img?.src || '',
-                
-                // Get photographer name from caption
                 photographer: photo.querySelector('.photo-caption')?.textContent || '',
                 
-                // Transform-based positioning (how photocards.js actually works)
+                // Transform-based positioning - THIS IS KEY
                 x: photo.dataset.x || '0',
                 y: photo.dataset.y || '0',
                 rotation: photo.dataset.rotation || '0',
@@ -205,19 +188,26 @@
                 imgWidth: img?.style.width || '',
                 imgHeight: img?.style.height || '',
                 
-                // Frame data
-                hasFrame: photo.classList.contains('has-frame'),
-                frameThickness: photo.dataset.frameThickness || '0',
-                frameColor: photo.dataset.frameColor || '#fae7b5',
-                matteThickness: photo.dataset.matteThickness || '0',
+                // Frame data from the frame element itself
+                frameStyle: frame ? {
+                    padding: frame.style.padding || '',
+                    background: frame.style.background || '',
+                    boxShadow: frame.style.boxShadow || '',
+                    frameThickness: frame.style.getPropertyValue('--frame-thickness') || ''
+                } : null,
                 
                 // Z-index for layering
-                zIndex: photo.style.zIndex || '1000'
+                zIndex: photo.style.zIndex || '1000',
+                
+                // Selection state
+                isSelected: photo.classList.contains('selected')
             };
         });
 
+        // Get wall state - check actual display style, not class
+        const wall = document.getElementById('wall');
         const wallState = {
-            visible: document.getElementById('wall').classList.contains('visible'),
+            visible: wall.style.display !== 'none' && wall.style.display !== '',
             width: document.getElementById('wallWidth').value,
             height: document.getElementById('wallHeight').value,
             unit: document.getElementById('wallUnit').value,
@@ -231,11 +221,16 @@
             timestamp: Date.now()
         };
 
-        // Only clear future history if we're not at the end (i.e., user made a NEW change after undoing)
-        // This preserves redo history when just navigating
-        // But clears it when user makes a real change after undo
+        // Check if this state is meaningfully different from the last one
+        const lastState = state.history[state.historyIndex];
+        if (lastState && JSON.stringify(newState.photos) === JSON.stringify(lastState.photos) &&
+            JSON.stringify(newState.wall) === JSON.stringify(lastState.wall)) {
+            // No meaningful change, don't save
+            return;
+        }
+
+        // Clear future history if we're not at the end
         if (state.historyIndex < state.history.length - 1) {
-            // User made a new change after undoing - clear redo history
             state.history = state.history.slice(0, state.historyIndex + 1);
         }
         
@@ -269,7 +264,6 @@
     }
 
     function restoreState(savedState) {
-        // Set a flag to prevent the mutation observer from saving state during restoration
         state.isRestoring = true;
         
         const container = document.getElementById('photo-container');
@@ -292,88 +286,77 @@
 
         // Restore wall state
         const wall = document.getElementById('wall');
-        const wallWidth = savedState.wall.width || '144';
-        const wallHeight = savedState.wall.height || '96';
-        const wallUnit = savedState.wall.unit || 'in';
-        const wallColor = savedState.wall.color || '#f1f1f1';
+        const buildWallBtn = document.getElementById('buildWallBtn');
+        const eraseWallBtn = document.getElementById('eraseWallBtn');
         
-        document.getElementById('wallWidth').value = wallWidth;
-        document.getElementById('wallHeight').value = wallHeight;
-        document.getElementById('wallUnit').value = wallUnit;
-        document.getElementById('wallColor').value = wallColor;
-        
-        // Calculate wall dimensions in pixels
-        let widthInPixels, heightInPixels;
-        switch(wallUnit) {
-            case 'in':
-                widthInPixels = parseFloat(wallWidth) * 96;
-                heightInPixels = parseFloat(wallHeight) * 96;
-                break;
-            case 'ft':
-                widthInPixels = parseFloat(wallWidth) * 12 * 96;
-                heightInPixels = parseFloat(wallHeight) * 12 * 96;
-                break;
-            case 'cm':
-                widthInPixels = parseFloat(wallWidth) * 37.795;
-                heightInPixels = parseFloat(wallHeight) * 37.795;
-                break;
-            case 'm':
-                widthInPixels = parseFloat(wallWidth) * 3779.5;
-                heightInPixels = parseFloat(wallHeight) * 3779.5;
-                break;
-            default:
-                widthInPixels = parseFloat(wallWidth) * 96;
-                heightInPixels = parseFloat(wallHeight) * 96;
-        }
-        
-        // Apply wall styling
-        wall.style.width = widthInPixels + 'px';
-        wall.style.height = heightInPixels + 'px';
-        wall.style.backgroundColor = wallColor;
+        document.getElementById('wallWidth').value = savedState.wall.width || '144';
+        document.getElementById('wallHeight').value = savedState.wall.height || '96';
+        document.getElementById('wallUnit').value = savedState.wall.unit || 'in';
+        document.getElementById('wallColor').value = savedState.wall.color || '#f1f1f1';
         
         if (savedState.wall.visible) {
-            wall.classList.add('visible');
-            document.getElementById('buildWallBtn').style.display = 'none';
-            document.getElementById('eraseWallBtn').style.display = 'flex';
-        } else {
-            wall.classList.remove('visible');
-            document.getElementById('buildWallBtn').style.display = 'flex';
-            document.getElementById('eraseWallBtn').style.display = 'none';
-        }
-
-        // Clear the restoring flag after a brief delay to let mutations settle
-        setTimeout(() => {
-            // Update dimensions text for all restored cards if dimensions are currently visible
-            const dimensionsVisible = document.querySelector('.photo-dimensions')?.style.display !== 'none';
-            if (dimensionsVisible && window.updateCardDimensionsText) {
-                document.querySelectorAll('.photo-card').forEach(card => {
-                    window.updateCardDimensionsText(card);
-                });
+            // Show wall - use the same method as buildWallBtn click
+            wall.style.display = 'block';
+            wall.style.backgroundColor = savedState.wall.color || '#f1f1f1';
+            
+            // Calculate and set wall dimensions
+            const W = parseFloat(savedState.wall.width);
+            const H = parseFloat(savedState.wall.height);
+            const U = savedState.wall.unit;
+            
+            const UNIT_TO_IN = { in: 1, ft: 12, cm: 0.393701, m: 39.3701 };
+            const W_in = W * UNIT_TO_IN[U];
+            const H_in = H * UNIT_TO_IN[U];
+            
+            window.currentWallInches = { width: W_in, height: H_in };
+            
+            const wallRatio = W_in / H_in;
+            const screenW = window.innerWidth - 80;
+            const screenH = window.innerHeight - 160;
+            const screenRatio = screenW / screenH;
+            
+            let renderW, renderH;
+            if (wallRatio > screenRatio) {
+                renderW = screenW;
+                renderH = renderW / wallRatio;
+            } else {
+                renderH = screenH;
+                renderW = renderH * wallRatio;
             }
             
+            wall.style.width = `${renderW}px`;
+            wall.style.height = `${renderH}px`;
+            
+            buildWallBtn.style.display = 'none';
+            eraseWallBtn.style.display = 'flex';
+        } else {
+            // Hide wall
+            wall.style.display = 'none';
+            buildWallBtn.style.display = 'flex';
+            eraseWallBtn.style.display = 'none';
+        }
+
+        // Clear the restoring flag after mutations settle
+        setTimeout(() => {
             state.isRestoring = false;
-        }, 100);
+        }, 150);
     }
 
     function createPhotoCard(data) {
-        // Create photo card matching photocards.js structure
         const card = document.createElement('div');
         card.className = 'photo-card';
-        if (data.hasFrame) card.classList.add('has-frame');
+        if (data.isSelected) card.classList.add('selected');
         
-        // Set dataset values
+        // Set dataset values FIRST before any interaction setup
         card.dataset.id = data.id || 'photo-' + Date.now();
         card.dataset.x = data.x || '0';
         card.dataset.y = data.y || '0';
         card.dataset.rotation = data.rotation || '0';
-        card.dataset.frameThickness = data.frameThickness || '0';
-        card.dataset.frameColor = data.frameColor || '#fae7b5';
-        card.dataset.matteThickness = data.matteThickness || '0';
         
         // Set z-index
         card.style.zIndex = data.zIndex || '1000';
         
-        // Apply transform (this is how photocards.js positions cards)
+        // Apply transform immediately
         card.style.transform = `translate(${data.x}px, ${data.y}px) rotate(${data.rotation}deg)`;
         
         // Create photo-frame wrapper
@@ -385,9 +368,11 @@
         img.src = data.src || '';
         img.alt = data.photographer || '';
         
-        // Restore image dimensions
-        if (data.imgWidth && data.imgHeight) {
+        // Restore image dimensions IMMEDIATELY
+        if (data.imgWidth) {
             img.style.width = data.imgWidth;
+        }
+        if (data.imgHeight) {
             img.style.height = data.imgHeight;
         }
         
@@ -398,13 +383,17 @@
         const caption = document.createElement('div');
         caption.className = 'photo-caption';
         caption.textContent = data.photographer || 'Unknown';
-        caption.style.display = 'none'; // Will be toggled by Names button
+        // Check if names are currently visible
+        const existingCaption = document.querySelector('.photo-caption');
+        caption.style.display = existingCaption ? existingCaption.style.display : 'none';
         card.appendChild(caption);
         
         // Create dimensions display
         const dim = document.createElement('div');
         dim.className = 'photo-dimensions';
-        dim.style.display = 'none';
+        // Check if dimensions are currently visible
+        const existingDim = document.querySelector('.photo-dimensions');
+        dim.style.display = existingDim ? existingDim.style.display : 'none';
         
         const pictureDimSpan = document.createElement('span');
         pictureDimSpan.className = 'picture-dimensions';
@@ -417,7 +406,6 @@
         `;
         pictureDimSpan.title = 'Click to edit picture dimensions';
         
-        // Add hover effect
         pictureDimSpan.addEventListener('mouseenter', () => {
             if (!pictureDimSpan.querySelector('input')) {
                 pictureDimSpan.style.background = 'rgba(255,255,255,0.2)';
@@ -429,9 +417,8 @@
             }
         });
         
-        // Click handler to make inline editable
         pictureDimSpan.addEventListener('click', (e) => {
-            e.stopPropagation(); // Prevent card selection
+            e.stopPropagation();
             if (!pictureDimSpan.querySelector('input')) {
                 if (window.makeInlineEditable) {
                     window.makeInlineEditable(card, pictureDimSpan);
@@ -451,50 +438,66 @@
         dim.appendChild(frameDimSpan);
         card.appendChild(dim);
         
-        // Apply frame styling if present
-        if (data.hasFrame) {
-            applyFrameToCard(card, frame, data);
+        // Restore frame styling if present
+        if (data.frameStyle && data.frameStyle.boxShadow) {
+            frame.style.padding = data.frameStyle.padding || '';
+            frame.style.background = data.frameStyle.background || '';
+            frame.style.boxShadow = data.frameStyle.boxShadow || '';
+            if (data.frameStyle.frameThickness) {
+                frame.style.setProperty('--frame-thickness', data.frameStyle.frameThickness);
+            }
         }
         
-        // CRITICAL: Attach all interactivity using photocards.js's function
-        // This ensures drag, resize, rotate, selection all work
+        // Create resize handle
+        const resizeHandle = document.createElement('div');
+        resizeHandle.className = 'resize-handle';
+        resizeHandle.textContent = '⇲';
+        frame.appendChild(resizeHandle);
+        
+        // Create rotate handle
+        const rotateHandle = document.createElement('div');
+        rotateHandle.className = 'rotate-handle';
+        rotateHandle.textContent = '↻';
+        frame.appendChild(rotateHandle);
+        
+        // NOW attach interactivity - but we need to preserve position
+        // The issue is makeCardInteractive sets random position
+        // We need to call it but then restore our position
+        const savedX = data.x;
+        const savedY = data.y;
+        const savedRotation = data.rotation;
+        
         if (window.makeCardInteractive) {
             window.makeCardInteractive(card);
         }
         
+        // RESTORE position after makeCardInteractive (which sets random position)
+        card.dataset.x = savedX;
+        card.dataset.y = savedY;
+        card.dataset.rotation = savedRotation;
+        card.style.transform = `translate(${savedX}px, ${savedY}px) rotate(${savedRotation}deg)`;
+        
         return card;
-    }
-    
-    function applyFrameToCard(card, frame, data) {
-        const frameThickness = parseFloat(data.frameThickness) || 0;
-        const matteThickness = parseFloat(data.matteThickness) || 0;
-        const frameColor = data.frameColor || '#fae7b5';
-        
-        if (frameThickness > 0) {
-            frame.style.setProperty('--frame-thickness', `${frameThickness}in`);
-            frame.style.boxShadow = `0 0 0 ${frameThickness}in ${frameColor}`;
-        }
-        
-        if (matteThickness > 0) {
-            frame.style.padding = `${matteThickness}in`;
-            frame.style.backgroundColor = 'white';
-        }
     }
 
     function updateUndoRedoButtons() {
         const undoBtn = document.querySelector('.toolbar-icon[title="Undo"]');
         const redoBtn = document.querySelector('.toolbar-icon[title="Redo"]');
         
-        if (state.historyIndex > 0) {
-            undoBtn.classList.remove('disabled');
-        } else {
-            undoBtn.classList.add('disabled');
+        if (undoBtn) {
+            if (state.historyIndex > 0) {
+                undoBtn.classList.remove('disabled');
+            } else {
+                undoBtn.classList.add('disabled');
+            }
         }
         
-        if (state.historyIndex < state.history.length - 1) {
-            redoBtn.classList.remove('disabled');
-        } else {
-            redoBtn.classList.add('disabled');
+        if (redoBtn) {
+            if (state.historyIndex < state.history.length - 1) {
+                redoBtn.classList.remove('disabled');
+            } else {
+                redoBtn.classList.add('disabled');
+            }
         }
     }
 
@@ -503,34 +506,30 @@
         const container = document.getElementById('photo-container');
         const photos = Array.from(container.querySelectorAll('.photo-card')).map(photo => {
             const img = photo.querySelector('img');
+            const frame = photo.querySelector('.photo-frame');
             
             return {
                 id: photo.dataset.id,
                 src: img?.src || '',
                 photographer: photo.querySelector('.photo-caption')?.textContent || '',
-                
-                // Transform-based positioning
                 x: photo.dataset.x || '0',
                 y: photo.dataset.y || '0',
                 rotation: photo.dataset.rotation || '0',
-                
-                // Image dimensions
                 imgWidth: img?.style.width || '',
                 imgHeight: img?.style.height || '',
-                
-                // Frame data
-                hasFrame: photo.classList.contains('has-frame'),
-                frameThickness: photo.dataset.frameThickness || '0',
-                frameColor: photo.dataset.frameColor || '#fae7b5',
-                matteThickness: photo.dataset.matteThickness || '0',
-                
-                // Z-index
+                frameStyle: frame ? {
+                    padding: frame.style.padding || '',
+                    background: frame.style.background || '',
+                    boxShadow: frame.style.boxShadow || '',
+                    frameThickness: frame.style.getPropertyValue('--frame-thickness') || ''
+                } : null,
                 zIndex: photo.style.zIndex || '1000'
             };
         });
 
+        const wall = document.getElementById('wall');
         const wallState = {
-            visible: document.getElementById('wall').classList.contains('visible'),
+            visible: wall.style.display !== 'none' && wall.style.display !== '',
             width: document.getElementById('wallWidth').value,
             height: document.getElementById('wallHeight').value,
             unit: document.getElementById('wallUnit').value,
@@ -540,7 +539,7 @@
         const documentTitle = document.querySelector('.doc-title').textContent.trim();
 
         const sequenceData = {
-            version: '1.0',
+            version: '1.1',
             created: new Date().toISOString(),
             documentTitle: documentTitle,
             photos: photos,
@@ -558,12 +557,10 @@
         const a = document.createElement('a');
         a.href = url;
         
-        // Sanitize filename - remove invalid characters and add .sequence extension
         let filename = documentTitle || 'Untitled document';
-        filename = filename.replace(/[<>:"/\\|?*]/g, ''); // Remove invalid filename chars
-        filename = filename.replace(/\s+/g, '_'); // Replace spaces with underscores
+        filename = filename.replace(/[<>:"/\\|?*]/g, '');
+        filename = filename.replace(/\s+/g, '_');
         
-        // Ensure it doesn't already end with .sequence
         if (!filename.toLowerCase().endsWith('.sequence')) {
             filename += '.sequence';
         }
@@ -600,22 +597,18 @@
     }
 
     function loadSequenceFile(data) {
-        // Update document title
         if (data.documentTitle) {
             document.querySelector('.doc-title').textContent = data.documentTitle;
         }
 
-        // Clear current layout
         const container = document.getElementById('photo-container');
         container.innerHTML = '';
 
-        // Load photos
         data.photos.forEach(photoData => {
             const photo = createPhotoCard(photoData);
             container.appendChild(photo);
         });
 
-        // Load wall settings
         if (data.wall) {
             document.getElementById('wallWidth').value = data.wall.width;
             document.getElementById('wallHeight').value = data.wall.height;
@@ -624,13 +617,11 @@
             
             const wall = document.getElementById('wall');
             if (data.wall.visible) {
-                wall.classList.add('visible');
-                document.getElementById('buildWallBtn').style.display = 'none';
-                document.getElementById('eraseWallBtn').style.display = 'flex';
+                // Trigger the build wall button logic
+                document.getElementById('buildWallBtn').click();
             }
         }
 
-        // Load settings
         if (data.settings) {
             document.getElementById('frameColor').value = data.settings.frameColor;
             document.getElementById('frameThickness').value = data.settings.frameThickness;
@@ -638,7 +629,6 @@
             document.getElementById('measurementUnit').value = data.settings.measurementUnit;
         }
 
-        // Save this as a new state
         saveState();
     }
 
@@ -652,11 +642,10 @@
         container.innerHTML = '';
 
         const wall = document.getElementById('wall');
-        wall.classList.remove('visible');
+        wall.style.display = 'none';
         document.getElementById('buildWallBtn').style.display = 'flex';
         document.getElementById('eraseWallBtn').style.display = 'none';
 
-        // Reset to defaults
         document.getElementById('wallWidth').value = '144';
         document.getElementById('wallHeight').value = '96';
         document.getElementById('wallUnit').value = 'in';
@@ -667,7 +656,6 @@
         document.getElementById('measurementUnit').value = 'in';
         document.querySelector('.doc-title').textContent = 'Untitled document';
 
-        // Clear history and save new state
         state.history = [];
         state.historyIndex = -1;
         saveState();
@@ -680,37 +668,32 @@
 
     // ===== KEYBOARD SHORTCUTS =====
     function handleKeyboardShortcuts(e) {
-        // Ctrl/Cmd + Z for Undo
+        // These are backup shortcuts - keyboard-shortcuts.js handles them too
         if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
             e.preventDefault();
             handleUndo();
         }
         
-        // Ctrl/Cmd + Shift + Z or Ctrl/Cmd + Y for Redo
         if ((e.ctrlKey || e.metaKey) && (e.shiftKey && e.key === 'z' || e.key === 'y')) {
             e.preventDefault();
             handleRedo();
         }
         
-        // Ctrl/Cmd + F for Search
         if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
             e.preventDefault();
             handleSearch();
         }
         
-        // Ctrl/Cmd + S for Download
         if ((e.ctrlKey || e.metaKey) && e.key === 's') {
             e.preventDefault();
             handleDownload();
         }
         
-        // Ctrl/Cmd + O for Upload
         if ((e.ctrlKey || e.metaKey) && e.key === 'o') {
             e.preventDefault();
             handleUpload();
         }
         
-        // Ctrl/Cmd + P for Print
         if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
             e.preventDefault();
             handlePrint();
@@ -727,44 +710,27 @@
         const container = document.getElementById('photo-container');
         const wall = document.getElementById('wall');
         
-        // Debounce function to avoid excessive saves
         let saveTimeout;
         const debouncedSave = () => {
             clearTimeout(saveTimeout);
             saveTimeout = setTimeout(() => {
-                // Don't save if we're restoring from undo/redo
                 if (!state.isRestoring) {
                     saveState();
                 }
-            }, 100); // Save 100ms after last change - faster to capture granular changes
+            }, 300); // 300ms debounce for smoother dragging
         };
 
-        // Track if we should save based on mutation type
-        const shouldSaveMutation = (mutations) => {
-            for (const mutation of mutations) {
-                // Ignore text content changes in filename divs (they don't affect state)
-                if (mutation.type === 'characterData' && 
-                    mutation.target.parentElement?.classList.contains('photo-filename')) {
-                    continue;
-                }
-                
-                // Save on any other mutation
-                return true;
-            }
-            return false;
-        };
-
-        // Observe photo container for any changes
+        // Observe photo container
         const observer = new MutationObserver((mutations) => {
-            if (!state.isRestoring && shouldSaveMutation(mutations)) {
+            if (!state.isRestoring) {
                 debouncedSave();
             }
         });
         
         observer.observe(container, {
-            childList: true, // Photos added/removed
-            attributes: true, // Position/style changes
-            attributeFilter: ['style', 'class', 'data-frame-thickness', 'data-frame-color', 'data-matte-thickness'],
+            childList: true,
+            attributes: true,
+            attributeFilter: ['style', 'class', 'data-x', 'data-y', 'data-rotation'],
             subtree: true
         });
 
@@ -780,7 +746,7 @@
             attributeFilter: ['style', 'class']
         });
 
-        // Listen to input changes in toolbar
+        // Listen to input changes
         const inputs = document.querySelectorAll('#wallWidth, #wallHeight, #wallUnit, #wallColor, #frameColor, #frameThickness, #matteThickness, #measurementUnit');
         inputs.forEach(input => {
             input.addEventListener('change', () => {
