@@ -187,31 +187,32 @@
     function saveState() {
         const container = document.getElementById('photo-container');
         const photos = Array.from(container.querySelectorAll('.photo-card')).map(photo => {
-            // Get computed styles to capture actual current state
-            const computedStyle = window.getComputedStyle(photo);
+            const img = photo.querySelector('img');
             
             return {
                 id: photo.dataset.id || 'photo-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9),
-                src: photo.querySelector('img')?.src || '',
-                filename: photo.querySelector('.photo-filename')?.textContent || '',
+                src: img?.src || '',
                 
-                // Capture actual position
-                left: photo.style.left || computedStyle.left || '0px',
-                top: photo.style.top || computedStyle.top || '0px',
+                // Get photographer name from caption
+                photographer: photo.querySelector('.photo-caption')?.textContent || '',
                 
-                // Capture actual dimensions from style or computed
-                actualWidth: photo.style.width || computedStyle.width,
-                actualHeight: photo.style.height || computedStyle.height,
+                // Transform-based positioning (how photocards.js actually works)
+                x: photo.dataset.x || '0',
+                y: photo.dataset.y || '0',
+                rotation: photo.dataset.rotation || '0',
                 
-                // Also save dataset values for reference
-                width: photo.dataset.width || '4',
-                height: photo.dataset.height || '6',
+                // Actual image dimensions
+                imgWidth: img?.style.width || '',
+                imgHeight: img?.style.height || '',
                 
                 // Frame data
                 hasFrame: photo.classList.contains('has-frame'),
                 frameThickness: photo.dataset.frameThickness || '0',
                 frameColor: photo.dataset.frameColor || '#fae7b5',
-                matteThickness: photo.dataset.matteThickness || '0'
+                matteThickness: photo.dataset.matteThickness || '0',
+                
+                // Z-index for layering
+                zIndex: photo.style.zIndex || '1000'
             };
         });
 
@@ -347,71 +348,123 @@
     }
 
     function createPhotoCard(data) {
-        // Create photo card from saved data
+        // Create photo card matching photocards.js structure
         const card = document.createElement('div');
         card.className = 'photo-card';
         if (data.hasFrame) card.classList.add('has-frame');
         
+        // Set dataset values
         card.dataset.id = data.id || 'photo-' + Date.now();
-        card.dataset.width = data.width || '4';
-        card.dataset.height = data.height || '6';
+        card.dataset.x = data.x || '0';
+        card.dataset.y = data.y || '0';
+        card.dataset.rotation = data.rotation || '0';
         card.dataset.frameThickness = data.frameThickness || '0';
         card.dataset.frameColor = data.frameColor || '#fae7b5';
         card.dataset.matteThickness = data.matteThickness || '0';
         
-        // Restore position
-        card.style.left = data.left || '0px';
-        card.style.top = data.top || '0px';
-        card.style.position = 'absolute';
+        // Set z-index
+        card.style.zIndex = data.zIndex || '1000';
         
-        // Use the actual saved dimensions directly
-        // This preserves exactly what was on screen when state was saved
-        if (data.actualWidth && data.actualHeight) {
-            card.style.width = data.actualWidth;
-            card.style.height = data.actualHeight;
-        } else {
-            // Fallback: calculate from dataset dimensions if actualWidth/Height don't exist
-            const width = parseFloat(data.width) || 4;
-            const height = parseFloat(data.height) || 6;
-            const ppi = 96; // Standard screen PPI
-            card.style.width = (width * ppi) + 'px';
-            card.style.height = (height * ppi) + 'px';
-        }
+        // Apply transform (this is how photocards.js positions cards)
+        card.style.transform = `translate(${data.x}px, ${data.y}px) rotate(${data.rotation}deg)`;
         
+        // Create photo-frame wrapper
+        const frame = document.createElement('div');
+        frame.className = 'photo-frame';
+        
+        // Create and configure image
         const img = document.createElement('img');
         img.src = data.src || '';
-        img.alt = data.filename || '';
-        img.style.width = '100%';
-        img.style.height = '100%';
-        img.style.objectFit = 'cover';
+        img.alt = data.photographer || '';
         
-        const filename = document.createElement('div');
-        filename.className = 'photo-filename';
-        filename.textContent = data.filename || '';
+        // Restore image dimensions
+        if (data.imgWidth && data.imgHeight) {
+            img.style.width = data.imgWidth;
+            img.style.height = data.imgHeight;
+        }
         
-        card.appendChild(img);
-        card.appendChild(filename);
+        frame.appendChild(img);
+        card.appendChild(frame);
+        
+        // Create caption
+        const caption = document.createElement('div');
+        caption.className = 'photo-caption';
+        caption.textContent = data.photographer || 'Unknown';
+        caption.style.display = 'none'; // Will be toggled by Names button
+        card.appendChild(caption);
+        
+        // Create dimensions display
+        const dim = document.createElement('div');
+        dim.className = 'photo-dimensions';
+        dim.style.display = 'none';
+        
+        const pictureDimSpan = document.createElement('span');
+        pictureDimSpan.className = 'picture-dimensions';
+        
+        const frameDimSpan = document.createElement('span');
+        frameDimSpan.className = 'frame-dimensions';
+        
+        dim.appendChild(pictureDimSpan);
+        dim.appendChild(frameDimSpan);
+        card.appendChild(dim);
         
         // Apply frame styling if present
         if (data.hasFrame) {
-            applyFrameToCard(card, data);
+            applyFrameToCard(card, frame, data);
         }
+        
+        // Re-attach all interactivity from photocards.js
+        makeRestoredCardInteractive(card);
         
         return card;
     }
     
-    function applyFrameToCard(card, data) {
+    function applyFrameToCard(card, frame, data) {
         const frameThickness = parseFloat(data.frameThickness) || 0;
         const matteThickness = parseFloat(data.matteThickness) || 0;
         const frameColor = data.frameColor || '#fae7b5';
         
-        if (frameThickness > 0 || matteThickness > 0) {
-            const totalThickness = frameThickness + matteThickness;
-            card.style.padding = `${matteThickness}in`;
-            card.style.border = `${frameThickness}in solid ${frameColor}`;
-            card.style.backgroundColor = 'white';
-            card.style.boxSizing = 'content-box';
+        if (frameThickness > 0) {
+            frame.style.setProperty('--frame-thickness', `${frameThickness}in`);
+            frame.style.boxShadow = `0 0 0 ${frameThickness}in ${frameColor}`;
         }
+        
+        if (matteThickness > 0) {
+            frame.style.padding = `${matteThickness}in`;
+            frame.style.backgroundColor = 'white';
+        }
+    }
+    
+    function makeRestoredCardInteractive(card) {
+        // This re-creates the interactivity from photocards.js
+        // The actual photocards.js will handle most of this, but we need basic setup
+        
+        let isDragging = false;
+        let dragOffset = { x: 0, y: 0 };
+        
+        // Click handler for selection (if keyboard-shortcuts.js is loaded)
+        card.addEventListener('click', (e) => {
+            if (window.sequenceTable && window.sequenceTable.keyboard) {
+                // Let keyboard-shortcuts.js handle selection
+            }
+        });
+        
+        // Mousedown for dragging
+        card.addEventListener('mousedown', function(e) {
+            if (e.target.classList.contains('resize-handle')) return;
+            if (e.target.classList.contains('rotate-handle')) return;
+            if (e.target.classList.contains('photo-caption')) return;
+            if (e.target.classList.contains('picture-dimensions')) return;
+            if (e.target.classList.contains('dim-input')) return;
+            
+            const x = parseFloat(card.dataset.x) || 0;
+            const y = parseFloat(card.dataset.y) || 0;
+            
+            // Bring to front
+            const maxZ = Array.from(document.querySelectorAll('.photo-card'))
+                .reduce((max, c) => Math.max(max, parseInt(c.style.zIndex) || 1000), 1000);
+            card.style.zIndex = maxZ + 1;
+        });
     }
 
     function updateUndoRedoButtons() {
@@ -435,18 +488,30 @@
     function handleDownload() {
         const container = document.getElementById('photo-container');
         const photos = Array.from(container.querySelectorAll('.photo-card')).map(photo => {
+            const img = photo.querySelector('img');
+            
             return {
                 id: photo.dataset.id,
-                src: photo.querySelector('img')?.src || '',
-                filename: photo.querySelector('.photo-filename')?.textContent || '',
-                left: photo.style.left,
-                top: photo.style.top,
-                width: photo.dataset.width,
-                height: photo.dataset.height,
+                src: img?.src || '',
+                photographer: photo.querySelector('.photo-caption')?.textContent || '',
+                
+                // Transform-based positioning
+                x: photo.dataset.x || '0',
+                y: photo.dataset.y || '0',
+                rotation: photo.dataset.rotation || '0',
+                
+                // Image dimensions
+                imgWidth: img?.style.width || '',
+                imgHeight: img?.style.height || '',
+                
+                // Frame data
                 hasFrame: photo.classList.contains('has-frame'),
-                frameThickness: photo.dataset.frameThickness,
-                frameColor: photo.dataset.frameColor,
-                matteThickness: photo.dataset.matteThickness
+                frameThickness: photo.dataset.frameThickness || '0',
+                frameColor: photo.dataset.frameColor || '#fae7b5',
+                matteThickness: photo.dataset.matteThickness || '0',
+                
+                // Z-index
+                zIndex: photo.style.zIndex || '1000'
             };
         });
 
