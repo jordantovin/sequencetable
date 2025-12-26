@@ -240,6 +240,9 @@
             // Legacy fallback: use innerHTML
             label.innerHTML = `Photo ${picW.toFixed(2)}${unitLabel} × ${picH.toFixed(2)}${unitLabel}<br>Framed ${frameW.toFixed(2)}${unitLabel} × ${frameH.toFixed(2)}${unitLabel}`;
         }
+        
+        // Apply current visibility state
+        label.style.display = areDimensionsVisible ? "block" : "none";
     }
 
     window.updateCardDimensionsText = updateDimensions;
