@@ -83,6 +83,8 @@
         element.style.backgroundColor = 'white';
         element.style.outline = '2px solid #4285f4';
         element.style.outlineOffset = '2px';
+        element.style.whiteSpace = 'nowrap'; // Force single line
+        element.style.overflow = 'hidden'; // Hide overflow
         
         // Select all text
         const range = document.createRange();
@@ -102,6 +104,9 @@
             
             // Trim and validate
             let newText = element.textContent.trim();
+            
+            // Remove any line breaks
+            newText = newText.replace(/[\r\n]+/g, ' ');
             
             // If empty, restore original
             if (!newText) {
@@ -125,14 +130,11 @@
             }
         };
         
-        // Finish on blur
-        element.addEventListener('blur', finishEditing, { once: true });
-        
-        // Finish on Enter key
-        const enterHandler = (e) => {
+        // Prevent line breaks and finish on Enter
+        const keydownHandler = (e) => {
             if (e.key === 'Enter') {
-                e.preventDefault();
-                element.blur(); // This will trigger finishEditing
+                e.preventDefault(); // Prevent line break
+                element.blur(); // This will trigger finishEditing via blur event
             } else if (e.key === 'Escape') {
                 e.preventDefault();
                 element.textContent = originalText;
@@ -140,7 +142,16 @@
             }
         };
         
-        element.addEventListener('keydown', enterHandler, { once: true });
+        // Add keydown listener (not once, because we need it for every key press)
+        element.addEventListener('keydown', keydownHandler);
+        
+        // Finish on blur
+        const blurHandler = () => {
+            finishEditing();
+            element.removeEventListener('keydown', keydownHandler);
+        };
+        
+        element.addEventListener('blur', blurHandler, { once: true });
     }
 
     // ===== SEARCH FUNCTIONALITY =====
@@ -202,6 +213,7 @@
         const newState = {
             photos: photos,
             wall: wallState,
+            documentTitle: document.querySelector('.doc-title').textContent,
             timestamp: Date.now()
         };
 
@@ -252,17 +264,58 @@
         container.innerHTML = '';
         
         // Restore photos
-        savedState.photos.forEach(photoData => {
-            const photo = createPhotoCard(photoData);
-            container.appendChild(photo);
-        });
+        if (savedState.photos && savedState.photos.length > 0) {
+            savedState.photos.forEach(photoData => {
+                const photo = createPhotoCard(photoData);
+                container.appendChild(photo);
+            });
+        }
+
+        // Restore document title
+        if (savedState.documentTitle) {
+            document.querySelector('.doc-title').textContent = savedState.documentTitle;
+        }
 
         // Restore wall state
         const wall = document.getElementById('wall');
-        document.getElementById('wallWidth').value = savedState.wall.width;
-        document.getElementById('wallHeight').value = savedState.wall.height;
-        document.getElementById('wallUnit').value = savedState.wall.unit;
-        document.getElementById('wallColor').value = savedState.wall.color;
+        const wallWidth = savedState.wall.width || '144';
+        const wallHeight = savedState.wall.height || '96';
+        const wallUnit = savedState.wall.unit || 'in';
+        const wallColor = savedState.wall.color || '#f1f1f1';
+        
+        document.getElementById('wallWidth').value = wallWidth;
+        document.getElementById('wallHeight').value = wallHeight;
+        document.getElementById('wallUnit').value = wallUnit;
+        document.getElementById('wallColor').value = wallColor;
+        
+        // Calculate wall dimensions in pixels
+        let widthInPixels, heightInPixels;
+        switch(wallUnit) {
+            case 'in':
+                widthInPixels = parseFloat(wallWidth) * 96;
+                heightInPixels = parseFloat(wallHeight) * 96;
+                break;
+            case 'ft':
+                widthInPixels = parseFloat(wallWidth) * 12 * 96;
+                heightInPixels = parseFloat(wallHeight) * 12 * 96;
+                break;
+            case 'cm':
+                widthInPixels = parseFloat(wallWidth) * 37.795;
+                heightInPixels = parseFloat(wallHeight) * 37.795;
+                break;
+            case 'm':
+                widthInPixels = parseFloat(wallWidth) * 3779.5;
+                heightInPixels = parseFloat(wallHeight) * 3779.5;
+                break;
+            default:
+                widthInPixels = parseFloat(wallWidth) * 96;
+                heightInPixels = parseFloat(wallHeight) * 96;
+        }
+        
+        // Apply wall styling
+        wall.style.width = widthInPixels + 'px';
+        wall.style.height = heightInPixels + 'px';
+        wall.style.backgroundColor = wallColor;
         
         if (savedState.wall.visible) {
             wall.classList.add('visible');
@@ -287,27 +340,62 @@
         if (data.hasFrame) card.classList.add('has-frame');
         
         card.dataset.id = data.id;
-        card.dataset.width = data.width;
-        card.dataset.height = data.height;
+        card.dataset.width = data.width || '4';
+        card.dataset.height = data.height || '6';
         card.dataset.frameThickness = data.frameThickness || '0';
         card.dataset.frameColor = data.frameColor || '#fae7b5';
         card.dataset.matteThickness = data.matteThickness || '0';
         
-        card.style.left = data.left;
-        card.style.top = data.top;
+        // Restore position
+        card.style.left = data.left || '0px';
+        card.style.top = data.top || '0px';
+        card.style.position = 'absolute';
+        
+        // Calculate and restore actual display dimensions
+        // This is critical - without it, photos lose their size
+        const width = parseFloat(data.width) || 4;
+        const height = parseFloat(data.height) || 6;
+        const ppi = 96; // Standard screen PPI
+        const displayWidth = width * ppi;
+        const displayHeight = height * ppi;
+        
+        card.style.width = displayWidth + 'px';
+        card.style.height = displayHeight + 'px';
         
         const img = document.createElement('img');
-        img.src = data.src;
-        img.alt = data.filename;
+        img.src = data.src || '';
+        img.alt = data.filename || '';
+        img.style.width = '100%';
+        img.style.height = '100%';
+        img.style.objectFit = 'cover';
         
         const filename = document.createElement('div');
         filename.className = 'photo-filename';
-        filename.textContent = data.filename;
+        filename.textContent = data.filename || '';
         
         card.appendChild(img);
         card.appendChild(filename);
         
+        // Apply frame styling if present
+        if (data.hasFrame) {
+            applyFrameToCard(card, data);
+        }
+        
         return card;
+    }
+    
+    function applyFrameToCard(card, data) {
+        const frameThickness = parseFloat(data.frameThickness) || 0;
+        const matteThickness = parseFloat(data.matteThickness) || 0;
+        const frameColor = data.frameColor || '#fae7b5';
+        
+        if (frameThickness > 0 || matteThickness > 0) {
+            const totalThickness = frameThickness + matteThickness;
+            card.style.padding = `${matteThickness}in`;
+            card.style.border = `${frameThickness}in solid ${frameColor}`;
+            card.style.backgroundColor = 'white';
+            card.style.boxSizing = 'content-box';
+        }
     }
 
     function updateUndoRedoButtons() {
@@ -553,20 +641,45 @@
                 if (!state.isRestoring) {
                     saveState();
                 }
-            }, 300); // Save 300ms after last change
+            }, 100); // Save 100ms after last change - faster to capture granular changes
+        };
+
+        // Track if we should save based on mutation type
+        const shouldSaveMutation = (mutations) => {
+            for (const mutation of mutations) {
+                // Ignore text content changes in filename divs (they don't affect state)
+                if (mutation.type === 'characterData' && 
+                    mutation.target.parentElement?.classList.contains('photo-filename')) {
+                    continue;
+                }
+                
+                // Save on any other mutation
+                return true;
+            }
+            return false;
         };
 
         // Observe photo container for any changes
-        const observer = new MutationObserver(debouncedSave);
+        const observer = new MutationObserver((mutations) => {
+            if (!state.isRestoring && shouldSaveMutation(mutations)) {
+                debouncedSave();
+            }
+        });
+        
         observer.observe(container, {
-            childList: true,
-            attributes: true,
+            childList: true, // Photos added/removed
+            attributes: true, // Position/style changes
             attributeFilter: ['style', 'class', 'data-frame-thickness', 'data-frame-color', 'data-matte-thickness'],
             subtree: true
         });
 
         // Observe wall changes
-        const wallObserver = new MutationObserver(debouncedSave);
+        const wallObserver = new MutationObserver((mutations) => {
+            if (!state.isRestoring) {
+                debouncedSave();
+            }
+        });
+        
         wallObserver.observe(wall, {
             attributes: true,
             attributeFilter: ['style', 'class']
@@ -585,7 +698,12 @@
         // Listen to document title changes
         const titleElement = document.querySelector('.doc-title');
         if (titleElement) {
-            const titleObserver = new MutationObserver(debouncedSave);
+            const titleObserver = new MutationObserver((mutations) => {
+                if (!state.isRestoring) {
+                    debouncedSave();
+                }
+            });
+            
             titleObserver.observe(titleElement, {
                 childList: true,
                 characterData: true,
