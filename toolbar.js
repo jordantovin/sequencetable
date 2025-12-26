@@ -187,18 +187,31 @@
     function saveState() {
         const container = document.getElementById('photo-container');
         const photos = Array.from(container.querySelectorAll('.photo-card')).map(photo => {
+            // Get computed styles to capture actual current state
+            const computedStyle = window.getComputedStyle(photo);
+            
             return {
-                id: photo.dataset.id,
+                id: photo.dataset.id || 'photo-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9),
                 src: photo.querySelector('img')?.src || '',
                 filename: photo.querySelector('.photo-filename')?.textContent || '',
-                left: photo.style.left,
-                top: photo.style.top,
-                width: photo.dataset.width,
-                height: photo.dataset.height,
+                
+                // Capture actual position
+                left: photo.style.left || computedStyle.left || '0px',
+                top: photo.style.top || computedStyle.top || '0px',
+                
+                // Capture actual dimensions from style or computed
+                actualWidth: photo.style.width || computedStyle.width,
+                actualHeight: photo.style.height || computedStyle.height,
+                
+                // Also save dataset values for reference
+                width: photo.dataset.width || '4',
+                height: photo.dataset.height || '6',
+                
+                // Frame data
                 hasFrame: photo.classList.contains('has-frame'),
-                frameThickness: photo.dataset.frameThickness,
-                frameColor: photo.dataset.frameColor,
-                matteThickness: photo.dataset.matteThickness
+                frameThickness: photo.dataset.frameThickness || '0',
+                frameColor: photo.dataset.frameColor || '#fae7b5',
+                matteThickness: photo.dataset.matteThickness || '0'
             };
         });
 
@@ -339,7 +352,7 @@
         card.className = 'photo-card';
         if (data.hasFrame) card.classList.add('has-frame');
         
-        card.dataset.id = data.id;
+        card.dataset.id = data.id || 'photo-' + Date.now();
         card.dataset.width = data.width || '4';
         card.dataset.height = data.height || '6';
         card.dataset.frameThickness = data.frameThickness || '0';
@@ -351,16 +364,19 @@
         card.style.top = data.top || '0px';
         card.style.position = 'absolute';
         
-        // Calculate and restore actual display dimensions
-        // This is critical - without it, photos lose their size
-        const width = parseFloat(data.width) || 4;
-        const height = parseFloat(data.height) || 6;
-        const ppi = 96; // Standard screen PPI
-        const displayWidth = width * ppi;
-        const displayHeight = height * ppi;
-        
-        card.style.width = displayWidth + 'px';
-        card.style.height = displayHeight + 'px';
+        // Use the actual saved dimensions directly
+        // This preserves exactly what was on screen when state was saved
+        if (data.actualWidth && data.actualHeight) {
+            card.style.width = data.actualWidth;
+            card.style.height = data.actualHeight;
+        } else {
+            // Fallback: calculate from dataset dimensions if actualWidth/Height don't exist
+            const width = parseFloat(data.width) || 4;
+            const height = parseFloat(data.height) || 6;
+            const ppi = 96; // Standard screen PPI
+            card.style.width = (width * ppi) + 'px';
+            card.style.height = (height * ppi) + 'px';
+        }
         
         const img = document.createElement('img');
         img.src = data.src || '';
