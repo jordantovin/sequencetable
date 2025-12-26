@@ -407,14 +407,68 @@
         }
     }
 
-    // ===== EXPOSE SAVE STATE FOR OTHER MODULES =====
-    window.toolbarSaveState = saveState;
+    // ===== EXPOSE FUNCTIONS FOR OTHER MODULES =====
+    window.sequenceTable = window.sequenceTable || {};
+    window.sequenceTable.saveState = saveState;
+    window.sequenceTable.getState = () => state;
+
+    // ===== AUTO-SAVE STATE ON MUTATIONS =====
+    function observeChanges() {
+        const container = document.getElementById('photo-container');
+        const wall = document.getElementById('wall');
+        
+        // Debounce function to avoid excessive saves
+        let saveTimeout;
+        const debouncedSave = () => {
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(() => {
+                saveState();
+            }, 300); // Save 300ms after last change
+        };
+
+        // Observe photo container for any changes
+        const observer = new MutationObserver(debouncedSave);
+        observer.observe(container, {
+            childList: true,
+            attributes: true,
+            attributeFilter: ['style', 'class', 'data-frame-thickness', 'data-frame-color', 'data-matte-thickness'],
+            subtree: true
+        });
+
+        // Observe wall changes
+        const wallObserver = new MutationObserver(debouncedSave);
+        wallObserver.observe(wall, {
+            attributes: true,
+            attributeFilter: ['style', 'class']
+        });
+
+        // Listen to input changes in toolbar
+        const inputs = document.querySelectorAll('#wallWidth, #wallHeight, #wallUnit, #wallColor, #frameColor, #frameThickness, #matteThickness, #measurementUnit');
+        inputs.forEach(input => {
+            input.addEventListener('change', debouncedSave);
+        });
+
+        // Listen to document title changes
+        const titleElement = document.querySelector('.doc-title');
+        if (titleElement) {
+            const titleObserver = new MutationObserver(debouncedSave);
+            titleObserver.observe(titleElement, {
+                childList: true,
+                characterData: true,
+                subtree: true
+            });
+        }
+    }
 
     // ===== INITIALIZE ON DOM READY =====
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
+        document.addEventListener('DOMContentLoaded', () => {
+            init();
+            observeChanges();
+        });
     } else {
         init();
+        observeChanges();
     }
 
 })();
