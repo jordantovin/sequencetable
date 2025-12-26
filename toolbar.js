@@ -320,7 +320,7 @@
 
         card.dataset.id = photoData.id;
         
-        // CRITICAL: Set transform data attributes first
+        // CRITICAL: Set transform data attributes
         card.dataset.x = photoData.x;
         card.dataset.y = photoData.y;
         card.dataset.rotation = photoData.rotation;
@@ -353,6 +353,11 @@
         const caption = document.createElement('div');
         caption.className = 'photo-caption';
         caption.textContent = photoData.photographer;
+        
+        // Check if names are visible
+        const namesAreVisible = window.areNamesVisible ? window.areNamesVisible() : false;
+        caption.style.display = namesAreVisible ? '' : 'none';
+        
         card.appendChild(caption);
 
         // Dimensions label with two spans
@@ -369,6 +374,26 @@
             transition: background 0.2s;
         `;
         pictureDimSpan.title = 'Click to edit picture dimensions';
+        
+        // Add hover effect
+        pictureDimSpan.addEventListener('mouseenter', () => {
+            if (!pictureDimSpan.querySelector('input')) {
+                pictureDimSpan.style.background = 'rgba(255,255,255,0.2)';
+            }
+        });
+        pictureDimSpan.addEventListener('mouseleave', () => {
+            if (!pictureDimSpan.querySelector('input')) {
+                pictureDimSpan.style.background = 'transparent';
+            }
+        });
+        
+        // Click handler to make inline editable
+        pictureDimSpan.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (!pictureDimSpan.querySelector('input') && window.makeInlineEditable) {
+                window.makeInlineEditable(card, pictureDimSpan);
+            }
+        });
         
         const frameDimSpan = document.createElement('span');
         frameDimSpan.className = 'frame-dimensions';
@@ -387,7 +412,7 @@
             card.style.zIndex = photoData.zIndex;
         }
 
-        // CRITICAL: Apply the transform immediately after creating the card
+        // CRITICAL: Apply the transform using the saved positions
         card.style.transform = `translate(${photoData.x}px, ${photoData.y}px) rotate(${photoData.rotation}deg)`;
 
         // Create resize and rotate handles
@@ -401,12 +426,60 @@
         rotateHandle.textContent = '↻';
         frame.appendChild(rotateHandle);
 
-        // Make card interactive (attach drag/resize/rotate handlers)
-        if (window.makeCardInteractive) {
-            window.makeCardInteractive(card);
-        }
+        // Attach event handlers manually WITHOUT calling makeCardInteractive
+        // (which would reset the position)
+        attachCardHandlers(card);
 
         return card;
+    }
+
+    // Attach drag/resize/rotate handlers without resetting position
+    function attachCardHandlers(card) {
+        // Selection handler
+        card.addEventListener('click', (e) => {
+            if (window.handleCardSelection) {
+                window.handleCardSelection(card, e);
+            }
+        });
+
+        // Drag handler
+        card.addEventListener('mousedown', function(e) {
+            if (e.target.classList.contains('resize-handle')) return;
+            if (e.target.classList.contains('rotate-handle')) return;
+            if (e.target.classList.contains('photo-caption')) return;
+            if (e.target.classList.contains('picture-dimensions')) return;
+            if (e.target.classList.contains('dim-input')) return;
+            
+            if (window.startCardDrag) {
+                window.startCardDrag(card, e);
+            }
+        });
+
+        const frame = card.querySelector('.photo-frame');
+        const resizeHandle = frame.querySelector('.resize-handle');
+        const rotateHandle = frame.querySelector('.rotate-handle');
+
+        // Resize handler
+        if (resizeHandle) {
+            resizeHandle.addEventListener('mousedown', function(e) {
+                if (window.startCardResize) {
+                    window.startCardResize(card, e);
+                }
+                e.stopPropagation();
+                e.preventDefault();
+            });
+        }
+
+        // Rotate handler
+        if (rotateHandle) {
+            rotateHandle.addEventListener('mousedown', function(e) {
+                if (window.startCardRotate) {
+                    window.startCardRotate(card, e);
+                }
+                e.stopPropagation();
+                e.preventDefault();
+            });
+        }
     }
 
     function updateUndoRedoButtons() {
