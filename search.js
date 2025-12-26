@@ -54,20 +54,19 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
+            background: transparent;
             display: none;
-            align-items: flex-start;
-            justify-content: center;
-            padding-top: 100px;
             z-index: 999999;
         `;
         
         const modalContent = document.createElement('div');
+        modalContent.id = 'searchModalContent';
         modalContent.style.cssText = `
+            position: absolute;
             background: white;
             border-radius: 8px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-            width: 600px;
+            width: 400px;
             max-height: 500px;
             display: flex;
             flex-direction: column;
@@ -82,8 +81,8 @@
         searchInput.style.cssText = `
             border: none;
             outline: none;
-            padding: 16px 20px;
-            font-size: 16px;
+            padding: 12px 16px;
+            font-size: 14px;
             border-bottom: 1px solid #e0e0e0;
             font-family: 'Google Sans', Arial, sans-serif;
         `;
@@ -101,7 +100,7 @@
         modal.appendChild(modalContent);
         document.body.appendChild(modal);
         
-        return { modal, searchInput, resultsContainer };
+        return { modal, searchInput, resultsContainer, modalContent };
     }
 
     // ===== RENDER RESULTS =====
@@ -110,7 +109,7 @@
         
         if (results.length === 0) {
             resultsContainer.innerHTML = `
-                <div style="padding: 20px; text-align: center; color: #666;">
+                <div style="padding: 16px; text-align: center; color: #666; font-size: 13px;">
                     No results found
                 </div>
             `;
@@ -129,12 +128,14 @@
             // Category header
             const categoryHeader = document.createElement('div');
             categoryHeader.style.cssText = `
-                padding: 8px 20px;
-                font-size: 12px;
+                padding: 6px 16px;
+                font-size: 11px;
                 font-weight: 600;
                 color: #666;
                 background: #f8f9fa;
                 border-top: 1px solid #e0e0e0;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
             `;
             categoryHeader.textContent = category;
             resultsContainer.appendChild(categoryHeader);
@@ -145,12 +146,13 @@
                 item.className = 'search-result-item';
                 item.dataset.index = currentIndex;
                 item.style.cssText = `
-                    padding: 12px 20px;
+                    padding: 8px 16px;
                     cursor: pointer;
                     display: flex;
                     align-items: center;
                     justify-content: space-between;
                     transition: background 0.1s;
+                    font-size: 14px;
                     ${currentIndex === selectedIndex ? 'background: #e8f0fe;' : ''}
                 `;
                 
@@ -172,21 +174,21 @@
                 leftContent.style.cssText = `
                     display: flex;
                     align-items: center;
-                    gap: 12px;
+                    gap: 10px;
                 `;
                 
                 const icon = document.createElement('span');
                 icon.textContent = cmd.icon;
                 icon.style.cssText = `
-                    font-size: 18px;
-                    width: 24px;
+                    font-size: 16px;
+                    width: 20px;
                     text-align: center;
                 `;
                 
                 const name = document.createElement('span');
                 name.textContent = cmd.name;
                 name.style.cssText = `
-                    font-size: 14px;
+                    font-size: 13px;
                     color: #202124;
                 `;
                 
@@ -198,11 +200,11 @@
                     const shortcut = document.createElement('span');
                     shortcut.textContent = cmd.shortcut;
                     shortcut.style.cssText = `
-                        font-size: 12px;
+                        font-size: 11px;
                         color: #666;
                         background: #f1f3f4;
-                        padding: 4px 8px;
-                        border-radius: 4px;
+                        padding: 2px 6px;
+                        border-radius: 3px;
                         font-family: monospace;
                     `;
                     rightContent.appendChild(shortcut);
@@ -291,10 +293,19 @@
 
     function openSearchModal() {
         const modal = document.getElementById('searchModal');
+        const modalContent = document.getElementById('searchModalContent');
         const searchInput = document.getElementById('searchInput');
         const resultsContainer = document.getElementById('searchResults');
         
-        modal.style.display = 'flex';
+        // Position modal content below search icon
+        const searchIcon = document.querySelector('.toolbar-icon[title="Search"]');
+        if (searchIcon) {
+            const rect = searchIcon.getBoundingClientRect();
+            modalContent.style.top = `${rect.bottom + 4}px`;
+            modalContent.style.left = `${rect.left}px`;
+        }
+        
+        modal.style.display = 'block';
         searchInput.value = '';
         searchInput.focus();
         
@@ -310,7 +321,7 @@
 
     // ===== EVENT HANDLERS =====
     function setupEventHandlers() {
-        const { modal, searchInput, resultsContainer } = createSearchModal();
+        const { modal, searchInput, resultsContainer, modalContent } = createSearchModal();
         
         // Click on search icon
         const searchIcon = document.querySelector('.toolbar-icon[title="Search"]');
@@ -318,9 +329,9 @@
             searchIcon.addEventListener('click', openSearchModal);
         }
         
-        // Click outside modal to close
+        // Click outside modal content to close
         modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
+            if (!modalContent.contains(e.target)) {
                 closeSearchModal();
             }
         });
