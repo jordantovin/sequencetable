@@ -343,6 +343,14 @@
 
         // Clear the restoring flag after a brief delay to let mutations settle
         setTimeout(() => {
+            // Update dimensions text for all restored cards if dimensions are currently visible
+            const dimensionsVisible = document.querySelector('.photo-dimensions')?.style.display !== 'none';
+            if (dimensionsVisible && window.updateCardDimensionsText) {
+                document.querySelectorAll('.photo-card').forEach(card => {
+                    window.updateCardDimensionsText(card);
+                });
+            }
+            
             state.isRestoring = false;
         }, 100);
     }
@@ -400,9 +408,44 @@
         
         const pictureDimSpan = document.createElement('span');
         pictureDimSpan.className = 'picture-dimensions';
+        pictureDimSpan.style.cssText = `
+            cursor: pointer;
+            display: block;
+            padding: 2px 4px;
+            border-radius: 4px;
+            transition: background 0.2s;
+        `;
+        pictureDimSpan.title = 'Click to edit picture dimensions';
+        
+        // Add hover effect
+        pictureDimSpan.addEventListener('mouseenter', () => {
+            if (!pictureDimSpan.querySelector('input')) {
+                pictureDimSpan.style.background = 'rgba(255,255,255,0.2)';
+            }
+        });
+        pictureDimSpan.addEventListener('mouseleave', () => {
+            if (!pictureDimSpan.querySelector('input')) {
+                pictureDimSpan.style.background = 'transparent';
+            }
+        });
+        
+        // Click handler to make inline editable
+        pictureDimSpan.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent card selection
+            if (!pictureDimSpan.querySelector('input')) {
+                if (window.makeInlineEditable) {
+                    window.makeInlineEditable(card, pictureDimSpan);
+                }
+            }
+        });
         
         const frameDimSpan = document.createElement('span');
         frameDimSpan.className = 'frame-dimensions';
+        frameDimSpan.style.cssText = `
+            display: block;
+            opacity: 0.7;
+            font-size: 0.9em;
+        `;
         
         dim.appendChild(pictureDimSpan);
         dim.appendChild(frameDimSpan);
